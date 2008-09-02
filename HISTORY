@@ -1,0 +1,76 @@
+NOTE: this library was first written probably between 1995 to 1998
+I separated it out of the 'aplot' program on 4/6/2002, and thus begins
+its changelog:
+
+4/6/02
+    - integrated the libmtm.a code into this library.  This means that
+        linking with -lg2c and a fortran compiler are necessary.
+    - changed the interface: create_sonogram() now does not accept
+        any parameters.  One uses the sonogram_setopts() to set the
+        fftsize, overlap, and nsamples parameters.  
+        Setting the fftsize is required.  However, one can change it
+        arbitrarily often.
+        Setting the overlap is required if one intends to generate
+        a sonogram: i.e., power-spectral densities at serial time
+        slices through a large number of samples.  In this case, it
+        is also necessary to set the total number of samples.
+        For now, see the aplot_sono.c file for how to do this.
+        The library can cache the time slices, so they won't be
+        recomputed if asked for again.   This caching will be on-disk,
+        so very large files can be handled.
+    - data in ring buffers is now supported nicely.  One simply tells
+        libsono that the buffers are ring buffers, and call
+        calculate_psd instead of calculate_psd_cached/uncached.
+    - added simple versioning system
+    - libsono now installs into /usr/local/lib/libsono.a and
+        /usr/local/include/sonogram.h
+    - Fixed the mtm code - mtm spectra now work, but take noticeably
+        longer to generate, and so may not be appropriate for real-time
+        use (right now).
+
+4/19/02
+    - changed from including values.h to float.h.  values.h isn't available
+        on Apple OS/X, while float.h is on both. (Thanks to Donour Sizemore
+        donour@uchicago.edu) for the bug report.
+
+4/27/02
+    - Added support (toggled by an #ifdef in sonogram.c) for a C language
+        version of multitapering, that is taken from the GRASP package
+        and modified.  It's based on the Percival and Walden book. so I
+        sort of know what's going on... 
+    - Fixed the normalization for MTM.
+    - Select the C or Fortran MTM code by commenting in/out the appropriate
+        parts of the Makefile...
+    - Note that for the C code, only the MTM # windows and MTM bandwidth
+        settings in aplot are used...  Of course, the fortran code didn't
+        really use any of the others either, for the most part.
+    - libsono is now GPL.  I have the copyright on sonogram.*, and parts
+        of mem.c and multitaper.c.  However, the FFT code is
+        copyright 1990  Richard H. Krukar all rights reserved
+        but is free to redistribute, and the Fortran MTM code is
+        (c) 1996 Michael Mann (http://www.people.virginia.edu/~mem6u),
+        and free to redistribute, and the C MTM code is
+        (c) 1997,1998 Bruce Allen (GRASP), and free to redistribute, and
+        there are several routines taken from or derived from
+        Numerical Recipes:
+        portions (C) Copr. 1986-92 Numerical Recipes Software #.3.
+        Note: my code is mainly just glue and interface stuff.
+    - Now, MEM and MTM spectra use boxcar windows regardless of what
+        window function the user asks for.
+
+6/13/03
+    - fixed fftw support. It works with fftw-2.1.3 on my system, when
+        the application built with this library is linked with librfftw.a.
+    - modified the LIBSONO_MAXFFTSIZE parameter to support FFT sizes
+        up to 65536 samples (this increases the sizes of allocated arrays
+        a whole lot, though).  I'll need to optimize the memory usage at
+        some point.
+    - modified the makefile to enable FFTW support by default.
+    - remember to make install this library and to rebuild all applications
+        that use it.
+
+12/8/05
+    - updated fftw support to support fftw3.  It no longer supports fftw2.
+        Applications built with libsono should be linked with -lfftw3.
+        There are RPM packages for linux, etc.
+

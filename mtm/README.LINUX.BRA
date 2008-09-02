@@ -1,0 +1,53 @@
+This readme file desribes the changes which are necessary to run ssamtm3.1 under
+Linux (kernel version 2). The program was tested and seemed to work properly. However there are
+still some propblems which seem to be caused by the code itself and are platform
+independent.
+1. The spectra.log file does not show the results of the ssa and mcssa
+programs. Further checking showed that possibly the ' -v ' verbose option is not
+handled properly by the user interface. Invoking the programs outside the user
+interface gives the wanted results.
+2. Sometimes the loading of a data file gives an error message, when this file
+is outside the working directory, albeit the file is shown as loaded. In
+addition the input data are not displayed. A new clic on the wanted file in the
+input window gives the new data display.
+
+Everything else seems to work fine. (of course without any warranty).
+
+The following changes are necessary:
+1. In the directory SSAMTM3.1:
+The preprocessor M4 does not seem to work properly. The location of '
+wish ' has to be added by hand in the 'spectra' file and in the mcssac.tcl file.
+If it has to be changed in the head.TCL file I don't know. I tried that, but
+this doesn't make much difference. Probably one of the programmers of the wish
+interface can comment on that.
+
+2.In the directory /SSAMTM3.1/src/mcssa
+There the linker calls a function ' lnblnk ' which is an intrinsic function in
+many compilers, but obviously not in gf77 of Linux. I wrote it myself and added
+it to the makefile of the subdirectory.
+
+3. In the directory /SSAMTM3.1/src/mtm
+There some warnings occur of array variables being out of bound. I haven't
+tested this yet, but this does not depend on Linux (Watcom under DOS gives the same errors). 
+Leaving the code as is seems not to have any crucial effect. (However ' Caveat emptor ').
+
+Find included a complete version of SSAMTM3.1 under xmgr with binaries as it runs on my machine.
+
+After having installed the program package proceed as described in the manual and then type 'make'.
+Then make the changes of step 1 and type ' make install '. 
+
+
+I would be grateful for any comments to improve installation or to correct
+errors. 
+
+Alexander Brawanski M.D., Ph.D
+
+Clinic of Neurosurgery
+
+University of Regensburg
+
+93042 Regensburg
+  
+Germany
+
+e-mail: alexander.brawanski@klinik.uni-regensburg.de  
