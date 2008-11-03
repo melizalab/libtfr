@@ -11,21 +11,12 @@ FFTW_DEFINES = -DHAVE_FFTW
 FFTW_LIBS = -lfftw3
 ###########################################################
 
-
-###########################################################
-### Select one of the following to enable multitaper method
-### Note that I haven't used the fortran stuff in a while.
-###########################################################
 MTM_DEFINES = 
 MTM_TARGETS = multitaper.o
 MTM_OBJECTS = multitaper.o
-###
-#MTM_DEFINES = -DFORTRAN_MTM
-#MTM_TARGETS = mtm/libmtm.a
-#MTM_OBJECTS = mtm/*.o
-###########################################################
 
-OPT_CFLAGS = -g2 -Wall # -O2
+CC=/usr/bin/gcc
+LIB_CFLAGS = -O2 -g2 -arch i386 -arch ppc
 
 LIBRARY = sono
 
@@ -38,12 +29,12 @@ TVER := $(shell grep BUILD version.h | cut -d' ' -f3)
 BUILDVER := $(shell expr 1 + ${TVER})
 
 PREFIX=/usr/local
-MODE=655
+MODE=644
 OWNER=root
-GROUP=root
-INSTALL=/usr/bin/install -b -D -o ${OWNER} -g ${GROUP}
+GROUP=wheel
+INSTALL=install -o ${OWNER} -g ${GROUP}
 
-CFLAGS = ${OPT_CFLAGS} ${FFTW_DEFINES} ${MTM_DEFINES}
+CFLAGS = -fPIC -Wall ${LIB_CFLAGS} ${FFTW_DEFINES} ${MTM_DEFINES}
 
 all: lib$(LIBRARY).a
 
