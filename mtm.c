@@ -230,6 +230,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 	return 0;
 }
 
+
 /*
  * Initialize a multitaper mtm transform using preallocated tapers (i.e. with dpss()))
  * 
@@ -429,7 +430,7 @@ mtpower(mtfft_params *mtm, double *pow, double sigpow)
 				pow[n] = num/den;
 				err += fabs(num/den-est);
 			}
-			printf("err: %3.4g\n", err);
+			//printf("err: %3.4g\n", err);
 		}
 		free(Sk);
 	}

@@ -21,6 +21,7 @@ main(int argv, char **argc)
 	printf("Setting options\n");
 	sonogram_setopts(sono, SONO_OPT_FFTSIZE, 256);
 	sonogram_setopts(sono, SONO_OPT_OVERLAP, 50);
+	sonogram_setopts(sono, SONO_OPT_NSAMPLES, nsamples);
 	sonogram_setopts(sono, SONO_OPT_METHOD, METHOD_STFT);
 	sonogram_setopts(sono, SONO_OPT_WINDOW, WINDOW_HANNING);
 	
@@ -34,7 +35,7 @@ main(int argv, char **argc)
 	FILE *out = fopen("testsono.bin","w");
 
 	for (i = 0; i < 100; i++) {
-		psd = calculate_psd_uncached_column(sono, data, nsamples, i, 0, 0.5);
+		psd = calculate_psd_cached_column(sono, data, nsamples, i, 0, 0.5);
 		fwrite(psd, sizeof(float), 127, out);
 	}
 

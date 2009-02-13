@@ -206,27 +206,6 @@ sonogram_setopts(struct sonogram *sono, int option, long value)
 		case SONO_OPT_MTM_ADAPT:
 			sono->mtm_adapt = value;
 			break;
-/* 		case SONO_OPT_MTM_INOISE: */
-/* 			if (sono->mtm) sono->mtm->p_inoise = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_ILOG: */
-/* 			if (sono->mtm) sono->mtm->p_ilog = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_FSMOOTH: */
-/* 			if (sono->mtm) sono->mtm->p_fsmooth = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_INORM: */
-/* 			if (sono->mtm) sono->mtm->p_inorm = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_ISPEC: */
-/* 			if (sono->mtm) sono->mtm->p_ispec = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_ITHRESH: */
-/* 			if (sono->mtm) sono->mtm->p_ithresh = value; */
-/* 			break; */
-/* 		case SONO_OPT_MTM_ISIGNAL: */
-/* 			if (sono->mtm) sono->mtm->p_isignal = value; */
-/* 			break; */
 	}
 	if (clearcache) {
 		if (sono->spec)
@@ -248,28 +227,6 @@ sonogram_setopts(struct sonogram *sono, int option, long value)
 	return 0;
 }
 
-
-/*
-*****
-** EXAMPLE:
-** fftsize = 4, overlap = 50%, nsamples = 9
-** 
-** bin		windowed samples
-** ---		----------------
-** 0		#, #, 0, 1
-** 1		0, 1, 2, 3
-** 2		2, 3, 4, 5
-** 3		4, 5, 6, 7
-** 4		6, 7, 8, #
-**
-** fftsize = 4, overlap = 0%, nsamples = 9
-**
-** bin		windowed samples
-** ---		----------------
-** 0		#, #, 0, 1
-** 1		2, 3, 4, 5
-** 2		6, 7, 8, #
-*****/
 
 float *calculate_psd_cached_column(struct sonogram *sono, short *samples, int nsamples, int timebin, float fmin, float fmax)
 {
