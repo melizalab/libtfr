@@ -238,27 +238,34 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
  *   npoints - number of points in the tapers (windows)
  *   ntapers - number of tapers
  *   *tapers - pointer to npoints*ntapers array of windowing functions
- *   *lambdas - eigenvalues for tapers
+ *   *lambdas - eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
+ *
  */
 
 mtfft_params* 
-init_mtm_prealloc(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
+mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 {
 	mtfft_params *mtm;
+	int *n_array, i;
+	fftw_r2r_kind *kind;
 	mtm = (mtfft_params*)malloc(sizeof(mtfft_params));
 
 	mtm->nfft = nfft;
 	mtm->npoints = npoints;
 	mtm->ntapers = ntapers;
 	mtm->tapers = tapers;
-	mtm->lambdas = lambdas;
+	if (lambdas)
+		mtm->lambdas = lambdas;
+	else {
+		mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
+		for (i = 0; i < ntapers; i++) mtm->lambdas[i] = 1.0;
+	}
+			
 
 	mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
 	//mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
 	
 	// set up fftw plan
-	int *n_array, i;
-	fftw_r2r_kind *kind;
 	n_array = malloc(sizeof(int)*ntapers);
 	kind = malloc(sizeof(int)*ntapers);
 	for (i = 0; i < ntapers; i++) {
@@ -276,18 +283,39 @@ init_mtm_prealloc(int nfft, int npoints, int ntapers, double* tapers, double *la
 	return mtm;
 }
 
-void
-destroy_mtm(mtfft_params *mtm)
+mtfft_params*
+mtm_init_dpss(int nfft, double nw, int ntapers)
 {
-	free(mtm->tapers);
-	free(mtm->lambdas);
-	fftw_destroy_plan(mtm->plan);
-	fftw_free(mtm->buf);
+	double *tapers, *lambdas;
+	tapers = (double*)malloc(nfft*ntapers*sizeof(double));
+	lambdas = (double*)malloc(nfft*sizeof(double));
+	dpss(tapers, lambdas, nfft, nw, ntapers);
+	printf("Generated %d tapers of length %d\n", ntapers, nfft);
+	int i;
+	for (i = 0; i < ntapers; i++)
+		printf("%3.6f, ", lambdas[i]);
+	printf("\n");
+	return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
+}
+
+/*
+ * Frees up the mtftt_params structure and dependent data. The references to the tapers
+ * are considered to be owned by the structure.
+ */
+void
+mtm_destroy(mtfft_params *mtm)
+{
+	if (mtm->plan) fftw_destroy_plan(mtm->plan);
+	if (mtm->tapers) free(mtm->tapers);
+	if (mtm->lambdas) free(mtm->lambdas);
+	if (mtm->buf) fftw_free(mtm->buf);
 	free(mtm);
 }
 
 /*
- * Compute multitaper FFT of a signal.
+ * Compute multitaper FFT of a signal. Note that this can be used for
+ * single taper FFTs, if the mtfft_params structure has been initialized
+ * with a single window
  *
  * Inputs:
  *    mtm - parameters for the transform
@@ -306,13 +334,16 @@ mtfft(mtfft_params *mtm, short *data, int nbins)
 	int nt = (nbins < size) ? nbins : size;
 	double pow = 0.0;
 
+	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = 0; j < nt; j++) {
 			mtm->buf[j+i*size] = mtm->tapers[j+i*size] * data[j];
 			pow += data[j] * data[j];
 		}
 	}
+	pow /= mtm->ntapers;
 	// zero-pad rest of buffer
+	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = nt; j < mtm->nfft; j++)
 			mtm->buf[j+i*size] = 0.0;
@@ -320,7 +351,7 @@ mtfft(mtfft_params *mtm, short *data, int nbins)
 
 	fftw_execute(mtm->plan);
 
-	return pow;
+	return pow / nt;
 }
 
 /*
@@ -344,7 +375,7 @@ mtpower(mtfft_params *mtm, double *pow, double sigpow)
 	int nfft = mtm->nfft;
 	int ntapers = mtm->ntapers;
 	int real_count = nfft / 2 + 1;
-	int imag_count = (nfft+1) / 2 - 1;
+	int imag_count = (nfft+1) / 2;  // not actually the count but the last index
 	int t,n;
 
 	if (sigpow<=0.0 || ntapers==1) {
@@ -352,41 +383,63 @@ mtpower(mtfft_params *mtm, double *pow, double sigpow)
 		for (t = 0; t < ntapers; t++) {
 			for (n = 0; n < real_count; n++)
 				pow[n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t]/ntapers;
-			for (n = 1; n < imag_count; n++)
+			for (n = 1; n < imag_count; n++) {
 				pow[n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t]/ntapers;
+			}
 		}
 	}
 	else {
 		double est, num, den, w;
 		double tol, err;
 		double *Sk;
-		Sk = (double*)calloc(ntapers*real_count,sizeof(double));
+		Sk = (double*)calloc(ntapers*real_count, sizeof(double));
 		for (t = 0; t < ntapers; t++) {
 			for (n = 0; n < real_count; n++)
-				Sk[t*nfft+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t];
+				Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t];
 			for (n = 1; n < imag_count; n++)
-				Sk[t*nfft+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t];
+				Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t];
+			//Sk[t*nfft+n] *= 2;
 		}
 		// initial guess is average of first two tapers
-		for (n = 0; n < real_count; n++)
-			pow[n] = (Sk[n] + Sk[nfft+n])/2;
-
-		tol = 0.0005 * sigpow;
 		err = 0;
+		for (n = 0; n < real_count; n++) {
+			pow[n] = (Sk[n] + Sk[real_count+n])/2;
+			err += abs(pow[n]);
+		}
+
+		tol = 0.0005 * sigpow / nfft;
+		err /= nfft;
+		//printf("err: %3.4g; tol: %3.4g\n", err, tol);
+		//for(t = 0; t < ntapers; t++)
+		//	printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
+		//printf("\n");
 		while (err > tol) {
+			err = 0;
 			for (n = 0; n < real_count; n++) {
 				est = pow[n];
 				num = den = 0;
+				//printf("%d: est=%3.4g; ", n, est);
 				for (t=0; t < ntapers; t++) {
-					w = est / (est * mtm->lambdas[t] + sigpow * (1 -mtm->lambdas[t]));
+					w = est / (est * mtm->lambdas[t] + sigpow * (1 - mtm->lambdas[t]));
 					w = w * w * mtm->lambdas[t];
-					num += w * Sk[t*nfft+n];
+					//printf("%3.4g ",Sk[t*real_count+n]);
+					num += w * Sk[t*real_count+n];
 					den += w;
 				}
 				pow[n] = num/den;
 				err += fabs(num/den-est);
 			}
+			printf("err: %3.4g\n", err);
 		}
 		free(Sk);
 	}
+	// adjust power for one-sided spectrum
+	for (n = 1; n < imag_count; n++)
+		pow[n] *= 2;
+}
+
+void
+getbuffer(mtfft_params *mtm, double *buf)
+{
+	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double));
 }

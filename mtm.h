@@ -12,11 +12,12 @@ typedef struct {
 } mtfft_params;
 
 /* public functions */
-mtfft_params* init_mtm_prealloc(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
+mtfft_params* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
+mtfft_params* mtm_init_dpss(int nfft, double nw, int ntapers);
 double mtfft(mtfft_params *mtm, short *data, int nbins);
-void destroy_mtm(mtfft_params *mtm);
+void mtm_destroy(mtfft_params *mtm);
 int dpss(double *tapers, double *lambda, int npoints, double NW, int k);
-
+void mtpower(mtfft_params *mtm, double *out, double sigpower);
 
 /* internal functions */
 int tridisolve(int N, double *e, double *d, double *b);
