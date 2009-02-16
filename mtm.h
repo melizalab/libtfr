@@ -14,12 +14,12 @@ typedef struct {
 /* public functions */
 mtfft_params* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
 mtfft_params* mtm_init_dpss(int nfft, double nw, int ntapers);
-double mtfft(mtfft_params *mtm, short *data, int nbins);
+double mtfft(mtfft_params *mtm, const short *data, int nbins);
 void mtm_destroy(mtfft_params *mtm);
 int dpss(double *tapers, double *lambda, int npoints, double NW, int k);
-void mtpower(mtfft_params *mtm, double *out, double sigpower);
+void mtpower(const mtfft_params *mtm, double *out, double sigpower);
 
 /* internal functions */
-int tridisolve(int N, double *e, double *d, double *b);
+int tridisolve(int N, const double *e, double *d, double *b);
 void renormalize(int N, double *x);
-void fftconv(int N, double *x, double *y);
+void fftconv(int N, const double *x, double *y);

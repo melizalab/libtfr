@@ -73,4 +73,3 @@ its changelog:
     - updated fftw support to support fftw3.  It no longer supports fftw2.
         Applications built with libsono should be linked with -lfftw3.
         There are RPM packages for linux, etc.
-
