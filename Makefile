@@ -11,7 +11,7 @@ LDFLAGS = -lm -llapack -lfftw3
 LIBNAME = sono2
 DYNLIB_FLAGS = -shared -Wl,-soname,lib${LIBNAME}.so.1 -o lib${LIBNAME}.so.1.0.0
 
-SRCS = mtm.c sonogram.c
+SRCS = mtm.c tfr.c sonogram.c
 HDR = mtm.h sonogram.h
 OBJS = $(SRCS:.c=.o)
 

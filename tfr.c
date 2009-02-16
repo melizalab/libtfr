@@ -75,30 +75,49 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <complex.h>
+#include "mtm.h"
+
+/* struct { */
+/* 	double *q;  // spectrotemporal power */
+/* 	double *tdisp; // temporal displacement */
+/* 	double *fdisp; //frequency displacement */
+
+#ifndef SQR
+#define SQR(a) ( (a) * (a) )
+#endif
+
 
 /**
  *  Computes a set of orthogonal Hermite functions for use in
  *  computing multi-taper reassigned spectrograms
  *
  * Inputs:
- * N - the number of points in the window (must be odd)
- * M - the maximum order of the set of functions (default 6)
- * tm - half-time support (default 6)
- *1
+ * N - the number of points in the window (must be odd; rounded down)
+ * M - the maximum order of the set of functions
+ * tm - half-time support
+ *
  * Outputs:
  * h - hermite functions (MxN)
  * Dh - first derivative of h (MxN)
- * tt - time support of functions (N)
+ * Th - time multiple of h (MxN)
+ *
+ * Returns:
+ *  The actual number of points in the tapers
  *
  * From the Time-Frequency Toolkit, P. Flandrin & J. Xiao, 2005
  */
-void
-hermf(int N, int M, double tm, double *h, double *Dh, double *tt)
+int
+hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
 	
 	int i, k;
-	double dt, *g, *P, *Htemp;
+	double dt, *tt, *g, *P, *Htemp;
 
+	// fix even window sizes
+	N -= (N % 2) ? 0 : 1;
+
+	tt = (double*)malloc(N*M*sizeof(double));
 	g = (double*)malloc(N*sizeof(double));
 	P = (double*)malloc(N*(M+1)*sizeof(double));
 	Htemp = (double*)malloc(N*(M+1)*sizeof(double));
@@ -128,11 +147,88 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *tt)
 	for (k = 0; k < M; k++) {
 		for (i = 0; i < N; i++) {
 			Dh[k*N+i] = (tt[i] * Htemp[k*N+i] - sqrt(2*(k+1)) * Htemp[(k+1)*N+i])*dt;
+			Th[k*N+i] = Htemp[k*N+i] * (-(N-1)/2 + i);
 		}
 	}
 
+
 	memcpy(h, Htemp, N*M*sizeof(double));
+	free(tt);
 	free(g);
 	free(P);
 	free(Htemp);
+
+	return N;
+}
+
+/**
+ *  Initialze the mtm engine to compute FFT transforms using the hermitian
+ *  function tapers.
+ *
+ * Inputs:
+ *  nfft - the number of points in the fourier transform
+ *  npoints - the number of points in the window; controls the time-frequency resolution
+ *  order - the maximum order of hermite functions to use. actual # of tapers is 3 times this
+ *  tm    - time support for the tapers. If 0 or less, use the default of 6
+ */
+mtfft_params*
+mtm_init_herm(int nfft, int npoints, int order, double tm)
+{
+
+	double *tapers = (double*)malloc(npoints*order*3*sizeof(double));
+	
+	tm = (tm > 0) ? tm : 6;
+
+	npoints = hermf(npoints, order, tm,
+			tapers, tapers + order*npoints, tapers + order*npoints*2);
+
+	mtfft_params* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
+
+	printf("NFFT= %d; npoints= %d; ntapers=%d\n", mtm->nfft, mtm->npoints, mtm->ntapers);
+	return mtm;
+}
+
+/**
+ * Compute the power spectrum and the time/frequency displacement.
+ *
+ * Inputs:
+ *   mtm - mtfft_params object with computed FFT transforms; assumes that there
+ *         are 3x tapers as the order of the multitaper transform (K)
+ *
+ * Outputs:
+ *   q   - power spectrum (NFFT/2+1 x K)
+ *   tdispl - time displacements (NFFT/2+1 x K)
+ *   fdispl - frequency displacements (NFFT/2+1 x K)
+ */
+void
+tfr_displacements(mtfft_params *mtm, double *q, double *tdispl, double *fdispl)
+{
+
+	int i,j;
+	int nfft = mtm->nfft;
+	int real_count = nfft / 2 + 1;
+	int imag_count = (nfft+1) / 2; // not actually the count but the last index
+	int K = mtm->ntapers / 3;
+	double pow;
+
+	for (j = 0; j < K; j++) {
+		//t = j*3;
+		for (i = 1; i < imag_count; i++) {
+			pow = SQR(mtm->buf[j*nfft+i]) + SQR(mtm->buf[j*nfft+(nfft-i)]);// * I);
+			q[j*real_count+i] = pow;
+			fdispl[j*real_count+i] = mtm->buf[(j*3+1)*nfft+(nfft-i)] / pow / (2 * M_PI);
+			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / pow;
+		}
+ 		// DC 
+ 		q[j*real_count] = SQR(mtm->buf[j*nfft]);
+		fdispl[j*real_count] = 0.0;
+		tdispl[j*real_count] = mtm->buf[(j*3+2)*nfft] / q[j*real_count];
+		// nyquist
+ 		if (imag_count < real_count) {
+ 			i = real_count-1;
+ 			q[j*real_count+i] = SQR(mtm->buf[j*nfft+i]);
+ 			fdispl[j*real_count+i] = 0.0; 
+ 			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / q[j*real_count+i]; 
+ 		}
+	}
 }
