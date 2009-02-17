@@ -4,6 +4,8 @@
 #include <pcmio.h>
 #include "sonogram.h"
 
+#define MIN(a, b) ( ((a) < (b)) ? (a) : (b) )
+
 int
 main(int argv, char **argc)
 {
@@ -28,19 +30,23 @@ main(int argv, char **argc)
 	sonogram_setopts(sono, SONO_OPT_WINDOW, WINDOW_MULTITAPER);
 	sonogram_setopts(sono, SONO_OPT_MTM_NW, 3.5);
 	sonogram_setopts(sono, SONO_OPT_MTM_NTAPERS, 5);
-	sonogram_setopts(sono, SONO_OPT_MTM_ADAPT, 1);
+	sonogram_setopts(sono, SONO_OPT_MTM_ADAPT, 0);
 	printf("Set options\n");
 	
-
 	FILE *out = fopen("testsono.bin","w");
+
+	double sigpow = 0.0;
+	for (i = 0; i < nsamples; i++)
+		sigpow += (double)data[i] * data[i];
+	sigpow /= nsamples;
 
 	for (i = 0; i < 100; i++) {
 		psd = calculate_psd_cached_column(sono, data, nsamples, i, 0, 0.5);
-		fwrite(psd, sizeof(float), 127, out);
+		fwrite(psd, sizeof(float), 129, out);
 	}
 
-	pcm_close(fp);
 	fclose(out);
+	pcm_close(fp);
 	return (0);
 }
 	

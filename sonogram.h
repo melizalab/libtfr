@@ -60,7 +60,7 @@ struct sonogram
 #define   WINDOW_BLACKMAN    6
 #define SONO_OPT_METHOD        4
 #define   METHOD_STFT           1
-#define   METHOD_MAXENTROPY     2
+#define   METHOD_TFR            2
 #define SONO_OPT_MTM_NTAPERS   5
 #define SONO_OPT_MTM_NW        6
 #define SONO_OPT_MTM_ADAPT     7

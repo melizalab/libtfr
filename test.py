@@ -43,8 +43,15 @@ lsono.tfr_reassign.argtypes = [ndpointer(dtype='d'),ndpointer(dtype='d'),
 lsono.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='h'),
                            cx.c_int, cx.c_int, cx.c_double, cx.c_int]
 
+lpck = cx.cdll.LoadLibrary('/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib')
+lpck.dptsv.argtypes = [cx.POINTER(cx.c_int), cx.POINTER(cx.c_int), ndpointer(dtype='d'),
+                        ndpointer(dtype='d'), ndpointer(dtype='d'),
+                        cx.POINTER(cx.c_int), cx.POINTER(cx.c_int)]
+lpck.dgtsv.argtypes = [cx.POINTER(cx.c_int), cx.POINTER(cx.c_int), 
+                       ndpointer(dtype='d'),ndpointer(dtype='d'),
+                       ndpointer(dtype='d'), ndpointer(dtype='d'),
+                       cx.POINTER(cx.c_int), cx.POINTER(cx.c_int)]
 def hc2cmplx(X):
-
     N = X.shape[0]
     real_count = N / 2 + 1;
     imag_count = (N+1) / 2;
@@ -57,10 +64,27 @@ def mwindow(x,w):
     out[:w.size] = x[:w.size] * w
     return out
 
+def alt_tridisolve(ee,d,e):
+    n = cx.c_int(d.size)
+    nrhs = cx.c_int(1)
+    ldb = cx.c_int(d.size)
+    info = cx.c_int(0)
+
+    #lpck.dptsv_(cx.byref(n), cx.byref(nrhs), d, ee, e, cx.byref(ldb), cx.byref(info))
+    #lpck.dptsv(n, nrhs, d, ee, e, ldb, info)
+    lpck.dgtsv(n,nrhs,ee,d,ee.copy(),e,ldb,info)
+    return info
+
 if __name__=="__main__":
     N = 256
     NW = 3.5
     k = 5
+
+##     from dlab import signalproc
+##     ee,d,e = signalproc.dpss(128,3.5)
+##     ee1,d1,e1 = signalproc.dpss(128,3.5)
+##     ee = ee[1:]
+##     alt_tridisolve(ee,d,e)
 
     # allocate storage
     #tapers = nx.zeros(N*k)

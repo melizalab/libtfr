@@ -73,3 +73,13 @@ its changelog:
     - updated fftw support to support fftw3.  It no longer supports fftw2.
         Applications built with libsono should be linked with -lfftw3.
         There are RPM packages for linux, etc.
+
+2/2009
+    - forked the codebase to libsono2; changes as follows:
+    - only use fftw3 for fft operations
+    - fixed implementation of multitaper methods; all windowed STFT operations are now
+      treated essentially the same
+    - windows are now properly normalized to have a total power of 1.0
+    - added multitaper time-frequency reassignment spectrogram
+    - removed maximum entropy - I don't think anyone uses this and tfr is better
+    

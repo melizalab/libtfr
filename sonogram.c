@@ -384,6 +384,32 @@ static void calculate_stftpsd(struct sonogram *sono, short *samples, int nsample
 }
 
 
+/* static void calculate_tfrpsd(struct sonogram *sono, short *samples, int nsamples, int xoffset, double *psd) */
+/* { */
+/* 	int i, fftsize; */
+/* 	double sigpow; */
+
+/* 	fftsize = sono->fftsize; */
+
+/* 	// initialize tapers/windows and plan if necessary */
+/* 	if ((sono->mtm == NULL) || fftsize != sono->mtm->nfft) { */
+/* 		printf("Initializing new plan\n"); */
+/* 		if (sono->mtm) mtm_destroy(sono->mtm); */
+/* 		sono->mtm = mtm_init_herm(fftsize, sono->mtm_nw, sono->mtm_ntapers); */
+/* 	} */
+
+/* 	//printf("Computing FFT\n"); */
+/* 	sigpow = mtfft(sono->mtm, samples+xoffset, nsamples); */
+/* 	//printf("Frame %d; Signal power: %3.2f\n", xoffset, sigpow); */
+/* 	if (!sono->mtm_adapt) sigpow = 0.0; */
+/* 	mtpower(sono->mtm, psd, sigpow); */
+
+/* 	if (sono->linear) return; */
+/* 	for (i = 0; i < (fftsize + 1) / 2; i++) */
+/* 		psd[i] = 10.0 * log10(psd[i] + DBL_EPSILON); */
+/* } */
+
+
 /****************************************************************************************
 ********   WINDOW FUNCTIONS
 ****************************************************************************************/
@@ -487,6 +513,7 @@ static void create_cache(struct sonogram *sono)
 	** For large allocations, create a temporary file and mmap it
 	** If this fails, or for small files, malloc the needed space.
 	*/
+	printf("Creating sonogram cache for %d timebins\n", sono->ntimebins);
 	sono->spec = NULL;
 	sono->specalloctype = 0;
 	if (sono->ntimebins * sono->nfreqbins > (10000000 / sizeof(float)))
