@@ -20,6 +20,7 @@ extern void dgtsv_(int *N, int *NRHS,
 		   int *LDB, int *INFO );
 
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
+#define NTHREADS 1
 
 /**
  * Scale a vector by its L2 norm
@@ -58,6 +59,8 @@ fftconv(int N, const double *x, double *y)
 	double *X;
 	fftw_complex *X1, *X2;
 	fftw_plan plan;
+
+	//fftw_init_threads();
 
 	X = (double*)calloc(N * 2, sizeof(double));
 	X1 = (fftw_complex*)fftw_malloc((N+1) * sizeof(fftw_complex));
@@ -230,7 +233,8 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 		mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
 		for (i = 0; i < ntapers; i++) mtm->lambdas[i] = 1.0;
 	}
-			
+
+	//fftw_init_threads();
 
 	mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
 	//mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
@@ -243,6 +247,7 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 		kind[i] = FFTW_R2HC;
 	}
 
+	//fftw_plan_with_nthreads(NTHREADS);
 	mtm->plan = fftw_plan_many_r2r(1, n_array, ntapers,
 				       mtm->buf, NULL, 1, nfft,
 				       mtm->buf, NULL, 1, nfft,
@@ -432,3 +437,4 @@ gettapers(const mfft *mtm, double *buf)
 {
 	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double));
 }
+
