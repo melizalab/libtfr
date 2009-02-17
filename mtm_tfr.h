@@ -7,7 +7,6 @@ typedef struct {
 	double *tapers;
 	double *lambdas;
 	double *buf;
-	//fftw_complex *out_buf;
 	fftw_plan plan;
 } mtfft_params;
 

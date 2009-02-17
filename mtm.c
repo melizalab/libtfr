@@ -12,63 +12,14 @@
  *  insert some crap here about copyright, etc
  */
 
-/* some LAPACK prototypes. I only use dsterf but too lazy to remove the others yet */
-extern void dstegr_( char *JOBZ, char *RANGE, int *N, double *D, double *E, double *VL, double *VU, 
-		     int *IL, int *IU, double *ABSTOL, int *M, double *W, double *Z, 
-		     int *LDZ, int *ISUPPZ, double *WORK, int *LWORK, int *IWORK,
-		     int *LIWORK, int *INFO );
-
+/* some LAPACK prototypes */
 extern void dsterf_(int *N, double *D, double *E, int *INFO);
-
-extern void dgttrf_(int *N, double *DL, double *D, double *DU, double *DU2, 
-		    int *IPIV, int *INFO );
-
-extern void dgttrs_(char *TRANS, int *N, int *NRHS, 
-		    double *DL, double *D, double *DU, double *DU2, 
-		    int *IPIV, double *B, int *LDB, int *INFO );
 
 extern void dgtsv_(int *N, int *NRHS, 
 		   double *DL, double *D, double *DU, double *B, 
 		   int *LDB, int *INFO );
 
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
-
-/**
- * Solve a symmetric tridiagonal system of equations; this doesn't exist 
- * in LAPACK.
- *
- * Inputs:
- *   n - matrix order
- *   e - subdiagonal (length n; first element is ignored)
- *   d - diagonal (length n)  (destroyed in computation)
- *   b - right hand side of equation
- *
- * Outputs:
- *   the solution is returned in b
- */
-int
-tridisolve(int N, const double *e, double *d, double *b)
-{
-	int j;
-	double mu;
-        
-    	for (j = 0; j < N-1; j++) {
-		mu = e[j+1]/d[j];
-		d[j+1] = d[j+1] - e[j+1]*mu;
-		b[j+1]  = b[j+1] -  b[j]*mu;
-	}
-
-	if (fabs(d[N-1]) < DBL_EPSILON)
-		return -1;
-	else {
-	        b[N-1] = b[N-1]/d[N-1];
-
-	        for (j=N-2; j >= 0; j--) {
-		       b[j] = (b[j] - e[j+1]*b[j+1])/d[j];
-	        }
-        }
-	return 0;
-}
 
 /**
  * Scale a vector by its L2 norm
@@ -161,7 +112,7 @@ int
 dpss(double *tapers, double *lambda, int npoints, double NW, int k) 
 {
 	int i, j, m, rv;
-	double *d, *sd, *dd1, *dd2, *ee;
+	double *d, *sd, *dd1, *dd2, *ee1, *ee2;
 	double *taper; 
 
 	double W, ff;
@@ -175,17 +126,17 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 	sd = (double*)malloc(npoints*sizeof(double));
 	dd1 = (double*)malloc(npoints*sizeof(double));
 	dd2 = (double*)malloc(npoints*sizeof(double));
-	// tridisolve ignores first element of subdiagonal
-	ee = (double*)malloc((npoints+1)*sizeof(double)); 
+	ee1 = (double*)malloc((npoints)*sizeof(double)); 
+	ee2 = (double*)malloc((npoints)*sizeof(double)); 
 
 	for (i = 0; i < npoints; i++) {
 		ff = (npoints - 1 - 2*i);
 		d[i] = dd1[i] = 0.25 * cos(2*M_PI*W) * ff * ff;
-		sd[i] = ee[i+1] = (i+1) * (npoints-(i+1))/2.0;
+		sd[i] = ee1[i] = (i+1) * (npoints-(i+1))/2.0;
 	}
 
 	// lapack eigenvalue solver; values stored in d in increasing order
-	dsterf_(&npoints,d,sd,&rv);
+	dsterf_(&npoints,d,ee1,&rv);
 	if (rv != 0) return -2;
 	
 	// set up tridiagonal equations:
@@ -197,11 +148,14 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 			taper[i] = sin((j+1) * M_PI * i / (npoints-1));
 
 		for (m = 0; m < 3; m++) {
-			// diagonal destroyed by tridisolve
-			for (i = 0; i < npoints; i++)
+			// all inputs destroyed by dgtsv
+			for (i = 0; i < npoints; i++) {
 				dd2[i] = dd1[i] - lambda[j];
-			if (tridisolve(npoints, ee, dd2, taper) < 0)
-				return -2;
+				ee1[i] = ee2[i] = sd[i];
+			}
+			i = 1;
+			dgtsv_(&npoints, &i, ee1, dd2, ee2, taper, &npoints, &rv);
+			if (rv != 0) return -2;
 			renormalize(npoints, taper);
 		}
 
@@ -235,7 +189,8 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 	free(sd);
 	free(dd1);
 	free(dd2);
-	free(ee);
+	free(ee1);
+	free(ee2);
 	return 0;
 }
 
