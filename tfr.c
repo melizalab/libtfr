@@ -208,8 +208,8 @@ tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 	for (j = 0; j < K; j++) {
 		for (i = 1; i < imag_count; i++) {
 			z1 = mtm->buf[j*nfft+i] + mtm->buf[j*nfft+(nfft-i)] * I;
-			z2 = mtm->buf[(j*3+1)*nfft+i] + mtm->buf[(j*3+1)*nfft+(nfft-i)] * I;
-			z3 = mtm->buf[(j*3+2)*nfft+i] + mtm->buf[(j*3+2)*nfft+(nfft-i)] * I;
+			z2 = mtm->buf[(K+j)*nfft+i] + mtm->buf[(K+j)*nfft+(nfft-i)] * I;
+			z3 = mtm->buf[(2*K+j)*nfft+i] + mtm->buf[(2*K+j)*nfft+(nfft-i)] * I;
 
 			q[j*real_count+i] = cabs(z1) * cabs(z1);
 			fdispl[j*real_count+i] =  cimag(z2 / z1 / (2 * M_PI));
@@ -218,13 +218,13 @@ tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
  		// DC 
  		q[j*real_count] = SQR(mtm->buf[j*nfft]);
 		fdispl[j*real_count] = 0.0;
-		tdispl[j*real_count] = mtm->buf[(j*3+2)*nfft] / mtm->buf[j*nfft];
+		tdispl[j*real_count] = mtm->buf[(2*K+j)*nfft] / mtm->buf[j*nfft];
 		// nyquist
  		if (imag_count < real_count) {
  			i = real_count-1;
  			q[j*real_count+i] = SQR(mtm->buf[j*nfft+i]);
  			fdispl[j*real_count+i] = 0.0; 
- 			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / mtm->buf[j*nfft+i];
+ 			tdispl[j*real_count+i] = mtm->buf[(2*K+j)*nfft+i] / mtm->buf[j*nfft+i];
  		}
 	}
 }
