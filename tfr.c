@@ -307,10 +307,10 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
  *
  */  
 void
-tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift,
+tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
 	 double flock, int tlock)
 {
-	int t;
+	int t,mink = 0;
 	int nbins = nsamples / shift;
 	int real_count = mtm->nfft / 2 + 1;
 	int K = mtm->ntapers / 3;
@@ -325,14 +325,20 @@ tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift,
 	double *td = (double*)malloc(real_count*K*sizeof(double));
 	double *fd = (double*)malloc(real_count*K*sizeof(double));
 
+	if (k >= 0) {
+		mink = k;
+		K = k+1;
+	}
+	for (k = mink; k < K; k++) printf("Calculating spectrogram for taper %d\n", k);
 	for (t = 0; t < nbins; t++) {
 		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
 		tfr_displacements(mtm, q, td, fd);
-		//memcpy(spec+(t*real_count), td, real_count*sizeof(double));
-		//memcpy(tdisp+(t*real_count), td, real_count*sizeof(double));
-		tfr_reassign(spec+(t*real_count), q, td, fd,
-			     real_count, real_count, shift, 1e-6*pow,
-			     flock, (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
+		for (k = mink; k < K; k++) {
+			tfr_reassign(spec+(t*real_count), 
+				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
+				     real_count, real_count, shift, 1e-6*pow,
+				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
+		}
 	}
 	free(q);
 	free(td);
