@@ -13,7 +13,7 @@
 */
 
 #include <fftw3.h>
-#include "mtm.h"
+#include "mtm_tfr.h"
 
 #define LIBSONO_MAXFFTSIZE 131072
 

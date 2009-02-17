@@ -4,7 +4,7 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
-#include "mtm.h"
+#include "mtm_tfr.h"
 
 /*
  *  mtm.c - calculate windowed and multitaper FFT transforms
@@ -365,7 +365,7 @@ mtfft(mtfft_params *mtm, const short *data, int nbins)
 	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = 0; j < nt; j++) {
-			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * data[j];
+			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
 			pow += data[j] * data[j];
 		}
 	}
@@ -374,7 +374,7 @@ mtfft(mtfft_params *mtm, const short *data, int nbins)
 	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = nt; j < mtm->nfft; j++)
-			mtm->buf[j+i*size] = 0.0;
+			mtm->buf[j+i*nfft] = 0.0;
 	}
 
 	fftw_execute(mtm->plan);
@@ -467,7 +467,13 @@ mtpower(const mtfft_params *mtm, double *pow, double sigpow)
 }
 
 void
-getbuffer(mtfft_params *mtm, double *buf)
+getbuffer(const mtfft_params *mtm, double *buf)
 {
 	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double));
+}
+
+void
+gettapers(const mtfft_params *mtm, double *buf)
+{
+	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double));
 }

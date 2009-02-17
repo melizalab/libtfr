@@ -76,17 +76,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
-#include "mtm.h"
-
-/* struct { */
-/* 	double *q;  // spectrotemporal power */
-/* 	double *tdisp; // temporal displacement */
-/* 	double *fdisp; //frequency displacement */
+#include "mtm_tfr.h"
 
 #ifndef SQR
 #define SQR(a) ( (a) * (a) )
 #endif
-
 
 /**
  *  Computes a set of orthogonal Hermite functions for use in
@@ -201,7 +195,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
  *   fdispl - frequency displacements (NFFT/2+1 x K)
  */
 void
-tfr_displacements(mtfft_params *mtm, double *q, double *tdispl, double *fdispl)
+tfr_displacements(const mtfft_params *mtm, double *q, double *tdispl, double *fdispl)
 {
 
 	int i,j;
@@ -209,26 +203,138 @@ tfr_displacements(mtfft_params *mtm, double *q, double *tdispl, double *fdispl)
 	int real_count = nfft / 2 + 1;
 	int imag_count = (nfft+1) / 2; // not actually the count but the last index
 	int K = mtm->ntapers / 3;
-	double pow;
+	fftw_complex z1,z2,z3;
 
 	for (j = 0; j < K; j++) {
-		//t = j*3;
 		for (i = 1; i < imag_count; i++) {
-			pow = SQR(mtm->buf[j*nfft+i]) + SQR(mtm->buf[j*nfft+(nfft-i)]);// * I);
-			q[j*real_count+i] = pow;
-			fdispl[j*real_count+i] = mtm->buf[(j*3+1)*nfft+(nfft-i)] / pow / (2 * M_PI);
-			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / pow;
+			z1 = mtm->buf[j*nfft+i] + mtm->buf[j*nfft+(nfft-i)] * I;
+			z2 = mtm->buf[(j*3+1)*nfft+i] + mtm->buf[(j*3+1)*nfft+(nfft-i)] * I;
+			z3 = mtm->buf[(j*3+2)*nfft+i] + mtm->buf[(j*3+2)*nfft+(nfft-i)] * I;
+
+			q[j*real_count+i] = cabs(z1) * cabs(z1);
+			fdispl[j*real_count+i] =  cimag(z2 / z1 / (2 * M_PI));
+			tdispl[j*real_count+i] = creal(z3 / z1);
 		}
  		// DC 
  		q[j*real_count] = SQR(mtm->buf[j*nfft]);
 		fdispl[j*real_count] = 0.0;
-		tdispl[j*real_count] = mtm->buf[(j*3+2)*nfft] / q[j*real_count];
+		tdispl[j*real_count] = mtm->buf[(j*3+2)*nfft] / mtm->buf[j*nfft];
 		// nyquist
  		if (imag_count < real_count) {
  			i = real_count-1;
  			q[j*real_count+i] = SQR(mtm->buf[j*nfft+i]);
  			fdispl[j*real_count+i] = 0.0; 
- 			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / q[j*real_count+i]; 
+ 			tdispl[j*real_count+i] = mtm->buf[(j*3+2)*nfft+i] / mtm->buf[j*nfft+i];
  		}
 	}
+}
+
+/**
+ *  Assign power from a spectrum to a spectrogram based on time-frequency displacements
+ *
+ * Inputs:
+ *  q - power spectrum (N points) 
+ *  tdispl  - time displacements (N points)
+ *  fdispl  - frequency displacements (N points)
+ *  N       - number of points in input spectrums
+ *  nfreq   - number of frequency bins in output spectrum
+ *  dt      - spacing between columns of output spectrogram (samples)
+ *  qthresh - frequency bins with q<=qthresh are not assigned (unstable)
+ *  flock   - maximum frequency displacement (radians; 0.01-0.02 is a good value; 0 to disable)
+ *  tminlock  - maximum negative time displacement (number of FRAMES)
+ *  tmaxlock  - maximum positive time displacement (number of FRAMES)
+ *
+ * Outputs:
+ *  spec    - output spectrogram (nfreq by >(tmaxlock+tminlock))
+ *
+ * Note:
+ *  The time-frequency reassignment spectrogram is built up through
+ *  calls to this function for each time frame.  The spectrum in q
+ *  contributes to a range of time bins in spec which is limited by
+ *  the tminlock and tmaxlock parameters.  This in turn controls how
+ *  the memory pointed to by *spec is accessed.  At the edges of the
+ *  spectrogram tminlock and tmaxlock need to be adjusted to avoid
+ *  accessing invalid memory locations.  Note that the units are frames,
+ *  to make allocating the memory a bit easier.
+ *
+ *  The bin resolution of the output spectrogram is controlled by the
+ *  nfreq and dt parameters.  
+ */
+void
+tfr_reassign(double *spec, const double *q, const double *tdispl, const double *fdispl,
+	     int N, int nfreq, double dt, double qthresh, double flock, int tminlock, int tmaxlock)
+{
+
+	int f, that, fhat;
+	double fref;
+	
+        for (f = 0; f < N; f++) {
+		//spec[f] += q[f];
+		fref = (1.0 * f) / N;
+		fhat = (int)round((fref - fdispl[f] * 2.0)*nfreq); // note 2xfdisplace for 1-sided psd
+		that = (int)round(tdispl[f] / dt);
+		//printf("\n%d: %d,%d (%3.3f)", f, fhat, that, q[f]);
+		// check that we're in bounds, within locking distance, and above thresh
+		if ((fhat < 0) || (fhat >= nfreq))
+			continue;
+		if (q[f] <= qthresh)
+			continue;
+		if ((flock > 0) && (fabs(fdispl[f]) > flock))
+			continue;
+		if ((that > tmaxlock) || (that < -tminlock))
+			continue;
+                 // make the reassignment
+		//printf("- assigned");
+		spec[that*nfreq + fhat] += q[f];
+	}
+}	     
+
+/**
+ *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
+ *  This function 'fills' a spectrogram by calculating the displaced PSD for each
+ *  frame in the signal.
+ *
+ * Inputs:
+ *  mtm - mtfft_params structure; needs to be initialized with hermite tapers
+ *  samples - input signal
+ *  nsamples - number of points in input buffer
+ *  shift    - number of samples to shift in each frame
+ *  flock    - frequency locking parameter
+ *  tlock    - time locking parameter
+ *
+ * Outputs:
+ *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *
+ */  
+void
+tfr_spec(mtfft_params *mtm, double *spec, const short *samples, int nsamples, int shift,
+	 double flock, int tlock)
+{
+	int t;
+	int nbins = nsamples / shift;
+	int real_count = mtm->nfft / 2 + 1;
+	int K = mtm->ntapers / 3;
+
+	double pow = 0.0;
+	for (t = 0; t < nsamples; t++)
+		pow += (double)samples[t] * samples[t];
+	pow /= nsamples;
+	printf("Signal: %d samples, %3.4f RMS power\n", nsamples, pow);
+
+	double *q = (double*)malloc(real_count*K*sizeof(double));
+	double *td = (double*)malloc(real_count*K*sizeof(double));
+	double *fd = (double*)malloc(real_count*K*sizeof(double));
+
+	for (t = 0; t < nbins; t++) {
+		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
+		tfr_displacements(mtm, q, td, fd);
+		//memcpy(spec+(t*real_count), td, real_count*sizeof(double));
+		//memcpy(tdisp+(t*real_count), td, real_count*sizeof(double));
+		tfr_reassign(spec+(t*real_count), q, td, fd,
+			     real_count, real_count, shift, 1e-6*pow,
+			     flock, (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
+	}
+	free(q);
+	free(td);
+	free(fd);
 }

@@ -25,6 +25,7 @@ lsono.create_sonogram.restype = cx.c_void_p
 lsono.sonogram_setopts.argtypes = [cx.c_void_p, cx.c_int, cx.c_long]
 
 lsono.getbuffer.argtypes = [cx.c_void_p, ndpointer(dtype='d')]
+lsono.gettapers.argtypes = [cx.c_void_p, ndpointer(dtype='d')]
 
 lsono.hermf.argtypes = [cx.c_int, cx.c_int, cx.c_double,
                         ndpointer(dtype='d'), ndpointer(dtype='d'), ndpointer(dtype='d')]
@@ -33,6 +34,14 @@ lsono.mtm_init_herm.argtypes = [cx.c_int, cx.c_int, cx.c_int, cx.c_double]
 
 lsono.tfr_displacements.argtypes = [cx.c_void_p, ndpointer(dtype='d'),
                                     ndpointer(dtype='d'), ndpointer(dtype='d')]
+
+lsono.tfr_reassign.argtypes = [ndpointer(dtype='d'),ndpointer(dtype='d'),
+                               ndpointer(dtype='d'),ndpointer(dtype='d'),
+                               cx.c_int, cx.c_int, cx.c_double, cx.c_double, cx.c_double,
+                               cx.c_int, cx.c_int]
+
+lsono.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='h'),
+                           cx.c_int, cx.c_int, cx.c_double, cx.c_int]
 
 def hc2cmplx(X):
 
@@ -43,6 +52,10 @@ def hc2cmplx(X):
     out[1:imag_count].imag = X[:(N-imag_count):-1]
     return out
 
+def mwindow(x,w):
+    out = nx.zeros(x.size,'d')
+    out[:w.size] = x[:w.size] * w
+    return out
 
 if __name__=="__main__":
     N = 256
@@ -55,7 +68,7 @@ if __name__=="__main__":
     from dlab import pcmio
     s = pcmio.sndfile('A7.pcm').read()
     #test = s[:N]  #(nx.random.randn(N) * 100).astype('h')
-    test = s[6800:(6800+N)]
+    test = s[8300:(8300+N)]
     out = nx.zeros(N/2+1)
     out2 = nx.zeros_like(out)
     out3 = nx.zeros_like(out)
@@ -86,29 +99,48 @@ if __name__=="__main__":
 
     # test time-freq reassignemnt
 
-    k = 6
+    k = 1
     tm = 6.0
     Np = 201
-    h = nx.zeros((Np,k),order='F')
-    Dh = nx.zeros_like(h)
-    Th = nx.zeros_like(h)
+    tapers = nx.zeros((Np,k*3),order='F')
+    #Dh = nx.zeros_like(h)
+    #Th = nx.zeros_like(h)
 
-    lsono.hermf(Np,k,tm,h,Dh,Th)
-
-##     from dlab import tfr
-##     h1,Dh1,tt1 = tfr.hermf(N,k,tm)
+    #lsono.hermf(Np,k,tm,h,Dh,Th)
     mtmh = lsono.mtm_init_herm(N,Np,k,tm)
+    lsono.gettapers(mtmh, tapers)
+##     h = tapers[:,0]
+##     Dh = tapers[:,1]
+##     Th = tapers[:,2]
+
+    from dlab import tfr
+    h1,Dh1,Th1 = tfr.hermf(Np,k,tm)
+    #q1,te1,fe1 = tfr.tfrrsph(test,256,h1[0],Dh1[0],Th1[0])
+    spec2 = tfr.tfrrsph(s,256,h1[0],Dh1[0],Th1[0])
+    
+
+##     S = tfr.sfft.fft(mwindow(test,h), N)
+##     tf2 = tfr.sfft.fft(mwindow(test,Th), N)
+##     tf3 = tfr.sfft.fft(mwindow(test,Dh), N)
+
+##     td1 = nx.real(tf2 / S) 
+##     fd1 = nx.imag(tf3 / S / (2 * nx.pi))
+
     sigpow = lsono.mtfft(mtmh,test,Np)
 
-    buf = nx.zeros((N,k*3),order='F')
-    lsono.getbuffer(mtmh, buf)
+##     buf = nx.zeros((N,k*3),order='F')
+##     lsono.getbuffer(mtmh, buf)
+##     Z = hc2cmplx(buf)
+##     td2 = nx.real(Z[:,2] / Z[:,0])
+##     fd2 = nx.imag(Z[:,1] / Z[:,0] / (2 * nx.pi))
 
     q = nx.zeros((N/2+1,k),order='F')
     td = nx.zeros_like(q)
     fd = nx.zeros_like(q)
     lsono.tfr_displacements(mtmh, q, td, fd)
 
-    #Z = hc2cmplx(buf[:,:6])
-    #lsono.tfr_cmplx(mtmh,Y)
-
-
+    qthresh = 299341e-6
+    spec = nx.zeros((N/2+1,s.size / 10), order='F')
+    #lsono.tfr_reassign(spec, q, td, fd, 129, 129, 10, qthresh, 0.01, 5, 5)
+                      
+    lsono.tfr_spec(mtmh, spec, s, s.size, 10, 0.01, 5)
