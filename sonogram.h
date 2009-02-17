@@ -31,7 +31,7 @@ struct sonogram
 	char *tempnam;
 	int tempfd;
 	int linear;
-	mtfft_params *mtm;
+	mfft *mtm;
 	int mtm_ntapers;
 	double mtm_nw;
 	int mtm_adapt;

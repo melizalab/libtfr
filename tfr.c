@@ -165,7 +165,7 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
  *  order - the maximum order of hermite functions to use. actual # of tapers is 3 times this
  *  tm    - time support for the tapers. If 0 or less, use the default of 6
  */
-mtfft_params*
+mfft*
 mtm_init_herm(int nfft, int npoints, int order, double tm)
 {
 
@@ -176,7 +176,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 	npoints = hermf(npoints, order, tm,
 			tapers, tapers + order*npoints, tapers + order*npoints*2);
 
-	mtfft_params* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
+	mfft* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
 
 	printf("NFFT= %d; npoints= %d; ntapers=%d\n", mtm->nfft, mtm->npoints, mtm->ntapers);
 	return mtm;
@@ -186,7 +186,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
  * Compute the power spectrum and the time/frequency displacement.
  *
  * Inputs:
- *   mtm - mtfft_params object with computed FFT transforms; assumes that there
+ *   mtm - mfft object with computed FFT transforms; assumes that there
  *         are 3x tapers as the order of the multitaper transform (K)
  *
  * Outputs:
@@ -195,7 +195,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
  *   fdispl - frequency displacements (NFFT/2+1 x K)
  */
 void
-tfr_displacements(const mtfft_params *mtm, double *q, double *tdispl, double *fdispl)
+tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 {
 
 	int i,j;
@@ -295,7 +295,7 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
  *  frame in the signal.
  *
  * Inputs:
- *  mtm - mtfft_params structure; needs to be initialized with hermite tapers
+ *  mtm - mfft structure; needs to be initialized with hermite tapers
  *  samples - input signal
  *  nsamples - number of points in input buffer
  *  shift    - number of samples to shift in each frame
@@ -307,7 +307,7 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
  *
  */  
 void
-tfr_spec(mtfft_params *mtm, double *spec, const short *samples, int nsamples, int shift,
+tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift,
 	 double flock, int tlock)
 {
 	int t;

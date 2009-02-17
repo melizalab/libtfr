@@ -212,13 +212,13 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
  *   pointers to tapers and lambdas are now owned by the return mtfft structure
  */
 
-mtfft_params* 
+mfft* 
 mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 {
-	mtfft_params *mtm;
+	mfft *mtm;
 	int *n_array, i;
 	fftw_r2r_kind *kind;
-	mtm = (mtfft_params*)malloc(sizeof(mtfft_params));
+	mtm = (mfft*)malloc(sizeof(mfft));
 
 	mtm->nfft = nfft;
 	mtm->npoints = npoints;
@@ -264,7 +264,7 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
  * Returns:
  *   pointer to mfft_params structure (owned by caller)
  */
-mtfft_params*
+mfft*
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
 	double *tapers, *lambdas;
@@ -285,7 +285,7 @@ mtm_init_dpss(int nfft, double nw, int ntapers)
  * structure.
  */
 void
-mtm_destroy(mtfft_params *mtm)
+mtm_destroy(mfft *mtm)
 {
 	if (mtm->plan) fftw_destroy_plan(mtm->plan);
 	if (mtm->tapers) free(mtm->tapers);
@@ -296,7 +296,7 @@ mtm_destroy(mtfft_params *mtm)
 
 /**
  * Compute multitaper FFT of a signal. Note that this can be used for
- * single taper FFTs, if the mtfft_params structure has been
+ * single taper FFTs, if the mfft structure has been
  * initialized with a single window
  *
  * Inputs:
@@ -308,7 +308,7 @@ mtm_destroy(mtfft_params *mtm)
  *    total power in signal (used in computing adaptive power spectra)
  */
 double
-mtfft(mtfft_params *mtm, const short *data, int nbins)
+mtfft(mfft *mtm, const short *data, int nbins)
 {
 	// copy data * tapers to buffer
 	int nfft = mtm->nfft;
@@ -345,7 +345,7 @@ mtfft(mtfft_params *mtm, const short *data, int nbins)
  * the total power in the signal.
  *
  * Inputs:
- *   mtm - mtfft_params structure after running mtfft
+ *   mtm - mfft structure after running mtfft
  *   sigpow - total power in the signal. If zero or less, uses high-res method
  *
  * Outputs:
@@ -353,7 +353,7 @@ mtfft(mtfft_params *mtm, const short *data, int nbins)
  *         preallocated, with dimensions at least nfft/2 + 1;
  */
 void
-mtpower(const mtfft_params *mtm, double *pow, double sigpow)
+mtpower(const mfft *mtm, double *pow, double sigpow)
 {
 	int nfft = mtm->nfft;
 	int ntapers = mtm->ntapers;
@@ -422,13 +422,13 @@ mtpower(const mtfft_params *mtm, double *pow, double sigpow)
 }
 
 void
-getbuffer(const mtfft_params *mtm, double *buf)
+getbuffer(const mfft *mtm, double *buf)
 {
 	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double));
 }
 
 void
-gettapers(const mtfft_params *mtm, double *buf)
+gettapers(const mfft *mtm, double *buf)
 {
 	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double));
 }
