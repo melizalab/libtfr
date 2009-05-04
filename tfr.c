@@ -1,76 +1,3 @@
-/*
-  Functions to compute time-frequency reassignment spectrograms.
-  Asqsembled from various MATLAB sources, including the time-frequency
-  toolkit [1], Xiao and Flandrin's work on multitaper reassignment [2]
-  and code from Gardner and Magnasco [3].
-
-  The basic principle is to use reassignment to increase the precision
-  of the time-frequency localization, essentially by deconvolving the
-  spectrogram with the TF representation of the window, recovering the
-  center of mass of the spectrotemporal energy.  Reassigned TFRs
-  typically show a 'froth' for noise, and strong narrow lines for
-  coherent signals like pure tones, chirps, and so forth.  The use of
-  multiple tapers reinforces the coherent signals while averaging out
-  the froth, giving a very clean spectrogram with optimal precision
-  and resolution properties.
-
-  Implementation notes:
-
-  Gardner & Magnasco calculate reassignment based on a different
-  algorithm from Xiao and Flandrin.  The latter involves 3 different
-  FFT operations on the signal windowed with the hermitian taper
-  [h(t)], its derivative [h'(t)], and its time product [t * h(t)].
-  The G&M algorithm only uses two FFTs, on the signal windowed with a
-  gassian and its time derivative.  If I understand their methods
-  correctly, however, this derivation is based on properties of the
-  fourier transform of the gaussian, and isn't appropriate for window
-  functions based on the Hermitian tapers.
-
-  Therefore, the algorithm is mostly from [2], though I include time
-  and frequency locking parameters from [3], which specify how far
-  energy is allowed to be reassigned in the TF plane.  Large
-  displacements generally arise from numerical errors, so this helps
-  to sharpen the lines somewhat. I also included the time/frequency
-  interpolation from [3], which can be used to get higher precision
-  (at the expense of less averaging) from smaller analysis windows.
-
-  Some fiddling with parameters is necessary to get the best
-  spectrograms from a given sort of signal.  Like the window size in
-  an STFT, the taper parameters control the time-frequency resolution.
-  However, in the reassignment spectrogram the precision
-  (i.e. localization) is not affected by the taper size, so the
-  effects of taper size will generally only be seen when two coherent
-  signals are close to each other in time or frequency.  Nh controls
-  the size of the tapers; one can also adjust tm, the time support of
-  the tapers, but depending on the number of tapers used, this
-  shouldn't get a whole lot smaller than 5.  Increased values of Nh
-  result in improved narrowband resolution (i.e. between pure tones)
-  but closely spaced clicks can become smeared.  Decreasing Nh
-  increases the resolution between broadband components (i.e. clicks)
-  but smears closely spaced narrowband components.  The effect of
-  smearing can be ameliorated to some extent by adjusting the
-  frequency/time locking parameters.
-
-  The frequency zoom parameter can be used to speed up calculation
-  quite a bit [3].  Since calculating the multitaper reassigned
-  spectrogram takes 3xNtapers FFT operations, smaller FFTs are
-  generally better.  The spectrogram can then be binned at a finer
-  resolution during reassignment.  These two sets of parameters should
-  generate fairly similar results:
-
-  nfft=512, shift=10, tm=6, Nh=257, zoomf=1, zoomt=1  (default)
-  nfft=256, shift=10, tm=6, Nh=257, zoomf=2, zoomt=1
-
-  Increasing the order generally reduces the background 'froth', but
-  interference between closely spaced components may increase.
-
-  CDM, 8/2008
-
-  [1] http://tftb.nongnu.org/
-  [2] http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html
-  [3] PNAS 2006, http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m 
-*/
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -150,7 +77,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 
 	mfft* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
 
-	printf("NFFT= %d; npoints= %d; ntapers=%d\n", mtm->nfft, mtm->npoints, mtm->ntapers);
+	//printf("NFFT= %d; npoints= %d; ntapers=%d\n", mtm->nfft, mtm->npoints, mtm->ntapers);
 	return mtm;
 }
 
@@ -231,7 +158,7 @@ tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int
 	for (t = 0; t < nsamples; t++)
 		pow += (double)samples[t] * samples[t];
 	pow /= nsamples;
-	printf("Signal: %d samples, %3.4f RMS power\n", nsamples, pow);
+	//printf("Signal: %d samples, %3.4f RMS power\n", nsamples, pow);
 
 	double *q = (double*)malloc(real_count*K*sizeof(double));
 	double *td = (double*)malloc(real_count*K*sizeof(double));
@@ -241,9 +168,83 @@ tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int
 		mink = k;
 		K = k+1;
 	}
-	for (k = mink; k < K; k++) printf("Calculating spectrogram for taper %d\n", k);
+	//for (k = mink; k < K; k++) printf("Calculating spectrogram for taper %d\n", k);
 	for (t = 0; t < nbins; t++) {
 		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
+		tfr_displacements(mtm, q, td, fd);
+		for (k = mink; k < K; k++) {
+			tfr_reassign(spec+(t*real_count), 
+				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
+				     real_count, real_count, shift, 1e-6*pow,
+				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
+		}
+	}
+	free(q);
+	free(td);
+	free(fd);
+}
+
+void
+tfr_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
+	 double flock, int tlock)
+{
+	int t,mink = 0;
+	int nbins = nsamples / shift;
+	int real_count = mtm->nfft / 2 + 1;
+	int K = mtm->ntapers / 3;
+
+	double pow = 0.0;
+	for (t = 0; t < nsamples; t++)
+		pow += (double)samples[t] * samples[t];
+	pow /= nsamples;
+
+	double *q = (double*)malloc(real_count*K*sizeof(double));
+	double *td = (double*)malloc(real_count*K*sizeof(double));
+	double *fd = (double*)malloc(real_count*K*sizeof(double));
+
+	if (k >= 0) {
+		mink = k;
+		K = k+1;
+	}
+	for (t = 0; t < nbins; t++) {
+		mtfft_float(mtm, samples+(t*shift), nsamples-(t*shift));
+		tfr_displacements(mtm, q, td, fd);
+		for (k = mink; k < K; k++) {
+			tfr_reassign(spec+(t*real_count), 
+				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
+				     real_count, real_count, shift, 1e-6*pow,
+				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
+		}
+	}
+	free(q);
+	free(td);
+	free(fd);
+}
+
+void
+tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
+	 double flock, int tlock)
+{
+	int t,mink = 0;
+	int nbins = nsamples / shift;
+	int real_count = mtm->nfft / 2 + 1;
+	int K = mtm->ntapers / 3;
+
+	double pow = 0.0;
+	for (t = 0; t < nsamples; t++)
+		pow += (double)samples[t] * samples[t];
+	pow /= nsamples;
+
+	double *q = (double*)malloc(real_count*K*sizeof(double));
+	double *td = (double*)malloc(real_count*K*sizeof(double));
+	double *fd = (double*)malloc(real_count*K*sizeof(double));
+
+	if (k >= 0) {
+		mink = k;
+		K = k+1;
+	}
+	for (t = 0; t < nbins; t++) {
+		mtfft_double(mtm, samples+(t*shift), nsamples-(t*shift));
 		tfr_displacements(mtm, q, td, fd);
 		for (k = mink; k < K; k++) {
 			tfr_reassign(spec+(t*real_count), 

@@ -6,12 +6,6 @@
 #include <complex.h>
 #include "tfr.h"
 
-/*
- *  mtm.c - calculate windowed and multitaper FFT transforms
- *
- *  insert some crap here about copyright, etc
- */
-
 /* some LAPACK prototypes */
 extern void dsterf_(int *N, double *D, double *E, int *INFO);
 
@@ -247,6 +241,7 @@ mtm_destroy(mfft *mtm)
 	free(mtm);
 }
 
+
 double
 mtfft(mfft *mtm, const short *data, int nbins)
 {
@@ -264,6 +259,69 @@ mtfft(mfft *mtm, const short *data, int nbins)
 			pow += data[j] * data[j];
 		}
 	}
+
+	pow /= mtm->ntapers;
+	// zero-pad rest of buffer
+	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
+	for (i = 0; i < mtm->ntapers; i++) {
+		for (j = nt; j < mtm->nfft; j++)
+			mtm->buf[j+i*nfft] = 0.0;
+	}
+
+	fftw_execute(mtm->plan);
+
+	return pow / nt;
+}
+
+double
+mtfft_float(mfft *mtm, const float *data, int nbins)
+{
+	// copy data * tapers to buffer
+	int nfft = mtm->nfft;
+	int size = mtm->npoints;
+	int i,j;
+	int nt = (nbins < size) ? nbins : size;
+	double pow = 0.0;
+
+	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
+	for (i = 0; i < mtm->ntapers; i++) {
+		for (j = 0; j < nt; j++) {
+			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
+			pow += data[j] * data[j];
+		}
+	}
+
+	pow /= mtm->ntapers;
+	// zero-pad rest of buffer
+	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
+	for (i = 0; i < mtm->ntapers; i++) {
+		for (j = nt; j < mtm->nfft; j++)
+			mtm->buf[j+i*nfft] = 0.0;
+	}
+
+	fftw_execute(mtm->plan);
+
+	return pow / nt;
+}
+
+double
+mtfft_double(mfft *mtm, const double *data, int nbins)
+{
+	// copy data * tapers to buffer
+	int nfft = mtm->nfft;
+	int size = mtm->npoints;
+	int i,j;
+	int nt = (nbins < size) ? nbins : size;
+	double pow = 0.0;
+
+	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
+	for (i = 0; i < mtm->ntapers; i++) {
+		for (j = 0; j < nt; j++) {
+			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
+			pow += data[j] * data[j];
+		}
+	}
+
 	pow /= mtm->ntapers;
 	// zero-pad rest of buffer
 	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
@@ -346,15 +404,15 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 		pow[n] *= 2;
 }
 
-/* void */
-/* getbuffer(const mfft *mtm, double *buf) */
-/* { */
-/* 	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double)); */
-/* } */
+void
+getbuffer(const mfft *mtm, double *buf)
+{
+	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double));
+}
 
-/* void */
-/* gettapers(const mfft *mtm, double *buf) */
-/* { */
-/* 	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double)); */
-/* } */
+void
+gettapers(const mfft *mtm, double *buf)
+{
+	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double));
+}
 
