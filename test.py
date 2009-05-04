@@ -41,7 +41,7 @@ lsono.tfr_reassign.argtypes = [ndpointer(dtype='d'),ndpointer(dtype='d'),
                                cx.c_int, cx.c_int]
 
 lsono.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='h'),
-                           cx.c_int, cx.c_int, cx.c_double, cx.c_int]
+                           cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
 
 lpck = cx.cdll.LoadLibrary('/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib')
 lpck.dptsv.argtypes = [cx.POINTER(cx.c_int), cx.POINTER(cx.c_int), ndpointer(dtype='d'),
@@ -64,21 +64,27 @@ def mwindow(x,w):
     out[:w.size] = x[:w.size] * w
     return out
 
-def alt_tridisolve(ee,d,e):
-    n = cx.c_int(d.size)
-    nrhs = cx.c_int(1)
-    ldb = cx.c_int(d.size)
-    info = cx.c_int(0)
+def test_tfr(s, N, Np, k, tm=6.0):
+    # test time-freq reassignemnt
+    mtmh = lsono.mtm_init_herm(N,Np,k,tm)
 
-    #lpck.dptsv_(cx.byref(n), cx.byref(nrhs), d, ee, e, cx.byref(ldb), cx.byref(info))
-    #lpck.dptsv(n, nrhs, d, ee, e, ldb, info)
-    lpck.dgtsv(n,nrhs,ee,d,ee.copy(),e,ldb,info)
-    return info
+    s0 = nx.zeros((N/2+1,s.size / 10), order='F')
+    s5 = nx.zeros_like(s0)
+    spec = nx.zeros_like(s0)
+    
+    lsono.tfr_spec(mtmh, s0, s, s.size, 0, 10, 0.01, 5)
+    lsono.tfr_spec(mtmh, s5, s, s.size, 5, 10, 0.01, 5)
+    lsono.tfr_spec(mtmh, spec, s, s.size, -1, 10, 0.01, 5)
+
+    return s0,s5,spec
 
 if __name__=="__main__":
     N = 256
     NW = 3.5
     k = 5
+
+    from dlab import pcmio
+    s = pcmio.sndfile('A7.pcm').read()
 
 ##     from dlab import signalproc
 ##     ee,d,e = signalproc.dpss(128,3.5)
@@ -86,11 +92,18 @@ if __name__=="__main__":
 ##     ee = ee[1:]
 ##     alt_tridisolve(ee,d,e)
 
+
+    k = 6
+    tm = 6.0
+    Np = 201
+
+    s0,s5,spec = test_tfr(s, N, Np, k, tm)
+                              
+
+def blah():
     # allocate storage
     #tapers = nx.zeros(N*k)
     #lambdas = nx.zeros(k)
-    from dlab import pcmio
-    s = pcmio.sndfile('A7.pcm').read()
     #test = s[:N]  #(nx.random.randn(N) * 100).astype('h')
     test = s[8300:(8300+N)]
     out = nx.zeros(N/2+1)
@@ -120,27 +133,24 @@ if __name__=="__main__":
 ##     lambda2,tapers2 = signalproc.dpss(N,NW,k)
 ##     J,f = signalproc.mtfft(test,tapers=tapers2)
 ##     out4 = nx.absolute(J**2).mean(1)
-
-    # test time-freq reassignemnt
-
-    k = 1
-    tm = 6.0
-    Np = 201
+    
     tapers = nx.zeros((Np,k*3),order='F')
-    #Dh = nx.zeros_like(h)
-    #Th = nx.zeros_like(h)
+    tapers2 = nx.zeros((Np,k2*3),order='F')
 
-    #lsono.hermf(Np,k,tm,h,Dh,Th)
     mtmh = lsono.mtm_init_herm(N,Np,k,tm)
+    mtmh2 = lsono.mtm_init_herm(N,Np,k2,tm)
     lsono.gettapers(mtmh, tapers)
+    lsono.gettapers(mtmh2, tapers2)
+
 ##     h = tapers[:,0]
 ##     Dh = tapers[:,1]
 ##     Th = tapers[:,2]
 
     from dlab import tfr
-    h1,Dh1,Th1 = tfr.hermf(Np,k,tm)
-    #q1,te1,fe1 = tfr.tfrrsph(test,256,h1[0],Dh1[0],Th1[0])
-    spec2 = tfr.tfrrsph(s,256,h1[0],Dh1[0],Th1[0])
+    h1,Dh1,Th1 = tfr.hermf(Np,6,tm)
+    q1,te1,fe1 = tfr.tfrrsph(test,256,h1[0],Dh1[0],Th1[0])
+    q6,te6,fe6 = tfr.tfrrsph(test,256,h1[5],Dh1[5],Th1[5])
+    #spec2,q2 = tfr.tfrrsph(s,256,h1[5],Dh1[5],Th1[5])
     
 
 ##     S = tfr.sfft.fft(mwindow(test,h), N)
@@ -151,7 +161,8 @@ if __name__=="__main__":
 ##     fd1 = nx.imag(tf3 / S / (2 * nx.pi))
 
     sigpow = lsono.mtfft(mtmh,test,Np)
-
+    sigpow = lsono.mtfft(mtmh2,test,Np)
+    
 ##     buf = nx.zeros((N,k*3),order='F')
 ##     lsono.getbuffer(mtmh, buf)
 ##     Z = hc2cmplx(buf)
@@ -163,8 +174,19 @@ if __name__=="__main__":
     fd = nx.zeros_like(q)
     lsono.tfr_displacements(mtmh, q, td, fd)
 
+    q2 = nx.zeros((N/2+1,k2),order='F')
+    td2 = nx.zeros_like(q2)
+    fd2 = nx.zeros_like(q2)
+    lsono.tfr_displacements(mtmh2, q2, td2, fd2)
+
     qthresh = 299341e-6
-    spec = nx.zeros((N/2+1,s.size / 10), order='F')
+    s0 = nx.zeros((N/2+1,s.size / 10), order='F')
+    s5 = nx.zeros_like(s0)
+    spec = nx.zeros_like(s0)
     #lsono.tfr_reassign(spec, q, td, fd, 129, 129, 10, qthresh, 0.01, 5, 5)
                       
-    lsono.tfr_spec(mtmh, spec, s, s.size, 10, 0.01, 5)
+    lsono.tfr_spec(mtmh2, s0, s, s.size, 0, 10, 0.01, 5)
+    lsono.tfr_spec(mtmh2, s5, s, s.size, 5, 10, 0.01, 5)
+    lsono.tfr_spec(mtmh2, spec, s, s.size, -1, 10, 0.01, 5)
+
+    
