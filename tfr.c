@@ -76,31 +76,13 @@
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
-#include "mtm_tfr.h"
+#include "tfr.h"
 
 #ifndef SQR
 #define SQR(a) ( (a) * (a) )
 #endif
 
-/**
- *  Computes a set of orthogonal Hermite functions for use in
- *  computing multi-taper reassigned spectrograms
- *
- * Inputs:
- * N - the number of points in the window (must be odd; rounded down)
- * M - the maximum order of the set of functions
- * tm - half-time support
- *
- * Outputs:
- * h - hermite functions (MxN)
- * Dh - first derivative of h (MxN)
- * Th - time multiple of h (MxN)
- *
- * Returns:
- *  The actual number of points in the tapers
- *
- * From the Time-Frequency Toolkit, P. Flandrin & J. Xiao, 2005
- */
+
 int
 hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
@@ -155,16 +137,6 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 	return N;
 }
 
-/**
- *  Initialze the mtm engine to compute FFT transforms using the hermitian
- *  function tapers.
- *
- * Inputs:
- *  nfft - the number of points in the fourier transform
- *  npoints - the number of points in the window; controls the time-frequency resolution
- *  order - the maximum order of hermite functions to use. actual # of tapers is 3 times this
- *  tm    - time support for the tapers. If 0 or less, use the default of 6
- */
 mfft*
 mtm_init_herm(int nfft, int npoints, int order, double tm)
 {
@@ -182,18 +154,6 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 	return mtm;
 }
 
-/**
- * Compute the power spectrum and the time/frequency displacement.
- *
- * Inputs:
- *   mtm - mfft object with computed FFT transforms; assumes that there
- *         are 3x tapers as the order of the multitaper transform (K)
- *
- * Outputs:
- *   q   - power spectrum (NFFT/2+1 x K)
- *   tdispl - time displacements (NFFT/2+1 x K)
- *   fdispl - frequency displacements (NFFT/2+1 x K)
- */
 void
 tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 {
@@ -229,37 +189,6 @@ tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 	}
 }
 
-/**
- *  Assign power from a spectrum to a spectrogram based on time-frequency displacements
- *
- * Inputs:
- *  q - power spectrum (N points) 
- *  tdispl  - time displacements (N points)
- *  fdispl  - frequency displacements (N points)
- *  N       - number of points in input spectrums
- *  nfreq   - number of frequency bins in output spectrum
- *  dt      - spacing between columns of output spectrogram (samples)
- *  qthresh - frequency bins with q<=qthresh are not assigned (unstable)
- *  flock   - maximum frequency displacement (radians; 0.01-0.02 is a good value; 0 to disable)
- *  tminlock  - maximum negative time displacement (number of FRAMES)
- *  tmaxlock  - maximum positive time displacement (number of FRAMES)
- *
- * Outputs:
- *  spec    - output spectrogram (nfreq by >(tmaxlock+tminlock))
- *
- * Note:
- *  The time-frequency reassignment spectrogram is built up through
- *  calls to this function for each time frame.  The spectrum in q
- *  contributes to a range of time bins in spec which is limited by
- *  the tminlock and tmaxlock parameters.  This in turn controls how
- *  the memory pointed to by *spec is accessed.  At the edges of the
- *  spectrogram tminlock and tmaxlock need to be adjusted to avoid
- *  accessing invalid memory locations.  Note that the units are frames,
- *  to make allocating the memory a bit easier.
- *
- *  The bin resolution of the output spectrogram is controlled by the
- *  nfreq and dt parameters.  
- */
 void
 tfr_reassign(double *spec, const double *q, const double *tdispl, const double *fdispl,
 	     int N, int nfreq, double dt, double qthresh, double flock, int tminlock, int tmaxlock)
@@ -289,23 +218,6 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 	}
 }	     
 
-/**
- *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
- *  This function 'fills' a spectrogram by calculating the displaced PSD for each
- *  frame in the signal.
- *
- * Inputs:
- *  mtm - mfft structure; needs to be initialized with hermite tapers
- *  samples - input signal
- *  nsamples - number of points in input buffer
- *  shift    - number of samples to shift in each frame
- *  flock    - frequency locking parameter
- *  tlock    - time locking parameter
- *
- * Outputs:
- *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
- *
- */  
 void
 tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
 	 double flock, int tlock)

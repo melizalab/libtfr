@@ -4,7 +4,7 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
-#include "mtm_tfr.h"
+#include "tfr.h"
 
 /*
  *  mtm.c - calculate windowed and multitaper FFT transforms
@@ -29,7 +29,7 @@ extern void dgtsv_(int *N, int *NRHS,
  *   N - number of points
  *   x - vector; altered in place
  */
-void
+static void
 renormalize(int N, double *x)
 {
 	int i;
@@ -52,7 +52,7 @@ renormalize(int N, double *x)
  * Outputs:
  *   y - output vector (not allocated; needs to have N points)
  */
-void
+static void
 fftconv(int N, const double *x, double *y)
 {
 	int i;
@@ -91,26 +91,7 @@ fftconv(int N, const double *x, double *y)
 	fftw_destroy_plan(plan);
 }
 
-/**
- * Computes the discrete prolate spherical sequences used in the
- * multitaper method power spectrum calculations.
- *
- * Inputs:
- *   npoints   the number of points in the window
- *   nw        the time-bandwidth product. Must be an integer or half-integer
- *             (typical choices are 2, 5/2, 3, 7/2, or 4)
- *   k         how many DPSS vectors to return (up to npoints but k>nw*2-1 are not stable)
- *
- * Outputs: 
- *   tapers  - k DPSS sequences in order of decreasing eigenvalue (size npoints*k)
- *   lambdas - k eigenvalues associated with each taper
- *   [outputs need to be allocated]
- *
- * Returns:
- *    0 for success
- *   -1 for invalid parameters (NW >= npoints/2, npoints < 0, k < 0, etc)
- *   -2 for failed eigenvalue solver (shouldn't ever happen)
- */
+
 int
 dpss(double *tapers, double *lambda, int npoints, double NW, int k) 
 {
@@ -198,23 +179,6 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 }
 
 
-/**
- * Initialize a multitaper mtm transform using preallocated tapers (i.e. with dpss()))
- * 
- * Inputs:
- *   nfft - number of points in the transform
- *   npoints - number of points in the tapers (windows)
- *   ntapers - number of tapers
- *   *tapers - pointer to npoints*ntapers array of windowing functions
- *   *lambdas - eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
- *
- * Returns:
- *   pointer to mfft_params structure (owned by caller)
- *
- * Note:
- *   pointers to tapers and lambdas are now owned by the return mtfft structure
- */
-
 mfft* 
 mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 {
@@ -258,17 +222,6 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 	return mtm;
 }
 
-/**
- * Initialize a mtfft transform and calculate DPSS tapers
- *
- * Inputs:
- *   nfft - number of points in the transform/dpss tapers
- *   nw   - time-frequency parameter
- *   ntapers - number of tapers to keep
- *
- * Returns:
- *   pointer to mfft_params structure (owned by caller)
- */
 mfft*
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
@@ -284,11 +237,6 @@ mtm_init_dpss(int nfft, double nw, int ntapers)
 	return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
 }
 
-/**
- * Frees up the mtftt_params structure and dependent data. The
- * references to the tapers are considered to be owned by the
- * structure.
- */
 void
 mtm_destroy(mfft *mtm)
 {
@@ -299,19 +247,6 @@ mtm_destroy(mfft *mtm)
 	free(mtm);
 }
 
-/**
- * Compute multitaper FFT of a signal. Note that this can be used for
- * single taper FFTs, if the mfft structure has been
- * initialized with a single window
- *
- * Inputs:
- *    mtm - parameters for the transform
- *    data - input data (short integers)
- *    nbins - the number of time points in the signal
- *
- * Returns:
- *    total power in signal (used in computing adaptive power spectra)
- */
 double
 mtfft(mfft *mtm, const short *data, int nbins)
 {
@@ -342,21 +277,6 @@ mtfft(mfft *mtm, const short *data, int nbins)
 	return pow / nt;
 }
 
-/**
- * Compute power spectrum from multiple taper spectrogram.  The
- * 'high-res' method is simply the average of the estimates for each
- * taper weighted by the eigenvalue of the taper.  The 'adaptive'
- * method attempts to fit the contribution from each taper to match
- * the total power in the signal.
- *
- * Inputs:
- *   mtm - mfft structure after running mtfft
- *   sigpow - total power in the signal. If zero or less, uses high-res method
- *
- * Outputs:
- *   pow - power spectral density (linear scale) of the signal. Needs to be
- *         preallocated, with dimensions at least nfft/2 + 1;
- */
 void
 mtpower(const mfft *mtm, double *pow, double sigpow)
 {
@@ -426,15 +346,15 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 		pow[n] *= 2;
 }
 
-void
-getbuffer(const mfft *mtm, double *buf)
-{
-	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double));
-}
+/* void */
+/* getbuffer(const mfft *mtm, double *buf) */
+/* { */
+/* 	memcpy(buf, mtm->buf, mtm->nfft*mtm->ntapers*sizeof(double)); */
+/* } */
 
-void
-gettapers(const mfft *mtm, double *buf)
-{
-	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double));
-}
+/* void */
+/* gettapers(const mfft *mtm, double *buf) */
+/* { */
+/* 	memcpy(buf, mtm->tapers, mtm->npoints*mtm->ntapers*sizeof(double)); */
+/* } */
 
