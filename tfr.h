@@ -52,6 +52,7 @@ typedef struct {
  */
 mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
 
+#ifndef NO_LAPACK
 /**
  * Initialize a mtfft transform using DPSS tapers (i.e. for a standard
  * multitaper transform)
@@ -65,7 +66,7 @@ mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambd
  *   pointer to mfft structure (owned by caller)
  */
 mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
-
+#endif
 
 /**
  *  Initialze the mtm engine to compute FFT transforms using the hermitian
@@ -114,30 +115,6 @@ double mtfft_double(mfft *mtm, const double *data, int nbins);
 /* spectrogram functions */
 
 /**
- *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
- *  This function 'fills' a spectrogram by calculating the displaced PSD for each
- *  frame in the signal.
- *
- * Inputs:
- *  mtm - mfft structure; needs to be initialized with hermite tapers
- *  samples - input signal
- *  nsamples - number of points in input buffer
- *  shift    - number of samples to shift in each frame
- *  flock    - frequency locking parameter
- *  tlock    - time locking parameter
- *
- * Outputs:
- *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
- *
- */  
-void tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-void tfr_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-void tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-
-/**
  * Compute power spectrum from multiple taper spectrogram.  The
  * 'high-res' method is simply the average of the estimates for each
  * taper weighted by the eigenvalue of the taper.  The 'adaptive'
@@ -153,6 +130,55 @@ void tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsample
  *         preallocated, with dimensions at least nfft/2 + 1;
  */
 void mtpower(const mfft *mtm, double *pow, double sigpower);
+
+
+/**
+ *  Compute a multitaper spectrogram by stepping through a signal.
+ *  This function 'fills' a spectrogram by calculating the PSD for each
+ *  frame in the signal.
+ *
+ * Inputs:
+ *  mtm - mfft structure; needs to be initialized with hermite tapers
+ *  samples - input signal
+ *  nsamples - number of points in input buffer
+ *  shift    - number of samples to shift in each frame
+ *  adapt    - if true, use adaptive averaging between tapers (otherwise 'high-res')
+ *
+ * Outputs:
+ *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *
+ */  
+void mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift, int adapt);
+void mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
+	 double flock, int tlock);
+void mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
+	 double flock, int tlock);
+
+/**
+ *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
+ *  This function 'fills' a spectrogram by calculating the displaced PSD for each
+ *  frame in the signal.
+ *
+ * Inputs:
+ *  mtm - mfft structure; needs to be initialized with hermite tapers
+ *  samples - input signal
+ *  nsamples - number of points in input buffer
+ *  k        - which taper to use; -1 for all tapers
+ *  shift    - number of samples to shift in each frame
+ *  flock    - frequency locking parameter
+ *  tlock    - time locking parameter
+ *
+ * Outputs:
+ *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *
+ */  
+void tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
+	 double flock, int tlock);
+void tfr_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
+	 double flock, int tlock);
+void tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
+	 double flock, int tlock);
+
 
 /* taper generating functions */
 
