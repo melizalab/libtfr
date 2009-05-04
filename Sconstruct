@@ -26,7 +26,8 @@ if not env.GetOption('clean'):
         conf.env.Append('-DNO_LAPACK')
     env = conf.Finish()
 
+slib = env.StaticLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')
 dylib = env.SharedLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')
 
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
-env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), dylib))
+env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))

@@ -149,10 +149,8 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *
  */  
 void mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift, int adapt);
-void mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-void mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
+void mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int shift, int adapt);
+void mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.

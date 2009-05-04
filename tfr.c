@@ -1,3 +1,12 @@
+/*
+ * tfr.c - functions for calculating time-frequency reassignment spectrograms
+ *
+ * Hermite tapers and reassignment algorithms adapted from MATLAB code by Xiao and Flandrin, 
+ * http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html
+ * Frequency locking algorithm from Gardner and Magnasco
+ * (http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m)
+ * All other code (spectrogram filling) copyright C.D. Meliza (dmeliza@uchicago.edu) 2008-2009
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

@@ -1,3 +1,8 @@
+/*
+ * mtm.c - functions for computing FFTs with multiple tapers using FFTW
+ *
+ * copyright C.D. Meliza (dmeliza@uchicago.edu), 2008-2009
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

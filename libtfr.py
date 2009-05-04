@@ -2,6 +2,9 @@
 # -*- coding: iso-8859-1 -*-
 """
 Interface to libtfrspec library using numpy and ctypes
+
+Copyright C.D. Meliza, 2009 (except for fmsin)
+dmeliza@uchicago.edu
 """
 
 import numpy as nx
