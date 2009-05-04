@@ -2,7 +2,7 @@
 import os
 
 # build options
-env = Environment(CCFLAGS = '-O2')
+env = Environment(CCFLAGS = '-O2 -std=c99')
 
 # install location
 install_prefix = '/usr/local/'
@@ -23,7 +23,7 @@ if not env.GetOption('clean'):
         Exit(1)
     if not conf.CheckLib('lapack'):
         print "Did not find lapack library; MTM spectrograms disabled"
-        conf.env.Append('-DNO_LAPACK')
+        conf.env.Append(CCFLAGS = ' -DNO_LAPACK')
     env = conf.Finish()
 
 slib = env.StaticLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')

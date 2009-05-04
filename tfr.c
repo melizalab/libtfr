@@ -51,7 +51,7 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 	for (k = 0; k < M+1; k++) {
 		for (i = 0; i < N; i++) {
 			Htemp[k*N+i] = P[k*N+i] * 
-				g[i]/sqrt(sqrt(M_PI) * pow(2, k) * gamma(k+1)) *
+				g[i]/sqrt(sqrt(M_PI) * pow(2, k) * tgamma(k+1)) *
 				sqrt(dt);
 		}
 	}

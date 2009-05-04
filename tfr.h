@@ -17,6 +17,7 @@
  */
 #include <fftw3.h>
 
+#define M_PI 3.14159265358979323846264338327
 /**
  * Multi-taper FFT transformation structure. Contains basic FFT
  * parameters as well as pointers to tapers (i.e. windowing
