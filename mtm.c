@@ -243,7 +243,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 void
 mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift, int adapt)
 {
-	int t,mink = 0;
+	int t;
 	int nbins = nsamples / shift;
 	int real_count = mtm->nfft / 2 + 1;
 	double sigpow;
@@ -257,7 +257,7 @@ mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift,
 void
 mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int shift, int adapt)
 {
-	int t,mink = 0;
+	int t;
 	int nbins = nsamples / shift;
 	int real_count = mtm->nfft / 2 + 1;
 	double sigpow;
@@ -271,7 +271,7 @@ mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int 
 void
 mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
 {
-	int t,mink = 0;
+	int t;
 	int nbins = nsamples / shift;
 	int real_count = mtm->nfft / 2 + 1;
 	double sigpow;

@@ -7,11 +7,21 @@ Copyright C.D. Meliza, 2009 (except for fmsin)
 dmeliza@uchicago.edu
 """
 
+import os,sys
 import numpy as nx
 import ctypes as cx
 from numpy.ctypeslib import ndpointer
 
-ltfr = cx.cdll.LoadLibrary('libtfrspec.dylib')
+# try to load the appropriate library
+if os.name=='posix' and sys.platform=='darwin':
+    ltfr = cx.cdll.LoadLibrary('libtfrspec.dylib')
+elif os.name=='posix':
+    try:
+        ltfr = cx.cdll.LoadLibrary('libtfrspec.so')
+    except OSError:
+        ltfr = cx.cdll.LoadLibrary('./libtfrspec.so')
+elif os.name=='nt':
+    ltfr = cx.cdll.LoadLibrary('libtfrspec.dll')    
 
 ltfr.mtm_init.restype = cx.c_void_p
 ltfr.mtm_init.argtypes = [cx.c_int, cx.c_int, cx.c_int,
