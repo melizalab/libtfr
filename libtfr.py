@@ -23,6 +23,8 @@ elif os.name=='posix':
 elif os.name=='nt':
     ltfr = cx.cdll.LoadLibrary('libtfrspec.dll')    
 
+ltfr_has_dpss = hasattr(ltfr,'dpss')
+
 ltfr.mtm_init.restype = cx.c_void_p
 ltfr.mtm_init.argtypes = [cx.c_int, cx.c_int, cx.c_int,
                                     ndpointer(dtype='d'), ndpointer(dtype='d')]
@@ -64,12 +66,6 @@ ltfr.tfr_spec_float.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtyp
 ltfr.tfr_spec_double.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='d'),
                            cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
 
-# Note: these functions only get built if there's a functioning LAPACK
-ltfr.dpss.restypes = None
-ltfr.dpss.argtypes = [ndpointer(dtype='d'), ndpointer(dtype='d'),
-                       cx.c_int, cx.c_double, cx.c_int]
-ltfr.mtm_init_dpss.restype = cx.c_void_p
-ltfr.mtm_init_dpss.argtypes = [cx.c_int, cx.c_double, cx.c_int]
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     """
@@ -102,69 +98,78 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     ltfr.mtm_destroy(mtmh)
     return spec
 
-def mtm_spec(s, N, step, NW, k=None, adapt=True):
-    """
-    Compute multitaper spectrogram using DPSS tapers
 
-    s - input signal
-    N - number of frequency points (i.e. window size)
-    step - step size
-    NW - time-frequency product
-    k - number of tapers (default NW*2-1)
-    adapt - compute adaptive spectrogram (default True)
+# Note: these functions only get built if there's a functioning LAPACK
+if ltfr_has_dpss:
+    ltfr.dpss.restypes = None
+    ltfr.dpss.argtypes = [ndpointer(dtype='d'), ndpointer(dtype='d'),
+                          cx.c_int, cx.c_double, cx.c_int]
+    ltfr.mtm_init_dpss.restype = cx.c_void_p
+    ltfr.mtm_init_dpss.argtypes = [cx.c_int, cx.c_double, cx.c_int]
 
-    returns an N/2+1 by L power spectrogram
-    """
-    if k==None:
-        k = int(NW*2-1)
-    if s.dtype=='h':
-        fun = ltfr.mtm_spec
-    elif s.dtype=='f':
-        fun = ltfr.mtm_spec_float
-    elif s.dtype=='d':
-        fun = ltfr.mtm_spec_double
-    else:
-        raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
+    def mtm_spec(s, N, step, NW, k=None, adapt=True):
+        """
+        Compute multitaper spectrogram using DPSS tapers
 
-    mtm = ltfr.mtm_init_dpss(N, NW, k)
-    spec = nx.zeros((N/2+1,s.size / step), order='F')
-    fun(mtm, spec, s, s.size, step, adapt)
-    ltfr.mtm_destroy(mtm)
-    return spec
+        s - input signal
+        N - number of frequency points (i.e. window size)
+        step - step size
+        NW - time-frequency product
+        k - number of tapers (default NW*2-1)
+        adapt - compute adaptive spectrogram (default True)
 
-def mtm_psd(s, NW, k=None, adapt=True):
-    """
-    Compute PSD of a signal using multitaper methods
+        returns an N/2+1 by L power spectrogram
+        """
+        if k==None:
+            k = int(NW*2-1)
+        if s.dtype=='h':
+            fun = ltfr.mtm_spec
+        elif s.dtype=='f':
+            fun = ltfr.mtm_spec_float
+        elif s.dtype=='d':
+            fun = ltfr.mtm_spec_double
+        else:
+            raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
 
-    s - input signal
-    NW - time-frequency product
-    k - number of tapers (default NW*2-1)
-    adapt - compute adaptive spectrogram (default True)
+        mtm = ltfr.mtm_init_dpss(N, NW, k)
+        spec = nx.zeros((N/2+1,s.size / step), order='F')
+        fun(mtm, spec, s, s.size, step, adapt)
+        ltfr.mtm_destroy(mtm)
+        return spec
 
-    returns an N/2+1 real power spectrum density
-    """
-    N = s.size
-    if k==None:
-        k = int(NW*2-1)    
-    if s.dtype=='h':
-        fun = ltfr.mtfft
-    elif s.dtype=='f':
-        fun = ltfr.mtfft_float
-    elif s.dtype=='d':
-        fun = ltfr.mtfft_double
-    else:
-        raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
+    def mtm_psd(s, NW, k=None, adapt=True):
+        """
+        Compute PSD of a signal using multitaper methods
 
-    mtm = ltfr.mtm_init_dpss(N, NW, k)
-    sigpow = fun(mtm, s, N)
-    out = nx.zeros(N/2+1)
-    if adapt:
-        ltfr.mtpower(mtm, out, sigpow)
-    else:
-        ltfr.mtpower(mtm, out, 0.0)
+        s - input signal
+        NW - time-frequency product
+        k - number of tapers (default NW*2-1)
+        adapt - compute adaptive spectrogram (default True)
 
-    ltfr.mtm_destroy(mtm)
-    return out
+        returns an N/2+1 real power spectrum density
+        """
+        N = s.size
+        if k==None:
+            k = int(NW*2-1)    
+        if s.dtype=='h':
+            fun = ltfr.mtfft
+        elif s.dtype=='f':
+            fun = ltfr.mtfft_float
+        elif s.dtype=='d':
+            fun = ltfr.mtfft_double
+        else:
+            raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
+
+        mtm = ltfr.mtm_init_dpss(N, NW, k)
+        sigpow = fun(mtm, s, N)
+        out = nx.zeros(N/2+1)
+        if adapt:
+            ltfr.mtpower(mtm, out, sigpow)
+        else:
+            ltfr.mtpower(mtm, out, 0.0)
+
+        ltfr.mtm_destroy(mtm)
+        return out
 
 def fmsin(N, fnormin=0.05, fnormax=0.45, period=None, t0=None, fnorm0=0.25, pm1=1):
     """
@@ -223,7 +228,8 @@ if __name__=="__main__":
     ss,iff = fmsin(siglen, .15, 0.45, 1024, 256/4,0.3,-1)
     s = ss.real + nx.random.randn(ss.size)/2
 
-    mpsd  = mtm_psd(s[8300:8600], NW)
-    mspec = mtm_spec(s, N, step, NW)
+    if ltfr_has_dpss:
+        mpsd  = mtm_psd(s[8300:8600], NW)
+        mspec = mtm_spec(s, N, step, NW)
     tspec = tfr_spec(s, N, step, Np, k, tm)
     
