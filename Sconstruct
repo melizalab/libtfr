@@ -1,16 +1,36 @@
 
 import os
 
-# build options
-env = Environment(CCFLAGS = '-O2 -std=c99')
-
-# install location
-install_prefix = '/usr/local/'
-
 # source files and libraries
 src_files = ['mtm.c', 'tfr.c']
 hdr_files = ['tfr.h']
 libs = ['m','fftw3']
+lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64']
+
+# install location
+AddOption('--prefix',
+          dest='prefix',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='DIR',
+          help='installation prefix')
+
+if not GetOption('prefix')==None:
+    install_prefix = GetOption('prefix')
+else:
+    install_prefix = '/usr/local/'
+
+Help("""
+Type: 'scons' to build the library
+      'scons install' to install library and headers under %s
+      (use --prefix  to change this)
+""" % install_prefix)
+
+# build options
+env = Environment(LIBPATH = lib_path,
+                  CCFLAGS = '-O2 -std=c99')
+
 
 # check platform configuration
 if not env.GetOption('clean'):
