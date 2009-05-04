@@ -1,0 +1,32 @@
+
+import os
+
+# build options
+env = Environment(CCFLAGS = '-O2')
+
+# install location
+install_prefix = '/usr/local/'
+
+# source files and libraries
+src_files = ['mtm.c', 'tfr.c']
+hdr_files = ['tfr.h']
+libs = ['m','lapack','fftw3']
+
+# check platform configuration
+if not env.GetOption('clean'):
+    conf = Configure(env)
+    if not conf.CheckLibWithHeader('m', 'math.h', 'c'):
+        print 'Did not find libm.a or m.lib; exiting'
+        Exit(1)
+    if not conf.CheckLibWithHeader('fftw3','fftw3.h','c'):
+        print "Did not find fftw3 library; exiting"
+        Exit(1)
+    if not conf.CheckLib('lapack'):
+        print "Did not find lapack library; MTM spectrograms disabled"
+        conf.env.Append('-DNO_LAPACK')
+    env = conf.Finish()
+
+dylib = env.SharedLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')
+
+env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
+env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), dylib))
