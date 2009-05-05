@@ -37,18 +37,17 @@ scons install
 
 In order to compute conventional MT spectrograms, LAPACK has to be
 installed. SCONS will attempt to detect whether this library exists;
-however, LAPACK libraries are notoriously difficult to find.  The
-SCONS script works for vecLib/Accelerate on Mac OS X, but I haven't
-been able to get it to find ATLAS on Linux.  I've set up the Makefile
-to work with this configuration.  If anyone can come up with a good
-solution to this please contact me.
+however, LAPACK libraries are notoriously difficult to find.  Edit the
+lapack_libs line in the Sconstruct file to help SCONS find them.
 
 To build the MATLAB mex file, after building the library type:
 
-mex tfrspec.c libtfrspec.a
+mex tfrspec.c tfr.os mtm.os
 
-and then copy the mex file and the associated mfile to a location in
-your MATLAB path.
+Note that you have to use the shared objects in order for MEX to
+generate a dynamically loadable file. Copy the mex file (the extension
+will depend on your platform) and the associated mfile to a location
+in your MATLAB path.
 
 ** Algorithm and usage notes:
 

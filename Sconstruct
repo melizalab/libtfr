@@ -5,10 +5,11 @@ import os
 src_files = ['mtm.c', 'tfr.c']
 hdr_files = ['tfr.h']
 libs = ['m','fftw3']
-# setting up the lapack dependency is tricky. This should work for vecLib under OS X,
-# for ATLAS you'll need to include cblas and atlas
-lapack_libs = ['lapack']
-# lapack_libs = ['lapack','cblas','atlas']
+# setting up the lapack dependency is tricky.
+# This should work for vecLib under OS X:
+#lapack_libs = ['lapack']
+# For ATLAS you'll need to include some other dependencies:
+lapack_libs = ['atlas','cblas','f77blas','lapack']
 lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64']
 
 # install location
@@ -33,8 +34,7 @@ Type: 'scons' to build the library
 
 # build options
 env = Environment(LIBPATH = lib_path,
-                  CCFLAGS = '-O2 -std=c99')
-
+                  CCFLAGS = ['-O2', '-std=c99'])
 
 # check platform configuration
 if not env.GetOption('clean'):
@@ -45,15 +45,16 @@ if not env.GetOption('clean'):
     if not conf.CheckLibWithHeader('fftw3','fftw3.h','c'):
         print "Did not find fftw3 library; exiting"
         Exit(1)
-    if conf.CheckLib(lapack_libs):
-        libs.append(lapack_libs)
-    else:
-        print "Did not find lapack library; MTM spectrograms disabled"
-        conf.env.Append(CCFLAGS = ' -DNO_LAPACK')
+    for lib in lapack_libs:
+        # this is a bit kludgy as all the libraries that ARE found still get linked.
+        if not conf.CheckLib(lib):
+            print "Did not find lapack library; MTM spectrograms disabled"
+            conf.env.Append(CCFLAGS = ['-DNO_LAPACK'])
+            break
     env = conf.Finish()
 
-slib = env.StaticLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')
-dylib = env.SharedLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH = '.')
+slib = env.StaticLibrary('libtfrspec', source = src_files, CPPPATH = '.')
+dylib = env.SharedLibrary('libtfrspec', source = src_files, CPPPATH = '.')
 
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
 env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
