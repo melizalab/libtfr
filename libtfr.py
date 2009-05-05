@@ -12,6 +12,8 @@ import numpy as nx
 import ctypes as cx
 from numpy.ctypeslib import ndpointer
 
+__version__ = "0.99.0"
+
 # try to load the appropriate library
 if os.name=='posix' and sys.platform=='darwin':
     ltfr = cx.cdll.LoadLibrary('libtfrspec.dylib')

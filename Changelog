@@ -1,0 +1,12 @@
+
+2.12.2009	
+
+	start project; generic multi-tapered FFT code and DPSS generation
+
+2.17.2009
+	
+	time-frequency reassignment now working
+
+5.5.2009
+
+	working library, python, and matlab interfaces - version 0.99
