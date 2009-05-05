@@ -5,6 +5,10 @@ import os
 src_files = ['mtm.c', 'tfr.c']
 hdr_files = ['tfr.h']
 libs = ['m','fftw3']
+# setting up the lapack dependency is tricky. This should work for vecLib under OS X,
+# for ATLAS you'll need to include cblas and atlas
+lapack_libs = ['lapack']
+# lapack_libs = ['lapack','cblas','atlas']
 lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64']
 
 # install location
@@ -41,10 +45,8 @@ if not env.GetOption('clean'):
     if not conf.CheckLibWithHeader('fftw3','fftw3.h','c'):
         print "Did not find fftw3 library; exiting"
         Exit(1)
-    if conf.CheckLib('lapack'):
-        # setting up the lapack dependency is tricky. This should work for vecLib under OS X,
-        # for ATLAS you'll need to include cblas and atlas, assuming CheckLib even finds it.
-        libs.append('lapack')
+    if conf.CheckLib(lapack_libs):
+        libs.append(lapack_libs)
     else:
         print "Did not find lapack library; MTM spectrograms disabled"
         conf.env.Append(CCFLAGS = ' -DNO_LAPACK')
