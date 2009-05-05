@@ -10,11 +10,12 @@ spherical sequences).
 
 Calculating good TFR spectrograms requires a lot of FFT operations, so
 libtfrspec is implemented in C and uses one of the fastest and most
-flexible FFT packages, FFTW.  If LAPACK is installed, libtfrspec can
-also be used to calculate convential multi-taper spectrograms rapidly.
+flexible FFT packages, FFTW.  If LAPACK is installed (see below),
+libtfrspec can also be used to calculate convential multi-taper
+spectrograms rapidly.
 
-A python module using ctypes and numpy is included for an interface to
-the library.
+A python module using ctypes and numpy, and a MATLAB mex file are
+included for interfaces to the library.
 
 libtfrspec was written by C Daniel Meliza (dmeliza@uchicago.edu) and
 is licensed under the Gnu Public License (GPL) version 2; see COPYING
@@ -33,6 +34,21 @@ scons
 To install the libraries and header (default to /usr/local/lib and /usr/local/include):
 
 scons install
+
+In order to compute conventional MT spectrograms, LAPACK has to be
+installed. SCONS will attempt to detect whether this library exists;
+however, LAPACK libraries are notoriously difficult to find.  The
+SCONS script works for vecLib/Accelerate on Mac OS X, but I haven't
+been able to get it to find ATLAS on Linux.  I've set up the Makefile
+to work with this configuration.  If anyone can come up with a good
+solution to this please contact me.
+
+To build the MATLAB mex file, after building the library type:
+
+mex tfrspec.c libtfrspec.a
+
+and then copy the mex file and the associated mfile to a location in
+your MATLAB path.
 
 ** Algorithm and usage notes:
 

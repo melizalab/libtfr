@@ -43,7 +43,7 @@ if not env.GetOption('clean'):
         Exit(1)
     if conf.CheckLib('lapack'):
         # setting up the lapack dependency is tricky. This should work for vecLib under OS X,
-        # for ATLAS you'll need to include cblas and atlas
+        # for ATLAS you'll need to include cblas and atlas, assuming CheckLib even finds it.
         libs.append('lapack')
     else:
         print "Did not find lapack library; MTM spectrograms disabled"
@@ -55,3 +55,4 @@ dylib = env.SharedLibrary('libtfrspec', source = src_files, LIBS = libs, CPPPATH
 
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
 env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
+
