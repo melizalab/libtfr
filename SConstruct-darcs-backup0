@@ -7,12 +7,10 @@ hdr_files = ['tfr.h']
 libs = ['m','fftw3']
 # setting up the lapack dependency is tricky.
 # This should work for vecLib under OS X:
-lapack_libs = ['lapack']
+#lapack_libs = ['lapack']
 # For ATLAS you'll need to include some other dependencies:
-#lapack_libs = ['atlas','cblas','f77blas','lapack']
-
-include_path = ['/opt/local/include']
-lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64','/opt/local/lib']
+lapack_libs = ['atlas','cblas','f77blas','lapack']
+lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64']
 
 # install location
 AddOption('--prefix',
@@ -37,7 +35,6 @@ Type: 'scons' to build the library
 # build options
 env = Environment(LIBPATH = lib_path,
                   CCFLAGS = ['-O2', '-std=c99'])
-env.Append(CPPPATH = include_path)
 
 # check platform configuration
 if not env.GetOption('clean'):
@@ -56,8 +53,8 @@ if not env.GetOption('clean'):
             break
     env = conf.Finish()
 
-slib = env.StaticLibrary('libtfrspec', source = src_files)
-dylib = env.SharedLibrary('libtfrspec', source = src_files)
+slib = env.StaticLibrary('libtfrspec', source = src_files, CPPPATH = '.')
+dylib = env.SharedLibrary('libtfrspec', source = src_files, CPPPATH = '.')
 
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
 env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
