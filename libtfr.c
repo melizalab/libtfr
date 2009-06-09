@@ -22,7 +22,7 @@ coerce_ndarray_double(PyArrayObject *in, PyArrayObject **out)
 		*out = (PyArrayObject*)PyArray_Cast(in, NPY_DOUBLE);
 		return ((double *) PyArray_DATA(*out));
 	}
-	else 
+	else
 		return NULL;
 }
 
@@ -54,7 +54,7 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 {
 	/* arguments */
 	PyObject *o = NULL;
- 	PyArrayObject *signal = NULL;
+	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
 	int N;
 	int step;
@@ -65,7 +65,7 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 	int tlock = 5;
 
 	/* output data */
- 	npy_intp out_shape[2];
+	npy_intp out_shape[2];
 	PyArrayObject *outdata = NULL;
 	double *spec;
 
@@ -85,7 +85,7 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 	/* allocate output array */
 	out_shape[0] = N/2+1;
 	out_shape[1] = PyArray_SIZE(signal) / step;
- 	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
+	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
 	spec = (double*) PyArray_DATA(outdata);
 
 	/* coerce data to proper type */
@@ -112,13 +112,47 @@ fail:
 }
 
 
+static PyObject*
+libtfr_hermf(PyObject *self, PyObject *args)
+{
+	/* arguments */
+	int N,M;
+	double tm;
+
+	/* output data */
+	npy_intp tapers_shape[2];
+	PyArrayObject *h = NULL;
+	PyArrayObject *Dh = NULL;
+	PyArrayObject *Th = NULL;
+
+	/* parse arguments */
+	if (!PyArg_ParseTuple(args, "iid", &N, &M, &tm))
+		return NULL;
+
+	/* allocate output arrays */
+	tapers_shape[0] = N;
+	tapers_shape[1] = M;
+	h  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
+	Dh  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
+	Th  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
+
+	double *hp = (double*) PyArray_DATA(h);
+	double *Dhp = (double*) PyArray_DATA(Dh);
+	double *Thp = (double*) PyArray_DATA(Th);
+
+	hermf(N, M, tm, hp, Dhp, Thp);
+
+	return Py_BuildValue("(OOO)", h, Dh, Th);
+}
+
+
 #ifndef NO_LAPACK
 static PyObject*
 libtfr_mtm_spec(PyObject *self, PyObject *args)
 {
 	/* arguments */
 	PyObject *o = NULL;
- 	PyArrayObject *signal = NULL;
+	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
 	int N;
 	int step;
@@ -127,7 +161,7 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
 	int adapt = 1;
 
 	/* output data */
- 	npy_intp out_shape[2];
+	npy_intp out_shape[2];
 	PyArrayObject *outdata = NULL;
 	double *spec;
 
@@ -151,7 +185,7 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
 	/* allocate output array */
 	out_shape[0] = N/2+1;
 	out_shape[1] = PyArray_SIZE(signal) / step;
- 	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
+	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
 	spec = (double*) PyArray_DATA(outdata);
 
 	/* coerce data to proper type */
@@ -182,7 +216,7 @@ libtfr_mtm_psd(PyObject *self, PyObject *args)
 {
 	/* arguments */
 	PyObject *o = NULL;
- 	PyArrayObject *signal = NULL;
+	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
 	int N;
 	double NW;
@@ -190,7 +224,7 @@ libtfr_mtm_psd(PyObject *self, PyObject *args)
 	int adapt = 1;
 
 	/* output data */
- 	npy_intp out_shape[1];
+	npy_intp out_shape[1];
 	PyArrayObject *outdata = NULL;
 	double *spec;
 
@@ -215,10 +249,10 @@ libtfr_mtm_psd(PyObject *self, PyObject *args)
 
 	/* allocate output array */
 	out_shape[0] = N/2+1;
- 	outdata  = (PyArrayObject*) PyArray_ZEROS(1,out_shape,NPY_DOUBLE,0);
+	outdata  = (PyArrayObject*) PyArray_ZEROS(1,out_shape,NPY_DOUBLE,0);
 	spec = (double*) PyArray_DATA(outdata);
 
-        /* coerce data to proper type */
+	/* coerce data to proper type */
 	samples = coerce_ndarray_double(signal, &signal_cast);
 	if (samples==NULL) {
 		PyErr_SetString(PyExc_TypeError, "Unable to cast signal to supported data type");
@@ -250,14 +284,14 @@ libtfr_mtfft(PyObject *self, PyObject *args)
 {
 	/* arguments */
 	PyObject *o = NULL;
- 	PyArrayObject *signal = NULL;
+	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
 	int N;
 	double NW;
 	int K = -1;
 
 	/* output data */
- 	npy_intp out_shape[2];
+	npy_intp out_shape[2];
 	PyArrayObject *outdata = NULL;
 	npy_cdouble *spec;
 
@@ -282,10 +316,10 @@ libtfr_mtfft(PyObject *self, PyObject *args)
 	/* allocate output array */
 	out_shape[0] = N;
 	out_shape[1] = K;
- 	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_CDOUBLE,1);
+	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_CDOUBLE,1);
 	spec = (npy_cdouble*) PyArray_DATA(outdata);
 
-        /* coerce data to proper type */
+	/* coerce data to proper type */
 	samples = coerce_ndarray_double(signal, &signal_cast);
 	if (samples==NULL) {
 		PyErr_SetString(PyExc_TypeError, "Unable to cast signal to supported data type");
@@ -329,17 +363,24 @@ libtfr_dpss(PyObject *self, PyObject *args)
 		return NULL;
 
 	/* allocate output arrays */
- 	tapers_shape[0] = N;
+	tapers_shape[0] = N;
 	tapers_shape[1] = K;
- 	tapers  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
- 	lambdas = (PyArrayObject*) PyArray_ZEROS(1,tapers_shape+1,NPY_DOUBLE,1);
+	tapers  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
+	lambdas = (PyArrayObject*) PyArray_ZEROS(1,tapers_shape+1,NPY_DOUBLE,1);
 
 	double *taperp = (double*) PyArray_DATA(tapers);
 	double *lambdap = (double*) PyArray_DATA(lambdas);
 
 	rV = dpss(taperp, lambdap, N, NW, K);
 
-	return Py_BuildValue("(OO)", tapers, lambdas);
+	if (rV==0)
+		return Py_BuildValue("(OO)", tapers, lambdas);
+	else {
+		PyErr_SetString(PyExc_TypeError, "Invalid DPSS parameters");
+		Py_XDECREF(tapers);
+		Py_XDECREF(lambdas);
+		return NULL;
+	}
 }
 
 
@@ -347,6 +388,7 @@ libtfr_dpss(PyObject *self, PyObject *args)
 
 static PyMethodDef _libtfr_methods[] = {
 	{"tfr_spec", libtfr_tfr_spec, METH_VARARGS,""},
+	{"hermf",libtfr_hermf, METH_VARARGS,""},
 #ifndef NO_LAPACK
 	{"mtm_spec", libtfr_mtm_spec, METH_VARARGS,""},
 	{"mtm_psd", libtfr_mtm_psd, METH_VARARGS,""},
@@ -356,7 +398,7 @@ static PyMethodDef _libtfr_methods[] = {
 	{NULL}  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
@@ -367,5 +409,5 @@ init_libtfr(void)
 
 	m = Py_InitModule3("_libtfr", _libtfr_methods,
 			   "Compute time-frequency reassignment spectrograms");
-	
+
 }

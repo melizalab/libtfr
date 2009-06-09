@@ -1,7 +1,7 @@
 /*
  * tfr.c - functions for calculating time-frequency reassignment spectrograms
  *
- * Hermite tapers and reassignment algorithms adapted from MATLAB code by Xiao and Flandrin, 
+ * Hermite tapers and reassignment algorithms adapted from MATLAB code by Xiao and Flandrin,
  * http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html
  * Frequency locking algorithm from Gardner and Magnasco
  * (http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m)
@@ -22,7 +22,7 @@
 int
 hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
-	
+
 	int i, k;
 	double dt, *tt, *g, *P, *Htemp;
 
@@ -50,7 +50,7 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 
 	for (k = 0; k < M+1; k++) {
 		for (i = 0; i < N; i++) {
-			Htemp[k*N+i] = P[k*N+i] * 
+			Htemp[k*N+i] = P[k*N+i] *
 				g[i]/sqrt(sqrt(M_PI) * pow(2, k) * tgamma(k+1)) *
 				sqrt(dt);
 		}
@@ -78,7 +78,7 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 {
 
 	double *tapers = (double*)malloc(npoints*order*3*sizeof(double));
-	
+
 	tm = (tm > 0) ? tm : 6;
 
 	npoints = hermf(npoints, order, tm,
@@ -111,17 +111,17 @@ tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 			fdispl[j*real_count+i] =  cimag(z2 / z1 / (2 * M_PI));
 			tdispl[j*real_count+i] = creal(z3 / z1);
 		}
- 		// DC 
- 		q[j*real_count] = SQR(mtm->buf[j*nfft]);
+		// DC
+		q[j*real_count] = SQR(mtm->buf[j*nfft]);
 		fdispl[j*real_count] = 0.0;
 		tdispl[j*real_count] = mtm->buf[(2*K+j)*nfft] / mtm->buf[j*nfft];
 		// nyquist
- 		if (imag_count < real_count) {
- 			i = real_count-1;
- 			q[j*real_count+i] = SQR(mtm->buf[j*nfft+i]);
- 			fdispl[j*real_count+i] = 0.0; 
- 			tdispl[j*real_count+i] = mtm->buf[(2*K+j)*nfft+i] / mtm->buf[j*nfft+i];
- 		}
+		if (imag_count < real_count) {
+			i = real_count-1;
+			q[j*real_count+i] = SQR(mtm->buf[j*nfft+i]);
+			fdispl[j*real_count+i] = 0.0;
+			tdispl[j*real_count+i] = mtm->buf[(2*K+j)*nfft+i] / mtm->buf[j*nfft+i];
+		}
 	}
 }
 
@@ -132,8 +132,8 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 
 	int f, that, fhat;
 	double fref;
-	
-        for (f = 0; f < N; f++) {
+
+	for (f = 0; f < N; f++) {
 		//spec[f] += q[f];
 		fref = (1.0 * f) / N;
 		fhat = (int)round((fref - fdispl[f] * 2.0)*nfreq); // note 2xfdisplace for 1-sided psd
@@ -148,11 +148,11 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 			continue;
 		if ((that > tmaxlock) || (that < -tminlock))
 			continue;
-                 // make the reassignment
+		 // make the reassignment
 		//printf("- assigned");
 		spec[that*nfreq + fhat] += q[f];
 	}
-}	     
+}
 
 void
 tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
@@ -182,7 +182,7 @@ tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, in
 		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
 		tfr_displacements(mtm, q, td, fd);
 		for (k = mink; k < K; k++) {
-			tfr_reassign(spec+(t*real_count), 
+			tfr_reassign(spec+(t*real_count),
 				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
 				     real_count, real_count, shift, 1e-6*pow,
 				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);

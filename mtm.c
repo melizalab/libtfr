@@ -14,15 +14,15 @@
 /* some LAPACK prototypes */
 extern void dsterf_(int *N, double *D, double *E, int *INFO);
 
-extern void dgtsv_(int *N, int *NRHS, 
-		   double *DL, double *D, double *DU, double *B, 
+extern void dgtsv_(int *N, int *NRHS,
+		   double *DL, double *D, double *DU, double *B,
 		   int *LDB, int *INFO );
 
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
-#define NTHREADS 1  
+#define NTHREADS 1
 
 
-mfft* 
+mfft*
 mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 {
 	mfft *mtm;
@@ -45,7 +45,7 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 
 	mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
 	//mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
-	
+
 	// set up fftw plan
 	n_array = malloc(sizeof(int)*ntapers);
 	kind = malloc(sizeof(int)*ntapers);
@@ -150,7 +150,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 		err /= nfft;
 		//printf("err: %3.4g; tol: %3.4g\n", err, tol);
 		//for(t = 0; t < ntapers; t++)
-		//	printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
+		//      printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
 		//printf("\n");
 		while (err > tol) {
 			err = 0;
@@ -212,11 +212,11 @@ renormalize(int N, double *x)
 
 	norm = sqrt(norm);
 	for (i = 0; i < N; i++)
-		x[i] /= norm; 
+		x[i] /= norm;
 }
 
 /**
- * Compute the self-convolution of a vector using FFT. 
+ * Compute the self-convolution of a vector using FFT.
  *
  * Inputs:
  *   N - number of points
@@ -255,7 +255,7 @@ fftconv(int N, const double *x, double *y)
 	// inverse fft
 	plan = fftw_plan_dft_c2r_1d(N*2, X1, X, FFTW_ESTIMATE);
 	fftw_execute(plan);
-	
+
 	for (i = 0; i < N; i++)
 		y[i] = X[i] / N / 2;
 	fftw_free(X1);
@@ -266,11 +266,11 @@ fftconv(int N, const double *x, double *y)
 
 
 int
-dpss(double *tapers, double *lambda, int npoints, double NW, int k) 
+dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 {
 	int i, j, m, rv;
 	double *d, *sd, *dd1, *dd2, *ee1, *ee2;
-	double *taper; 
+	double *taper;
 
 	double W, ff;
 
@@ -278,13 +278,13 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 		return -1;
 
 	W = NW/npoints;
-	
+
 	d = (double*)malloc(npoints*sizeof(double));
 	sd = (double*)malloc(npoints*sizeof(double));
 	dd1 = (double*)malloc(npoints*sizeof(double));
 	dd2 = (double*)malloc(npoints*sizeof(double));
-	ee1 = (double*)malloc((npoints)*sizeof(double)); 
-	ee2 = (double*)malloc((npoints)*sizeof(double)); 
+	ee1 = (double*)malloc((npoints)*sizeof(double));
+	ee2 = (double*)malloc((npoints)*sizeof(double));
 
 	for (i = 0; i < npoints; i++) {
 		ff = (npoints - 1 - 2*i);
@@ -295,7 +295,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 	// lapack eigenvalue solver; values stored in d in increasing order
 	dsterf_(&npoints,d,ee1,&rv);
 	if (rv != 0) return -2;
-	
+
 	// set up tridiagonal equations:
 	for (j = 0; j < k; j++) {
 		taper = tapers + j * npoints;  // point into tapers array
@@ -341,7 +341,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 
 		lambda[j] = ff;
 
-	}	
+	}
 	free(d);
 	free(sd);
 	free(dd1);

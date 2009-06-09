@@ -14,7 +14,7 @@ flexible FFT packages, FFTW.  If LAPACK is installed (see below),
 libtfrspec can also be used to calculate convential multi-taper
 spectrograms rapidly.
 
-A python module using ctypes and numpy, and a MATLAB mex file are
+A python module using numpy, and a MATLAB mex file are
 included for interfaces to the library.
 
 libtfrspec was written by C Daniel Meliza (dmeliza@uchicago.edu) and
@@ -29,11 +29,19 @@ is not guaranteed to be portable without some fiddling.
 
 To build the library (static and shared), type:
 
-scons
+scons lib
 
 To install the libraries and header (default to /usr/local/lib and /usr/local/include):
 
 scons install
+
+To build the python wrapper:
+
+scons python
+
+To install the python wrapper to the standard site-packages directory:
+
+scons python-install
 
 In order to compute conventional MT spectrograms, LAPACK has to be
 installed. SCONS will attempt to detect whether this library exists;

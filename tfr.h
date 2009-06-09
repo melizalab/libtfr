@@ -40,7 +40,7 @@ typedef struct {
 
 /**
  * Initialize a multitaper mtm transform using preallocated tapers (i.e. with dpss()))
- * 
+ *
  * Inputs:
  *   nfft - number of points in the transform
  *   npoints - number of points in the tapers (windows)
@@ -147,7 +147,7 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  * Outputs:
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
  *
- */  
+ */
 void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
 
 /**
@@ -167,7 +167,7 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  * Outputs:
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
  *
- */  
+ */
 void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
 	 double flock, int tlock);
 
@@ -183,7 +183,7 @@ void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *             (typical choices are 2, 5/2, 3, 7/2, or 4)
  *   k         how many DPSS vectors to return (up to npoints but k>nw*2-1 are not stable)
  *
- * Outputs: 
+ * Outputs:
  *   tapers  - k DPSS sequences in order of decreasing eigenvalue (size npoints*k)
  *   lambdas - k eigenvalues associated with each taper
  *   [outputs need to be allocated]
@@ -236,7 +236,7 @@ void tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdisp
  *  Assign power from a spectrum to a spectrogram based on time-frequency displacements
  *
  * Inputs:
- *  q - power spectrum (N points) 
+ *  q - power spectrum (N points)
  *  tdispl  - time displacements (N points)
  *  fdispl  - frequency displacements (N points)
  *  N       - number of points in input spectrums
@@ -261,8 +261,7 @@ void tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdisp
  *  to make allocating the memory a bit easier.
  *
  *  The bin resolution of the output spectrogram is controlled by the
- *  nfreq and dt parameters.  
+ *  nfreq and dt parameters.
  */
 void tfr_reassign(double *spec, const double *q, const double *tdispl, const double *fdispl,
 		  int N, int nfreqout, double dt, double qthresh, double flock, int tminlock, int tmaxlock);
-
