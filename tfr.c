@@ -155,7 +155,7 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 }	     
 
 void
-tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
+tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
 	 double flock, int tlock)
 {
 	int t,mink = 0;
@@ -180,80 +180,6 @@ tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int
 	//for (k = mink; k < K; k++) printf("Calculating spectrogram for taper %d\n", k);
 	for (t = 0; t < nbins; t++) {
 		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
-		tfr_displacements(mtm, q, td, fd);
-		for (k = mink; k < K; k++) {
-			tfr_reassign(spec+(t*real_count), 
-				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
-				     real_count, real_count, shift, 1e-6*pow,
-				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
-		}
-	}
-	free(q);
-	free(td);
-	free(fd);
-}
-
-void
-tfr_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
-	 double flock, int tlock)
-{
-	int t,mink = 0;
-	int nbins = nsamples / shift;
-	int real_count = mtm->nfft / 2 + 1;
-	int K = mtm->ntapers / 3;
-
-	double pow = 0.0;
-	for (t = 0; t < nsamples; t++)
-		pow += (double)samples[t] * samples[t];
-	pow /= nsamples;
-
-	double *q = (double*)malloc(real_count*K*sizeof(double));
-	double *td = (double*)malloc(real_count*K*sizeof(double));
-	double *fd = (double*)malloc(real_count*K*sizeof(double));
-
-	if (k >= 0) {
-		mink = k;
-		K = k+1;
-	}
-	for (t = 0; t < nbins; t++) {
-		mtfft_float(mtm, samples+(t*shift), nsamples-(t*shift));
-		tfr_displacements(mtm, q, td, fd);
-		for (k = mink; k < K; k++) {
-			tfr_reassign(spec+(t*real_count), 
-				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
-				     real_count, real_count, shift, 1e-6*pow,
-				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-tlock);
-		}
-	}
-	free(q);
-	free(td);
-	free(fd);
-}
-
-void
-tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	 double flock, int tlock)
-{
-	int t,mink = 0;
-	int nbins = nsamples / shift;
-	int real_count = mtm->nfft / 2 + 1;
-	int K = mtm->ntapers / 3;
-
-	double pow = 0.0;
-	for (t = 0; t < nsamples; t++)
-		pow += (double)samples[t] * samples[t];
-	pow /= nsamples;
-
-	double *q = (double*)malloc(real_count*K*sizeof(double));
-	double *td = (double*)malloc(real_count*K*sizeof(double));
-	double *fd = (double*)malloc(real_count*K*sizeof(double));
-
-	if (k >= 0) {
-		mink = k;
-		K = k+1;
-	}
-	for (t = 0; t < nbins; t++) {
-		mtfft_double(mtm, samples+(t*shift), nsamples-(t*shift));
 		tfr_displacements(mtm, q, td, fd);
 		for (k = mink; k < K; k++) {
 			tfr_reassign(spec+(t*real_count), 

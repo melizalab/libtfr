@@ -105,16 +105,13 @@ void mtm_destroy(mfft *mtm);
  *
  * Inputs:
  *    mtm - parameters for the transform
- *    data - input data (short integers)
+ *    data - input data (double-precision floating points)
  *    nbins - the number of time points in the signal
  *
  * Returns:
  *    total power in signal (used in computing adaptive power spectra)
  */
-double mtfft(mfft *mtm, const short *data, int nbins);
-double mtfft_float(mfft *mtm, const float *data, int nbins);
-double mtfft_double(mfft *mtm, const double *data, int nbins);
-
+double mtfft(mfft *mtm, const double *data, int nbins);
 
 /* spectrogram functions */
 
@@ -135,7 +132,6 @@ double mtfft_double(mfft *mtm, const double *data, int nbins);
  */
 void mtpower(const mfft *mtm, double *pow, double sigpower);
 
-
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
  *  This function 'fills' a spectrogram by calculating the PSD for each
@@ -152,9 +148,7 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
  *
  */  
-void mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift, int adapt);
-void mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int shift, int adapt);
-void mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
+void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
@@ -174,13 +168,8 @@ void mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsample
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
  *
  */  
-void tfr_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int k, int shift,
+void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
 	 double flock, int tlock);
-void tfr_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-void tfr_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	 double flock, int tlock);
-
 
 /* taper generating functions */
 

@@ -33,19 +33,11 @@ ltfr.mtm_init.argtypes = [cx.c_int, cx.c_int, cx.c_int,
 ltfr.mtm_destroy.argtypes = [cx.c_void_p]
 
 ltfr.mtfft.restype = cx.c_double
-ltfr.mtfft.argtypes = [cx.c_void_p, ndpointer(dtype='h'), cx.c_int]
-ltfr.mtfft_float.restype = cx.c_double
-ltfr.mtfft_float.argtypes = [cx.c_void_p, ndpointer(dtype='f'), cx.c_int]
-ltfr.mtfft_double.restype = cx.c_double
-ltfr.mtfft_double.argtypes = [cx.c_void_p, ndpointer(dtype='d'), cx.c_int]
+ltfr.mtfft.argtypes = [cx.c_void_p, ndpointer(dtype='d'), cx.c_int]
 
 ltfr.mtpower.argtypes = [cx.c_void_p, ndpointer(dtype='d'), cx.c_double]
 
-ltfr.mtm_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'), ndpointer(dtype='h'),
-                           cx.c_int, cx.c_int, cx.c_int]
-ltfr.mtm_spec_float.argtypes = [cx.c_void_p, ndpointer(dtype='d'), ndpointer(dtype='f'),
-                           cx.c_int, cx.c_int, cx.c_int]
-ltfr.mtm_spec_double.argtypes = [cx.c_void_p, ndpointer(dtype='d'), ndpointer(dtype='d'),
+ltfr.mtm_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'), ndpointer(dtype='d'),
                            cx.c_int, cx.c_int, cx.c_int]
 
 ltfr.hermf.argtypes = [cx.c_int, cx.c_int, cx.c_double,
@@ -61,11 +53,7 @@ ltfr.tfr_reassign.argtypes = [ndpointer(dtype='d'),ndpointer(dtype='d'),
                                cx.c_int, cx.c_int, cx.c_double, cx.c_double, cx.c_double,
                                cx.c_int, cx.c_int]
 
-ltfr.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='h'),
-                           cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
-ltfr.tfr_spec_float.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='f'),
-                           cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
-ltfr.tfr_spec_double.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='d'),
+ltfr.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='d'),
                            cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
 
 
@@ -85,18 +73,9 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
 
     returns an N/2+1 by L power spectrogram (L = length(s) / step)
     """
-    if s.dtype=='h':
-        fun = ltfr.tfr_spec
-    elif s.dtype=='f':
-        fun = ltfr.tfr_spec_float
-    elif s.dtype=='d':
-        fun = ltfr.tfr_spec_double
-    else:
-        raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
-
     mtmh = ltfr.mtm_init_herm(N,Np,K,tm)
     spec = nx.zeros((N/2+1,s.size / step), order='F')
-    fun(mtmh, spec, s, s.size, -1, step, flock, tlock)
+    ltfr.tfr_spec(mtmh, spec, s.astype('d'), s.size, -1, step, flock, tlock)
     ltfr.mtm_destroy(mtmh)
     return spec
 
@@ -124,18 +103,10 @@ if ltfr_has_dpss:
         """
         if k==None:
             k = int(NW*2-1)
-        if s.dtype=='h':
-            fun = ltfr.mtm_spec
-        elif s.dtype=='f':
-            fun = ltfr.mtm_spec_float
-        elif s.dtype=='d':
-            fun = ltfr.mtm_spec_double
-        else:
-            raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
 
         mtm = ltfr.mtm_init_dpss(N, NW, k)
         spec = nx.zeros((N/2+1,s.size / step), order='F')
-        fun(mtm, spec, s, s.size, step, adapt)
+        ltfr.mtm_spec(mtm, spec, s.astype('d'), s.size, step, adapt)
         ltfr.mtm_destroy(mtm)
         return spec
 
@@ -146,24 +117,16 @@ if ltfr_has_dpss:
         s - input signal
         NW - time-frequency product
         k - number of tapers (default NW*2-1)
-        adapt - compute adaptive spectrogram (default True)
+        adapt - compute adaptive spectrum (default True)
 
         returns an N/2+1 real power spectrum density
         """
         N = s.size
         if k==None:
             k = int(NW*2-1)    
-        if s.dtype=='h':
-            fun = ltfr.mtfft
-        elif s.dtype=='f':
-            fun = ltfr.mtfft_float
-        elif s.dtype=='d':
-            fun = ltfr.mtfft_double
-        else:
-            raise TypeError, "libtfrspec doesn't support dtype %s" % s.dtype
 
         mtm = ltfr.mtm_init_dpss(N, NW, k)
-        sigpow = fun(mtm, s, N)
+        sigpow = ltfr.mtfft(mtm, s.astype('d'), N)
         out = nx.zeros(N/2+1)
         if adapt:
             ltfr.mtpower(mtm, out, sigpow)
@@ -234,4 +197,3 @@ if __name__=="__main__":
         mpsd  = mtm_psd(s[8300:8600], NW)
         mspec = mtm_spec(s, N, step, NW)
     tspec = tfr_spec(s, N, step, Np, k, tm)
-    

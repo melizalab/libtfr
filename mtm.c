@@ -78,7 +78,7 @@ mtm_destroy(mfft *mtm)
 
 
 double
-mtfft(mfft *mtm, const short *data, int nbins)
+mtfft(mfft *mtm, const double *data, int nbins)
 {
 	// copy data * tapers to buffer
 	int nfft = mtm->nfft;
@@ -90,69 +90,7 @@ mtfft(mfft *mtm, const short *data, int nbins)
 	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = 0; j < nt; j++) {
-			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
-			pow += data[j] * data[j];
-		}
-	}
-
-	pow /= mtm->ntapers;
-	// zero-pad rest of buffer
-	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
-	for (i = 0; i < mtm->ntapers; i++) {
-		for (j = nt; j < mtm->nfft; j++)
-			mtm->buf[j+i*nfft] = 0.0;
-	}
-
-	fftw_execute(mtm->plan);
-
-	return pow / nt;
-}
-
-double
-mtfft_float(mfft *mtm, const float *data, int nbins)
-{
-	// copy data * tapers to buffer
-	int nfft = mtm->nfft;
-	int size = mtm->npoints;
-	int i,j;
-	int nt = (nbins < size) ? nbins : size;
-	double pow = 0.0;
-
-	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
-	for (i = 0; i < mtm->ntapers; i++) {
-		for (j = 0; j < nt; j++) {
-			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
-			pow += data[j] * data[j];
-		}
-	}
-
-	pow /= mtm->ntapers;
-	// zero-pad rest of buffer
-	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
-	for (i = 0; i < mtm->ntapers; i++) {
-		for (j = nt; j < mtm->nfft; j++)
-			mtm->buf[j+i*nfft] = 0.0;
-	}
-
-	fftw_execute(mtm->plan);
-
-	return pow / nt;
-}
-
-double
-mtfft_double(mfft *mtm, const double *data, int nbins)
-{
-	// copy data * tapers to buffer
-	int nfft = mtm->nfft;
-	int size = mtm->npoints;
-	int i,j;
-	int nt = (nbins < size) ? nbins : size;
-	double pow = 0.0;
-
-	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
-	for (i = 0; i < mtm->ntapers; i++) {
-		for (j = 0; j < nt; j++) {
-			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * (double)data[j];
+			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * data[j];
 			pow += data[j] * data[j];
 		}
 	}
@@ -241,7 +179,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 
 
 void
-mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift, int adapt)
+mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
 {
 	int t;
 	int nbins = nsamples / shift;
@@ -253,35 +191,6 @@ mtm_spec(mfft *mtm, double *spec, const short *samples, int nsamples, int shift,
 		mtpower(mtm, spec+(t*real_count), (adapt) ? sigpow : 0.0);
 	}
 }
-
-void
-mtm_spec_float(mfft *mtm, double *spec, const float *samples, int nsamples, int shift, int adapt)
-{
-	int t;
-	int nbins = nsamples / shift;
-	int real_count = mtm->nfft / 2 + 1;
-	double sigpow;
-
-	for (t = 0; t < nbins; t++) {
-		sigpow = mtfft_float(mtm, samples+(t*shift), nsamples-(t*shift));
-		mtpower(mtm, spec+(t*real_count), (adapt) ? sigpow : 0.0);
-	}
-}
-
-void
-mtm_spec_double(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
-{
-	int t;
-	int nbins = nsamples / shift;
-	int real_count = mtm->nfft / 2 + 1;
-	double sigpow;
-
-	for (t = 0; t < nbins; t++) {
-		sigpow = mtfft_double(mtm, samples+(t*shift), nsamples-(t*shift));
-		mtpower(mtm, spec+(t*real_count), (adapt) ? sigpow : 0.0);
-	}
-}
-
 
 /* these functions are all used for generated tapers for classic MTM spectrograms */
 
