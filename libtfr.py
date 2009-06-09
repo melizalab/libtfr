@@ -1,61 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 """
-Interface to libtfrspec library using numpy and ctypes
+Interface to libtfrspec library using numpy
 
 Copyright C.D. Meliza, 2009 (except for fmsin)
 dmeliza@uchicago.edu
 """
 
-import os,sys
 import numpy as nx
-import ctypes as cx
-from numpy.ctypeslib import ndpointer
+import _libtfr
 
-__version__ = "0.99.0"
-
-# try to load the appropriate library
-if os.name=='posix' and sys.platform=='darwin':
-    ltfr = cx.cdll.LoadLibrary('libtfrspec.dylib')
-elif os.name=='posix':
-    try:
-        ltfr = cx.cdll.LoadLibrary('libtfrspec.so')
-    except OSError:
-        ltfr = cx.cdll.LoadLibrary('./libtfrspec.so')
-elif os.name=='nt':
-    ltfr = cx.cdll.LoadLibrary('libtfrspec.dll')    
-
-ltfr_has_dpss = hasattr(ltfr,'dpss')
-
-ltfr.mtm_init.restype = cx.c_void_p
-ltfr.mtm_init.argtypes = [cx.c_int, cx.c_int, cx.c_int,
-                                    ndpointer(dtype='d'), ndpointer(dtype='d')]
-ltfr.mtm_destroy.argtypes = [cx.c_void_p]
-
-ltfr.mtfft.restype = cx.c_double
-ltfr.mtfft.argtypes = [cx.c_void_p, ndpointer(dtype='d'), cx.c_int]
-
-ltfr.mtpower.argtypes = [cx.c_void_p, ndpointer(dtype='d'), cx.c_double]
-
-ltfr.mtm_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'), ndpointer(dtype='d'),
-                           cx.c_int, cx.c_int, cx.c_int]
-
-ltfr.hermf.argtypes = [cx.c_int, cx.c_int, cx.c_double,
-                        ndpointer(dtype='d'), ndpointer(dtype='d'), ndpointer(dtype='d')]
-ltfr.mtm_init_herm.restype = cx.c_void_p
-ltfr.mtm_init_herm.argtypes = [cx.c_int, cx.c_int, cx.c_int, cx.c_double]
-
-ltfr.tfr_displacements.argtypes = [cx.c_void_p, ndpointer(dtype='d'),
-                                    ndpointer(dtype='d'), ndpointer(dtype='d')]
-
-ltfr.tfr_reassign.argtypes = [ndpointer(dtype='d'),ndpointer(dtype='d'),
-                               ndpointer(dtype='d'),ndpointer(dtype='d'),
-                               cx.c_int, cx.c_int, cx.c_double, cx.c_double, cx.c_double,
-                               cx.c_int, cx.c_int]
-
-ltfr.tfr_spec.argtypes = [cx.c_void_p, ndpointer(dtype='d'),ndpointer(dtype='d'),
-                           cx.c_int, cx.c_int, cx.c_int, cx.c_double, cx.c_int]
-
+#__version__ = _libtfr.__version__
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     """
@@ -65,30 +20,18 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     N - number of frequency points
     step - step size (in time points)
     Np - window size (should be <= N)
-    K - number of tapers to use
-    tm - time support of tapers
+    K - number of tapers to use (default 6)
+    tm - time support of tapers (default 6.0)
     flock - frequency locking parameter; power is not reassigned
-            more than this value (in Hz)
-    tlock - time locking parameter (in frames)
+            more than this value (in Hz; default 0.01)
+    tlock - time locking parameter (in frames; default 5)
 
     returns an N/2+1 by L power spectrogram (L = length(s) / step)
     """
-    mtmh = ltfr.mtm_init_herm(N,Np,K,tm)
-    spec = nx.zeros((N/2+1,s.size / step), order='F')
-    ltfr.tfr_spec(mtmh, spec, s.astype('d'), s.size, -1, step, flock, tlock)
-    ltfr.mtm_destroy(mtmh)
-    return spec
+    return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock)
 
-
-# Note: these functions only get built if there's a functioning LAPACK
-if ltfr_has_dpss:
-    ltfr.dpss.restypes = None
-    ltfr.dpss.argtypes = [ndpointer(dtype='d'), ndpointer(dtype='d'),
-                          cx.c_int, cx.c_double, cx.c_int]
-    ltfr.mtm_init_dpss.restype = cx.c_void_p
-    ltfr.mtm_init_dpss.argtypes = [cx.c_int, cx.c_double, cx.c_int]
-
-    def mtm_spec(s, N, step, NW, k=None, adapt=True):
+if hasattr(_libtfr,'mtm_spec'):
+    def mtm_spec(s, N, step, NW, k=0, adapt=True):
         """
         Compute multitaper spectrogram using DPSS tapers
 
@@ -101,16 +44,10 @@ if ltfr_has_dpss:
 
         returns an N/2+1 by L power spectrogram
         """
-        if k==None:
-            k = int(NW*2-1)
+        return _libtfr.mtm_spec(s, N, step, NW, k, adapt)
 
-        mtm = ltfr.mtm_init_dpss(N, NW, k)
-        spec = nx.zeros((N/2+1,s.size / step), order='F')
-        ltfr.mtm_spec(mtm, spec, s.astype('d'), s.size, step, adapt)
-        ltfr.mtm_destroy(mtm)
-        return spec
-
-    def mtm_psd(s, NW, k=None, adapt=True):
+if hasattr(_libtfr,'mtm_psd'):
+    def mtm_psd(s, NW, k=0, adapt=True):
         """
         Compute PSD of a signal using multitaper methods
 
@@ -121,20 +58,41 @@ if ltfr_has_dpss:
 
         returns an N/2+1 real power spectrum density
         """
-        N = s.size
-        if k==None:
-            k = int(NW*2-1)    
+        return _libtfr.mtm_psd(s, NW, k, adapt)
 
-        mtm = ltfr.mtm_init_dpss(N, NW, k)
-        sigpow = ltfr.mtfft(mtm, s.astype('d'), N)
-        out = nx.zeros(N/2+1)
-        if adapt:
-            ltfr.mtpower(mtm, out, sigpow)
-        else:
-            ltfr.mtpower(mtm, out, 0.0)
 
-        ltfr.mtm_destroy(mtm)
-        return out
+if hasattr(_libtfr,'mtm_psd'):
+    def mtfft(s, NW, k=0):
+        """
+        Compute multitaper transform of a signal
+
+        s - input signal
+        NW - time-frequency product
+        k - number of tapers (default NW*2-1)
+
+        returns an NxK array of complex numbers
+        """
+        return _libtfr.mtfft(s, NW, k)
+
+if hasattr(_libtfr,'dpss'):
+    def dpss(N, NW, k):
+        """
+        Computes the discrete prolate spherical sequences used in the
+        multitaper method power spectrum calculations.
+
+        npoints   the number of points in the window
+        mtm_p     the time-bandwidth product. Must be an integer or half-integer
+                  (typical choices are 2, 5/2, 3, 7/2, or 4)
+        k         If a scalar, returns the 1:k DPSS vectors
+                  If a 2-ple, returns the k[0]:k[1] DPSS vectors
+                  Default is to return all vectors
+
+        returns:
+        e - 2D array of eigenvectors, shape (npoints, n)
+        v - 2D array of eigenvalues, length n = (mtm_p * 2 - 1)
+        """
+        return _libtfr.dpss(N,NW,k)
+
 
 def fmsin(N, fnormin=0.05, fnormax=0.45, period=None, t0=None, fnorm0=0.25, pm1=1):
     """
@@ -193,7 +151,10 @@ if __name__=="__main__":
     ss,iff = fmsin(siglen, .15, 0.45, 1024, 256/4,0.3,-1)
     s = ss.real + nx.random.randn(ss.size)/2
 
-    if ltfr_has_dpss:
+    for i in range(100):
+        print i
+        E,V   = dpss(N, NW, k)
         mpsd  = mtm_psd(s[8300:8600], NW)
+        J     = mtfft(s[8300:8600], NW)
         mspec = mtm_spec(s, N, step, NW)
-    tspec = tfr_spec(s, N, step, Np, k, tm)
+        tspec = tfr_spec(s, N, step, Np, k, tm)
