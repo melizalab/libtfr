@@ -15,7 +15,7 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     """
     Compute time-frequency reassignment spectrogram of input signal s
 
-    s - input signal (short integer, float, and double supported)
+    s - input signal (real)
     N - number of frequency points
     step - step size (in time points)
     Np - window size (should be <= N)
@@ -28,6 +28,19 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     returns an N/2+1 by L power spectrogram (L = length(s) / step)
     """
     return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock)
+
+def stft(s, w, step, N=0):
+    """
+    Compute short time Fourier transforms with arbitrary window functions
+
+    s - input signal (real)
+    w - window function, N-vector
+    step - step size (in samples)
+    N - size of FFT transform (defaults to size of window)
+
+    returns N/2+1 by L spectrogram
+    """
+    return _libtfr.specgram(s, w, step, N)
 
 def hermf(N, order=6, tm=6.0):
     """
