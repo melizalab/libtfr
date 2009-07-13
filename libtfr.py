@@ -22,7 +22,7 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     K - number of tapers to use (default 6)
     tm - time support of tapers (default 6.0)
     flock - frequency locking parameter; power is not reassigned
-	    more than this value (in Hz; default 0.01)
+	    more than this value (normalized frequency; default 0.01)
     tlock - time locking parameter (in frames; default 5)
 
     returns an N/2+1 by L power spectrogram (L = length(s) / step)
@@ -40,7 +40,7 @@ def stft(s, w, step, N=0):
 
     returns N/2+1 by L spectrogram
     """
-    return _libtfr.specgram(s, w, step, N)
+    return _libtfr.stft(s, w, step, N)
 
 def hermf(N, order=6, tm=6.0):
     """
@@ -91,17 +91,18 @@ if hasattr(_libtfr,'mtm_psd'):
 
 
 if hasattr(_libtfr,'mtm_psd'):
-    def mtfft(s, NW, k=0):
+    def mtfft(s, NW, k=0, N=0):
 	"""
 	Compute multitaper transform of a signal
 
 	s - input signal
 	NW - time-frequency product
 	k - number of tapers (default NW*2-1)
+        N - number of points in FFT (default s.size)
 
 	returns an NxK array of complex numbers
 	"""
-	return _libtfr.mtfft(s, NW, k)
+	return _libtfr.mtfft(s, NW, k, N)
 
 if hasattr(_libtfr,'dpss'):
     def dpss(N, NW, k):

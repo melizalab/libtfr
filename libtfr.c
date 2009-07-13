@@ -156,6 +156,7 @@ libtfr_stft(PyObject *self, PyObject *args)
 	PyArrayObject *window = NULL;
 	int step;
 	int N = 0;
+	int Npoints;
 
 	/* output data */
 	npy_intp out_shape[2];
@@ -165,9 +166,10 @@ libtfr_stft(PyObject *self, PyObject *args)
 	/* internal stuff */
 	mfft *mtmh;
 	double *samples = NULL;
+	double *windowp;
 
 	/* parse arguments */
-	if (!PyArg_ParseTuple(args, "OOi|i", &o, &o2, &step))
+	if (!PyArg_ParseTuple(args, "OOi|i", &o, &o2, &step, &N))
 		return NULL;
 	signal = (PyArrayObject*) PyArray_FromAny(o, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
 	if (signal==NULL) {
@@ -175,14 +177,15 @@ libtfr_stft(PyObject *self, PyObject *args)
 		return NULL;
 	}
 	window = (PyArrayObject*) PyArray_FromAny(o2, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
-	if (signal==NULL) {
+	if (window==NULL) {
 		PyErr_SetString(PyExc_TypeError, "Window function must be an ndarray");
 		goto fail;
 	}
+	Npoints = PyArray_SIZE(window);
 
 	/* allocate output array */
 	if (N < 1)
-		N = PyArray_SIZE(window);
+		N = Npoints;
 	out_shape[0] = N/2+1;
 	out_shape[1] = PyArray_SIZE(signal) / step;
 	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
@@ -194,15 +197,17 @@ libtfr_stft(PyObject *self, PyObject *args)
 		PyErr_SetString(PyExc_TypeError, "Unable to cast signal to supported data type");
 		goto fail;
 	}
+	/* need to copy the window function b/c mtm_destroy() will demalloc it */
 	if (PyArray_TYPE(window)!=NPY_DOUBLE) {
 		PyErr_SetString(PyExc_TypeError, "Window function must be double precision float");
 		goto fail;
 	}
+	windowp = malloc(Npoints * sizeof(double));
+	memcpy(windowp, PyArray_DATA(window), Npoints * sizeof(double));
 
 	/* do the transform */
-	mtmh = mtm_init(N, PyArray_SIZE(window), 1, PyArray_DATA(window), NULL);
-	mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal),
-		 step, 0);
+	mtmh = mtm_init(N, Npoints, 1, windowp, NULL);
+	mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal), step, 0);
 	mtm_destroy(mtmh);
 
 	Py_DECREF(signal);
@@ -357,7 +362,7 @@ libtfr_mtfft(PyObject *self, PyObject *args)
 	PyObject *o = NULL;
 	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
-	int N;
+	int N = 0;
 	double NW;
 	int K = -1;
 
@@ -371,7 +376,7 @@ libtfr_mtfft(PyObject *self, PyObject *args)
 	double *samples = NULL;
 
 	/* parse arguments */
-	if (!PyArg_ParseTuple(args, "Od|i", &o, &NW, &K))
+	if (!PyArg_ParseTuple(args, "Od|ii", &o, &NW, &K, &N))
 		return NULL;
 	signal = (PyArrayObject*) PyArray_FromAny(o, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
 	if (signal==NULL) {
@@ -379,10 +384,10 @@ libtfr_mtfft(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	if (K < 1) {
+	if (K < 1)
 		K = NW*2-1;
-	}
-	N = PyArray_SIZE(signal);
+	if (N < 1)
+		N = PyArray_SIZE(signal);
 
 	/* allocate output array */
 	out_shape[0] = N;

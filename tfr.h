@@ -161,8 +161,8 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  nsamples - number of points in input buffer
  *  k        - which taper to use; -1 for all tapers
  *  shift    - number of samples to shift in each frame
- *  flock    - frequency locking parameter
- *  tlock    - time locking parameter
+ *  flock    - frequency locking parameter (normalized frequency units)
+ *  tlock    - time locking parameter (in frames)
  *
  * Outputs:
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
