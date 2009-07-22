@@ -185,7 +185,7 @@ tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, in
 			tfr_reassign(spec+(t*real_count),
 				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
 				     real_count, real_count, shift, 1e-6*pow,
-				     flock*(k+1), (t < tlock) ? t : tlock, (t < nbins-tlock) ? tlock : nbins-t-1);
+				     flock*(k+1), (t < tlock) ? t : tlock, (t+tlock >= nbins) ? nbins-t-1 : tlock);
 		}
 	}
 	free(q);
