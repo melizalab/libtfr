@@ -154,7 +154,9 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *  adapt    - if true, use adaptive averaging between tapers (otherwise 'high-res')
  *
  * Outputs:
- *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *  spec     - output spectrogram, with dimension  (nfft/2+1) by (nsamples/shift).
+ *             needs to be allocated and zero-filled before calling;
+ *             
  *
  */
 void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
@@ -176,7 +178,8 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  fgrid    - output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
  *
  * Outputs:
- *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *  spec     - output spectrogram, with dimension  (nfft/2+1) by (nsamples/shift).
+ *             needs to be allocated and zero-filled before calling
  *
  */
 void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
