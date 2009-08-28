@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 """
-Interface to libtfrspec library using numpy
+Interface to libtfrspec library using numpy. 
 
 Copyright C.D. Meliza, 2009
 dmeliza@uchicago.edu
@@ -57,7 +57,7 @@ def hermf(N, order=6, tm=6.0):
     Returns: h, Dh, Th
     h - hermite functions (MxN)
     Dh - first derivative of h (MxN)
-    Th - time-multiple of h tt - time support of functions (N)
+    Th - time-multiple of h (MxN)
 
     """
     return _libtfr.hermf(N, order, tm)
@@ -93,7 +93,7 @@ if hasattr(_libtfr,'mtm_psd'):
 	return _libtfr.mtm_psd(s, NW, k, adapt)
 
 
-if hasattr(_libtfr,'mtfft'):
+if hasattr(_libtfr,'mtm_psd'):
     def mtfft(s, NW, k=0, N=0):
 	"""
 	Compute multitaper transform of a signal
@@ -122,7 +122,7 @@ if hasattr(_libtfr,'dpss'):
 		  Default is to return all vectors
 
 	returns:
-	e - 2D array of eigenvectors, shape (npoints, n)
+	e - 2D array of eigenvectors, shape (n,npoints)
 	v - 2D array of eigenvalues, length n = (mtm_p * 2 - 1)
 	"""
 	return _libtfr.dpss(N,NW,k)

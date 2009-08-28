@@ -2,8 +2,10 @@
  * libtfr.c
  *
  * A python extension module interface to libtfrspec
- * Data are stored in numpy arrays.
  *
+ * NB: most arrays are returned in fortran order to simplify plotting
+ * (i.e. frequencies in columns).  However, windows are
+ * returned/accepted in C order.
  */
 
 #include <Python.h>
@@ -150,12 +152,12 @@ libtfr_hermf(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "iid", &N, &M, &tm))
 		return NULL;
 
-	/* allocate output arrays */
-	tapers_shape[0] = N;
-	tapers_shape[1] = M;
-	h  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
-	Dh  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
-	Th  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
+	/* allocate output arrays; use C order to simplify passing back */
+	tapers_shape[0] = M;
+	tapers_shape[1] = N;
+	h  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,0);
+	Dh  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,0);
+	Th  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,0);
 
 	double *hp = (double*) PyArray_DATA(h);
 	double *Dhp = (double*) PyArray_DATA(Dh);
@@ -242,6 +244,7 @@ fail:
 	Py_XDECREF(outdata);
 	return NULL;
 }
+
 
 #ifndef NO_LAPACK
 static PyObject*
@@ -459,11 +462,11 @@ libtfr_dpss(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "idi", &N, &NW, &K))
 		return NULL;
 
-	/* allocate output arrays */
-	tapers_shape[0] = N;
-	tapers_shape[1] = K;
-	tapers  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,1);
-	lambdas = (PyArrayObject*) PyArray_ZEROS(1,tapers_shape+1,NPY_DOUBLE,1);
+	/* allocate output arrays; return in C order to simplify passing back */
+	tapers_shape[0] = K;
+	tapers_shape[1] = N;
+	tapers  = (PyArrayObject*) PyArray_ZEROS(2,tapers_shape,NPY_DOUBLE,0);
+	lambdas = (PyArrayObject*) PyArray_ZEROS(1,tapers_shape,NPY_DOUBLE,0);
 
 	double *taperp = (double*) PyArray_DATA(tapers);
 	double *lambdap = (double*) PyArray_DATA(lambdas);

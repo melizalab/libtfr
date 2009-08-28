@@ -35,7 +35,15 @@ extern "C" {
 /**
  * Multi-taper FFT transformation structure. Contains basic FFT
  * parameters as well as pointers to tapers (i.e. windowing
- * functions), output buffers, and the FFTW plan
+ * functions), output buffers, and the FFTW plan.
+ *
+ * nfft - number of points in the transformm
+ * npoints - size of the window/tapers
+ * ntapers - number of tapers
+ * tapers - array holding tapers, dimension ntapers x npoints
+ * lamdas - weights for tapers dimension ntapers
+ * buf    - workspace for FFTW, dimension ntapers x npoints
+ * plan   - FFTW plan
  */
 typedef struct {
 	int nfft;
@@ -56,14 +64,14 @@ typedef struct {
  *   nfft - number of points in the transform
  *   npoints - number of points in the tapers (windows)
  *   ntapers - number of tapers
- *   *tapers - pointer to npoints*ntapers array of windowing functions
+ *   *tapers - pointer to ntapers*npoints array of windowing functions
  *   *lambdas - eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
  *
  * Returns:
  *   pointer to mfft_params structure (owned by caller)
  *
  * Note:
- *   pointers to tapers and lambdas are now owned by the return mtfft structure
+ *   pointers to tapers and lambdas are now owned by the returned mfft structure
  */
 mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
 
@@ -110,7 +118,8 @@ void mtm_destroy(mfft *mtm);
 /**
  * Compute multitaper FFT of a signal. Note that this can be used for
  * single taper FFTs, if the mfft structure has been
- * initialized with a single window
+ * initialized with a single window.  The result is stored in the mfft
+ * buffer in half-complex format with dimension ntapers x nfft
  *
  * Inputs:
  *    mtm - parameters for the transform
@@ -154,8 +163,8 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *  adapt    - if true, use adaptive averaging between tapers (otherwise 'high-res')
  *
  * Outputs:
- *  spec     - output spectrogram, with dimension  (nfft/2+1) by (nsamples/shift).
- *             needs to be allocated and zero-filled before calling;
+ *  spec     - output spectrogram, with dimension  (nsamples/shift) by (nfft/2+1)
+ *             needs to be allocated and zero-filled before calling
  *             
  *
  */
@@ -178,7 +187,7 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  fgrid    - output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
  *
  * Outputs:
- *  spec     - output spectrogram, with dimension  (nfft/2+1) by (nsamples/shift).
+ *  spec     - output spectrogram, with dimension  (nsamples/shift) by (nfft/2+1)
  *             needs to be allocated and zero-filled before calling
  *
  */
@@ -198,7 +207,7 @@ void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *   k         how many DPSS vectors to return (up to npoints but k>nw*2-1 are not stable)
  *
  * Outputs:
- *   tapers  - k DPSS sequences in order of decreasing eigenvalue (size npoints*k)
+ *   tapers  - k DPSS sequences in order of decreasing eigenvalue (size k*npoints)
  *   lambdas - k eigenvalues associated with each taper
  *   [outputs need to be allocated]
  *
