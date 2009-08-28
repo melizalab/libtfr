@@ -32,18 +32,21 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
     return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock, fgrid)
 
-def stft(s, w, step, N=0):
+def stft(s, w, step, N=0, complex=False):
     """
     Compute short time Fourier transforms with arbitrary window functions
 
     s - input signal (real)
-    w - window function, N-vector
+    w - window function, N-vector or KxN array (for multiple tapers)
     step - step size (in samples)
     N - size of FFT transform (defaults to size of window)
+    complex - if True, return complex results (default False)
 
-    returns N/2+1 by L spectrogram
+    returns N/2+1 by L spectrogram (or N by L by K for complex)
     """
-    return _libtfr.stft(s, w, step, N)
+    S = _libtfr.stft(s, w, step, N, complex)
+    # reorder axes here
+    return S.swapaxes(1,2) if complex else S
 
 def hermf(N, order=6, tm=6.0):
     """

@@ -29,6 +29,16 @@ coerce_ndarray_double(PyArrayObject *in, PyArrayObject **out)
 }
 
 static void
+cmplx_c99tonpy(const complex double *in, npy_cdouble *out, unsigned int n)
+{
+	unsigned int i;
+	for (i = 0; i < n; i++, out++, in++) {
+		out->real = creal(*in);
+		out->imag = cimag(*in);
+	}
+}
+
+static void
 hc2cmplx(const mfft *mtm, npy_cdouble *out)
 {
 	int nfft = mtm->nfft;
@@ -179,12 +189,15 @@ libtfr_stft(PyObject *self, PyObject *args)
 	PyArrayObject *window = NULL;
 	int step;
 	int N = 0;
-	int Npoints;
+	int Npoints, Ntapers, Ntimes;
 
 	/* output data */
-	npy_intp out_shape[2];
+	npy_intp out_shape[3];
 	PyArrayObject *outdata = NULL;
+	int do_complex = 0;
 	double *spec;
+	complex double *zspec_tmp;
+	npy_cdouble *zspec;
 
 	/* internal stuff */
 	mfft *mtmh;
@@ -192,27 +205,28 @@ libtfr_stft(PyObject *self, PyObject *args)
 	double *windowp;
 
 	/* parse arguments */
-	if (!PyArg_ParseTuple(args, "OOi|i", &o, &o2, &step, &N))
+	if (!PyArg_ParseTuple(args, "OOi|ii", &o, &o2, &step, &N, &do_complex))
 		return NULL;
 	signal = (PyArrayObject*) PyArray_FromAny(o, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
 	if (signal==NULL) {
 		PyErr_SetString(PyExc_TypeError, "Input signal must be an ndarray");
 		return NULL;
 	}
-	window = (PyArrayObject*) PyArray_FromAny(o2, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
+	window = (PyArrayObject*) PyArray_FromAny(o2, NULL, 1, 2, NPY_CONTIGUOUS, NULL);
 	if (window==NULL) {
-		PyErr_SetString(PyExc_TypeError, "Window function must be an ndarray");
+		PyErr_SetString(PyExc_TypeError, "Window must be a 1D or 2D ndarray");
 		goto fail;
 	}
-	Npoints = PyArray_SIZE(window);
-
-	/* allocate output array */
-	if (N < 1)
-		N = Npoints;
-	out_shape[0] = N/2+1;
-	out_shape[1] = PyArray_SIZE(signal) / step;
-	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
-	spec = (double*) PyArray_DATA(outdata);
+	/* determine dimensions of window */
+	if (PyArray_NDIM(window)==1) {
+		Ntapers = 1;
+		Npoints = PyArray_DIM(window, 0);
+	}
+	else {
+		Ntapers = PyArray_DIM(window, 0);
+		Npoints = PyArray_DIM(window, 1);
+	}
+	Ntimes =  PyArray_SIZE(signal) / step;
 
 	/* coerce data to proper type */
 	samples = coerce_ndarray_double(signal, &signal_cast);
@@ -225,12 +239,31 @@ libtfr_stft(PyObject *self, PyObject *args)
 		PyErr_SetString(PyExc_TypeError, "Window function must be double precision float");
 		goto fail;
 	}
-	windowp = malloc(Npoints * sizeof(double));
-	memcpy(windowp, PyArray_DATA(window), Npoints * sizeof(double));
+	windowp = malloc(Npoints * Ntapers * sizeof(double));
+	memcpy(windowp, PyArray_DATA(window), Npoints * Ntapers * sizeof(double));
 
-	/* do the transform */
-	mtmh = mtm_init(N, Npoints, 1, windowp, NULL);
-	mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal), step, 0);
+	/* allocate outputs and do the transform */
+	if (N < 1)
+		N = Npoints;
+	mtmh = mtm_init(N, Npoints, Ntapers, windowp, NULL);
+	out_shape[0] = N/2+1;
+	if (do_complex) {
+		out_shape[1] = Ntapers;
+		out_shape[2] = Ntimes;
+		outdata  = (PyArrayObject*) PyArray_ZEROS(3,out_shape,NPY_CDOUBLE,1); // fortran-order
+		zspec = (npy_cdouble*) PyArray_DATA(outdata);
+		//printf("output dimensions: %d, %d, %d\n", out_shape[0], out_shape[1], out_shape[2]);
+		zspec_tmp = (complex double*)malloc(PyArray_SIZE(outdata) * sizeof(complex double));
+		mtm_zspec(mtmh, zspec_tmp, samples, PyArray_SIZE(signal), step);
+		cmplx_c99tonpy(zspec_tmp, zspec, PyArray_SIZE(outdata));
+		free(zspec_tmp);
+	}
+	else {
+		out_shape[1] = Ntimes;
+		outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // fortran-order
+		spec = (double*) PyArray_DATA(outdata);
+		mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal), step, 0);
+	}
 	mtm_destroy(mtmh);
 
 	Py_DECREF(signal);

@@ -177,6 +177,28 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 		pow[n] *= 2;
 }
 
+void
+mtcomplex(const mfft *mtm, double complex *out)
+{
+	int nfft = mtm->nfft;
+	int ntapers = mtm->ntapers;
+	int real_count = nfft / 2 + 1;
+	int imag_count = (nfft+1) / 2;  // not actually the count but the last index
+	int t,n;
+	double complex x;
+
+	for (t = 0; t < ntapers; t++) {
+		for (n = 0; n < real_count; n++) 
+		  out[t*real_count+n] = mtm->buf[t*nfft+n];
+		  //out[t*nfft+n] = out[t*nfft+(nfft-n)] = mtm->buf[t*nfft+n];
+		for (n = 1; n < imag_count; n++) {
+			x = mtm->buf[t*nfft+(nfft-n)] * I;
+			out[t*real_count+n] += x;
+			//out[t*nfft+(nfft-n)] += -x;
+		}
+	}
+}
+
 
 void
 mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
@@ -191,6 +213,21 @@ mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift
 		mtpower(mtm, spec+(t*real_count), (adapt) ? sigpow : 0.0);
 	}
 }
+
+void
+mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift)
+{
+	int t;
+	int nbins = nsamples / shift;
+	int N = mtm->nfft / 2 + 1;
+	int K = mtm->ntapers;
+
+	for (t = 0; t < nbins; t++) {
+		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
+		mtcomplex(mtm, spec+(t*N*K));
+	}
+}
+
 
 /* these functions are all used for generated tapers for classic MTM spectrograms */
 

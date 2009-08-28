@@ -27,6 +27,7 @@ extern "C" {
 #endif 
 
 #include <fftw3.h>
+#include <complex.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -49,7 +50,7 @@ typedef struct {
 	int nfft;
 	int npoints;
 	int ntapers;
-	double *tapers;
+	double *tapers;  
 	double *lambdas;
 	double *buf;
 	fftw_plan plan;
@@ -150,6 +151,19 @@ double mtfft(mfft *mtm, const double *data, int nbins);
  */
 void mtpower(const mfft *mtm, double *pow, double sigpower);
 
+
+/**
+ * Export complex multitaper transform of signal.
+ *
+ * Inputs:
+ *   mtm - mfft structure after running mtfft
+ *
+ * Outputs:
+ *   out - complex transform of signal.  Needs to be preallocated with
+ *         dimensions at least ntapers by nfft
+ */
+void mtcomplex(const mfft *mtm, double complex *out);
+
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
  *  This function 'fills' a spectrogram by calculating the PSD for each
@@ -169,6 +183,25 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *
  */
 void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
+
+/**
+ *  Compute a multitaper complex spectrogram by stepping through a signal.
+ *  This function 'fills' a spectrogram by calculating the complex FFT for each
+ *  frame in the signal.  If the mfft object is configured for multiple tapers,
+ *  these are not averaged.
+ *
+ * Inputs:
+ *  mtm - mfft structure; needs to be initialized with hermite tapers
+ *  samples - input signal
+ *  nsamples - number of points in input buffer
+ *  shift    - number of samples to shift in each frame
+ *
+ * Outputs:
+ *  spec     - output spectrogram, with dimension  (nsamples/shift) by (ntapers) by (nfft) 
+ *             
+ *
+ */
+void mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
