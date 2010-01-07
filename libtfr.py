@@ -11,7 +11,7 @@ import _libtfr
 
 #__version__ = _libtfr.__version__
 
-def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
+def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
     Compute time-frequency reassignment spectrogram of input signal s
 
@@ -24,10 +24,12 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5):
     flock - frequency locking parameter; power is not reassigned
 	    more than this value (normalized frequency; default 0.01)
     tlock - time locking parameter (in frames; default 5)
+    fgrid - output frequency bins: monotonic increase between 0 and 1
+            (default linear scale with N points)
 
     returns an N/2+1 by L power spectrogram (L = length(s) / step)
     """
-    return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock)
+    return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock, fgrid)
 
 def stft(s, w, step, N=0):
     """
@@ -90,7 +92,7 @@ if hasattr(_libtfr,'mtm_psd'):
 	return _libtfr.mtm_psd(s, NW, k, adapt)
 
 
-if hasattr(_libtfr,'mtm_psd'):
+if hasattr(_libtfr,'mtfft'):
     def mtfft(s, NW, k=0, N=0):
 	"""
 	Compute multitaper transform of a signal
@@ -122,3 +124,24 @@ if hasattr(_libtfr,'dpss'):
 	v - 2D array of eigenvalues, length n = (mtm_p * 2 - 1)
 	"""
 	return _libtfr.dpss(N,NW,k)
+
+
+def log_fgrid(fmin, fmax, N, Fs=None):
+    """
+    Generates a logarithmic frequency grid between fmin and fmax
+
+    fmin - first frequency
+    fmax  - last frequency
+    N      - number of points
+    base   - log base
+    Fs     - set to a positive value to convert values
+             to angular frequencies (Fs > fmax)
+    """
+    from numpy import log, logspace, e
+    lfmin, lfmax = log((fmin, fmax)) 
+    out = logspace(lfmin, lfmax, N, base=e)
+    if Fs:
+        assert Fs > fmax, "Fs must be greater than fmax"
+        return out / Fs
+    else:
+        return out

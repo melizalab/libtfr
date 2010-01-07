@@ -18,7 +18,6 @@
 #define SQR(a) ( (a) * (a) )
 #endif
 
-
 int
 hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
@@ -90,6 +89,27 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 	return mtm;
 }
 
+/**
+ * Determine closest bin in a grid of arbitrarily spaced
+ * frequencies. fgrid is assumed to be monotonically
+ * increasing. Transform values to do comparisons on a different scale
+ * (i.e. log).  Returns -1 if the test value is out of range.
+ *
+ */
+
+static int 
+find_bin(double f, const double *fgrid, int nfreq) {
+	double diff;
+	int i;
+	if (f < *fgrid || f > fgrid[nfreq-1]) return -1;
+	for (i = 1; i < nfreq; i++) {
+		diff = fgrid[i] - f;
+		if (diff >= 0)
+			return ((f-fgrid[i-1]) < diff) ? i-1 : i;
+	}
+	return -1;
+}
+
 void
 tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 {
@@ -127,7 +147,8 @@ tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
 
 void
 tfr_reassign(double *spec, const double *q, const double *tdispl, const double *fdispl,
-	     int N, int nfreq, double dt, double qthresh, double flock, int tminlock, int tmaxlock)
+	     int N, int nfreq, const double *fgrid, 
+	     double dt, double qthresh, double flock, int tminlock, int tmaxlock)
 {
 
 	int f, that, fhat;
@@ -136,12 +157,19 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 	for (f = 0; f < N; f++) {
 		//spec[f] += q[f];
 		fref = (1.0 * f) / N;
-		fhat = (int)round((fref - fdispl[f] * 2.0)*nfreq); // note 2xfdisplace for 1-sided psd
+		if (fgrid==0) {
+			fhat = (int)round((fref - fdispl[f] * 2.0)*nfreq); // note 2xfdisplace for 1-sided psd
+			if ((fhat < 0) || (fhat >= nfreq))
+				continue;
+		}
+		else {
+			fhat = find_bin(fref - fdispl[f] * 2.0, fgrid, nfreq);
+			if (fhat <  0)
+				continue;
+		}
 		that = (int)round(tdispl[f] / dt);
 		//printf("\n%d: %d,%d (%3.3f)", f, fhat, that, q[f]);
 		// check that we're in bounds, within locking distance, and above thresh
-		if ((fhat < 0) || (fhat >= nfreq))
-			continue;
 		if (q[f] <= qthresh)
 			continue;
 		if ((flock > 0) && (fabs(fdispl[f]) > flock))
@@ -156,12 +184,13 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 
 void
 tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	 double flock, int tlock)
+	 double flock, int tlock, int nfreq, const double *fgrid)
 {
 	int t,mink = 0;
 	int nbins = nsamples / shift;
 	int real_count = mtm->nfft / 2 + 1;
 	int K = mtm->ntapers / 3;
+	if (nfreq <= 0) nfreq = real_count;
 
 	double pow = 0.0;
 	for (t = 0; t < nsamples; t++)
@@ -182,9 +211,9 @@ tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, in
 		mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
 		tfr_displacements(mtm, q, td, fd);
 		for (k = mink; k < K; k++) {
-			tfr_reassign(spec+(t*real_count),
+			tfr_reassign(spec+(t*nfreq),
 				     q+(k*real_count), td+(k*real_count), fd+(k*real_count),
-				     real_count, real_count, shift, 1e-6*pow,
+				     real_count, nfreq, fgrid, shift, 1e-6*pow,
 				     flock*(k+1), (t < tlock) ? t : tlock, (t+tlock >= nbins) ? nbins-t-1 : tlock);
 		}
 	}
@@ -192,3 +221,4 @@ tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, in
 	free(td);
 	free(fd);
 }
+	

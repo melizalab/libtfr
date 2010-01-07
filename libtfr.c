@@ -56,6 +56,9 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 	PyObject *o = NULL;
 	PyArrayObject *signal = NULL;
 	PyArrayObject *signal_cast = NULL;
+	PyObject *o2 = NULL;
+	PyArrayObject *fgrid = NULL;
+	PyArrayObject *fgrid_cast = NULL;
 	int N;
 	int step;
 	int Np;
@@ -72,18 +75,32 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 	/* internal stuff */
 	mfft *mtmh;
 	double *samples;
+	double *fgridp = NULL;
 
 	/* parse arguments */
-	if (!PyArg_ParseTuple(args, "Oiii|iddi", &o, &N, &step, &Np, &K, &tm, &flock, &tlock))
+	if (!PyArg_ParseTuple(args, "Oiii|iddiO", &o, &N, &step, &Np, &K, &tm, &flock, &tlock, &o2))
 		return NULL;
 	signal = (PyArrayObject*) PyArray_FromAny(o, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
 	if (signal==NULL) {
 		PyErr_SetString(PyExc_TypeError, "Input signal must be an ndarray");
 		return NULL;
 	}
+	int nfreq = N/2+1;
+
+	if (o2!=NULL && o2!=Py_None) {
+		fgrid = (PyArrayObject*) PyArray_FromAny(o2, NULL, 1, 1, NPY_CONTIGUOUS, NULL);
+		if (fgrid!=NULL) {
+			fgridp = coerce_ndarray_double(fgrid, &fgrid_cast);
+			if (fgridp==NULL) {
+				PyErr_SetString(PyExc_TypeError, "Unable to cast frequency grid to supported data type");
+				goto fail;
+			}
+			nfreq = PyArray_SIZE(fgrid);
+		}
+	}
 
 	/* allocate output array */
-	out_shape[0] = N/2+1;
+	out_shape[0] = nfreq;
 	out_shape[1] = PyArray_SIZE(signal) / step;
 	outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
 	spec = (double*) PyArray_DATA(outdata);
@@ -98,13 +115,17 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 	/* do the transform */
 	mtmh = mtm_init_herm(N, Np, K, tm);
 	tfr_spec(mtmh, spec, samples, PyArray_SIZE(signal),
-		 -1, step, flock, tlock);
+		 -1, step, flock, tlock, nfreq, fgridp);
 	mtm_destroy(mtmh);
 
 	Py_DECREF(signal);
 	Py_XDECREF(signal_cast);
+	Py_XDECREF(fgrid);
+	Py_XDECREF(fgrid_cast);
 	return PyArray_Return(outdata);
 fail:
+	Py_XDECREF(fgrid_cast);
+	Py_XDECREF(fgrid);
 	Py_XDECREF(signal_cast);
 	Py_XDECREF(signal);
 	Py_XDECREF(outdata);

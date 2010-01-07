@@ -80,6 +80,8 @@ if __name__=="__main__":
         spec  = stft(s, w, step)
 	mspec = mtm_spec(s, N, step, NW)
 	tspec = tfr_spec(s, N, step, Np, k, tm)
+	tspec_zoom = tfr_spec(s, N, step, Np, k, tm, fgrid=nx.linspace(0.2,0.95,512))
+	tspec_log = tfr_spec(s, N, step, Np, k, tm, fgrid=log_fgrid(0.2, 0.9, 256))
 
 
 # Variables:
