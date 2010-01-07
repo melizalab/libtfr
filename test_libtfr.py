@@ -64,6 +64,10 @@ if __name__=="__main__":
     tm = 6.0
     Np = 201
 
+    import sys
+    nloop = 1 if len(sys.argv) == 1 else int(sys.argv[1])
+        
+
     # generate a nice dynamic signal
     siglen = 17590
     ss,iff = fmsin(siglen, .15, 0.45, 1024, 256/4,0.3,-1)
@@ -71,7 +75,7 @@ if __name__=="__main__":
 
     w = get_window('hamming',N)
 
-    for i in range(1):
+    for i in range(nloop):
 	print i
 	h,Dh,Th = hermf(N, k, tm)
 	E,V   = dpss(N, NW, k)
