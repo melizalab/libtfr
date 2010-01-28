@@ -145,3 +145,54 @@ def log_fgrid(fmin, fmax, N, Fs=None):
         return out / Fs
     else:
         return out
+
+# utility functions
+def fgrid(Fs,nfft,fpass):
+    """
+    Calculate the frequency grid associated with an fft computation
+
+    Usage: [f,findx]=fgrid(Fs,nfft,fpass)
+
+    Fs        sampling frequency associated with the data
+    nfft      number of points in fft
+    fpass     range of frequencies over which the fft is being calculated
+              [fmin fmax], in Hz
+    Outputs:
+    f         frequencies
+    findx     index of the frequencies in the full frequency grid.
+
+    Example:
+    
+    If Fs=1000, and nfft=1048, an fft calculation of a real signal
+    generates 512 frequencies between 0 and 500 (i.e. Fs/2) Hz. Now if
+    fpass=(0,100), findx will contain the indices in the frequency grid
+    corresponding to frequencies < 100 Hz.
+
+    From Chronux 1_50
+    """
+    from numpy import arange, abs
+    
+    df = float(Fs)/ nfft
+    f = arange(0,Fs,df)  # all possible frequencies
+
+    if len(fpass)!=1:
+        findx = ((f>=fpass[0]) & (f<=fpass[-1])).nonzero()[0]
+    else:
+        findx = abs(f-fpass).argmin()
+
+    return f[findx], findx
+
+def tgrid(siglen, Fs, shift):
+    """
+    Calculate the time grid associated with an STFT
+
+    Usage: t = tgrid(siglen, Fs,shift)
+
+    Inputs:
+    siglen    length of signal (in samples)
+    Fs        sampling frequency associated with the data
+    shift     number of samples shifted between data frames
+    """
+    from numpy import arange
+    Fs = 1. * Fs
+    return arange(0, siglen / Fs, 1 / Fs * shift)
