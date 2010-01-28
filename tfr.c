@@ -156,14 +156,14 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 
 	for (f = 0; f < N; f++) {
 		//spec[f] += q[f];
-		fref = (1.0 * f) / N;
+		fref = (0.5 * f) / N;
 		if (fgrid==0) {
-			fhat = (int)round((fref - fdispl[f] * 2.0)*nfreq); // note 2xfdisplace for 1-sided psd
+			fhat = (int)round((fref - fdispl[f])*2.0*nfreq);
 			if ((fhat < 0) || (fhat >= nfreq))
 				continue;
 		}
 		else {
-			fhat = find_bin(fref - fdispl[f] * 2.0, fgrid, nfreq);
+			fhat = find_bin(fref - fdispl[f], fgrid, nfreq);
 			if (fhat <  0)
 				continue;
 		}

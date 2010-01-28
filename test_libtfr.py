@@ -76,7 +76,7 @@ if __name__=="__main__":
     w = get_window('hamming',N)
 
     for i in range(nloop):
-	print i
+	print "Loop %d" % i
 	h,Dh,Th = hermf(N, k, tm)
 	E,V   = dpss(N, NW, k)
 	mpsd  = mtm_psd(s[8300:8600], NW)
@@ -84,8 +84,8 @@ if __name__=="__main__":
         spec  = stft(s, w, step)
 	mspec = mtm_spec(s, N, step, NW)
 	tspec = tfr_spec(s, N, step, Np, k, tm)
-	tspec_zoom = tfr_spec(s, N, step, Np, k, tm, fgrid=nx.linspace(0.2,0.95,512))
-	tspec_log = tfr_spec(s, N, step, Np, k, tm, fgrid=log_fgrid(0.2, 0.9, 256))
+	tspec_zoom = tfr_spec(s, N, step, Np, k, tm, fgrid=nx.linspace(0.1,0.475,512))
+	tspec_log = tfr_spec(s, N, step, Np, k, tm, fgrid=log_fgrid(0.1, 0.45, 256))
 
 
 # Variables:

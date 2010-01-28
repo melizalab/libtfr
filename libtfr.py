@@ -24,10 +24,11 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     flock - frequency locking parameter; power is not reassigned
 	    more than this value (normalized frequency; default 0.01)
     tlock - time locking parameter (in frames; default 5)
-    fgrid - output frequency bins: monotonic increase between 0 and 1
-            (default linear scale with N points)
+    fgrid - output frequency bins: monotonically increasing
+            (default linear scale with N points; Nyquist is 1.0)
 
-    returns an N/2+1 by L power spectrogram (L = length(s) / step)
+    returns an N/2+1 by L power spectrogram (L = length(s) / step), or if
+    fgrid is specified, fgrid.size by L
     """
     return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock, fgrid)
 
@@ -135,7 +136,7 @@ def log_fgrid(fmin, fmax, N, Fs=None):
     N      - number of points
     base   - log base
     Fs     - set to a positive value to convert values
-             to angular frequencies (Fs > fmax)
+             to relative frequencies
     """
     from numpy import log, logspace, e
     lfmin, lfmax = log((fmin, fmax)) 

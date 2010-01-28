@@ -164,7 +164,7 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  flock    - frequency locking parameter (normalized frequency units)
  *  tlock    - time locking parameter (in frames)
  *  nfreq    - output frequency resolution; if <= 0, defaults to nfft/2+1
- *  fgrid    - output frequency grid; if NULL, defaults to linear scale from 0 to 1.0 (normalized freq)
+ *  fgrid    - output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
  *
  * Outputs:
  *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
