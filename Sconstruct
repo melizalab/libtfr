@@ -1,18 +1,17 @@
 
 import os
 
+if hasattr(os,'uname'):
+    system = os.uname()[0]
+else:
+    system = 'Windows'
+
 # source files and libraries
 src_files = ['mtm.c', 'tfr.c']
 hdr_files = ['tfr.h']
-libs = ['m','fftw3']
-# setting up the lapack dependency is tricky.
-# This should work for vecLib under OS X:
-lapack_libs = ['lapack']
-# For ATLAS you'll need to include some other dependencies:
-#lapack_libs = ['atlas','cblas','f77blas','lapack']
+libs = ['m']
 
-include_path = ['/opt/local/include']
-lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64','/opt/local/lib']
+lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64',]
 
 # install location
 AddOption('--prefix',
@@ -37,24 +36,24 @@ Type: 'scons' to build the library
 # build options
 env = Environment(LIBPATH = lib_path,
                   CCFLAGS = ['-O2', '-std=c99'])
-env.Append(CPPPATH = include_path)
+
+# system-specific settings
+if system=='Darwin':
+    env.Append(LIBS = ['lapack'],
+               CPPPATH = ['/opt/local/include'],
+               LIBPATH = ['/opt/local/lib'])
+elif system=='Linux':
+    env.Append(LIBS = ['atlas','cblas','f77blas','lapack'])
+
 
 # check platform configuration
 if not env.GetOption('clean'):
     conf = Configure(env)
-    if not conf.CheckLibWithHeader('m', 'math.h', 'c'):
-        print 'Did not find libm.a or m.lib; exiting'
-        Exit(1)
     if not conf.CheckLibWithHeader('fftw3','fftw3.h','c'):
         print "Did not find fftw3 library; exiting"
         Exit(1)
-    for lib in lapack_libs:
-        # this is a bit kludgy as all the libraries that ARE found still get linked.
-        if not conf.CheckLib(lib):
-            print "Did not find lapack library; MTM spectrograms disabled"
-            conf.env.Append(CCFLAGS = ['-DNO_LAPACK'])
-            break
     env = conf.Finish()
+
 
 sharedobjs = env.SharedObject(src_files)
 slib = env.StaticLibrary('libtfrspec', source = src_files)
