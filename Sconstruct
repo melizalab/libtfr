@@ -56,8 +56,8 @@ if not env.GetOption('clean'):
 
 
 sharedobjs = env.SharedObject(src_files)
-slib = env.StaticLibrary('libtfrspec', source = src_files)
-dylib = env.SharedLibrary('libtfrspec', sharedobjs)
+slib = env.StaticLibrary('libtfr', source = src_files)
+dylib = env.SharedLibrary('libtfr', sharedobjs)
 
 env.Alias('lib', [slib, dylib])
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))

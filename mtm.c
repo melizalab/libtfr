@@ -194,7 +194,6 @@ mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift
 
 /* these functions are all used for generated tapers for classic MTM spectrograms */
 
-#ifndef NO_LAPACK
 /**
  * Scale a vector by its L2 norm
  *
@@ -362,4 +361,3 @@ mtm_init_dpss(int nfft, double nw, int ntapers)
 	return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
 }
 
-#endif

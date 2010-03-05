@@ -1,5 +1,7 @@
 /*
- * tfr.h
+ * @file   tfr.h
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:35:27 2010
  *
  * The libtfrspec library computes multi-tapered time-frequency
  * reassignment spectrograms from real-valued time
@@ -14,6 +16,11 @@
  * discrete steps and using the transforms of each step to caculate
  * the power and time-frequency displacements.  All of these steps can
  * be combined by using the tfr_spec functions.
+ *
+ * Copyright C Daniel Meliza 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ *
  */
 #include <fftw3.h>
 
@@ -56,7 +63,6 @@ typedef struct {
  */
 mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
 
-#ifndef NO_LAPACK
 /**
  * Initialize a mtfft transform using DPSS tapers (i.e. for a standard
  * multitaper transform)
@@ -70,7 +76,6 @@ mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambd
  *   pointer to mfft structure (owned by caller)
  */
 mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
-#endif
 
 /**
  *  Initialze the mtm engine to compute FFT transforms using the hermitian

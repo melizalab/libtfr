@@ -107,6 +107,7 @@ if hasattr(_libtfr,'mtfft'):
 	"""
 	return _libtfr.mtfft(s, NW, k, N)
 
+
 if hasattr(_libtfr,'dpss'):
     def dpss(N, NW, k):
 	"""
@@ -194,6 +195,5 @@ def tgrid(siglen, Fs, shift):
     Fs        sampling frequency associated with the data
     shift     number of samples shifted between data frames
     """
-    from numpy import arange
-    Fs = 1. * Fs
-    return arange(0, siglen / Fs, 1 / Fs * shift)
+    from numpy import linspace
+    return linspace(0, 1. * siglen/Fs, siglen / shift)
