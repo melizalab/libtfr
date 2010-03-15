@@ -197,3 +197,14 @@ def tgrid(siglen, Fs, shift):
     """
     from numpy import linspace
     return linspace(0, 1. * siglen/Fs, siglen / shift)
+
+
+def dynamic_range(S, dB):
+    """
+    Compress a spectrogram's dynamic range by thresholding all values dB less than
+    the peak of S (linear scale).
+    """
+    from numpy import log10,where
+    smax = S.max()
+    thresh = 10**(log10(smax) - dB/10.)
+    return where(S >= thresh, S, thresh)
