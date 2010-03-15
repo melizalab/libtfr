@@ -24,10 +24,12 @@
  */
 #ifdef __cplusplus
 extern "C" {
+#include <complex>
+#else
+#include <complex.h>
 #endif 
 
 #include <fftw3.h>
-#include <complex.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -162,7 +164,7 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *   out - complex transform of signal.  Needs to be preallocated with
  *         dimensions at least ntapers by nfft
  */
-void mtcomplex(const mfft *mtm, double complex *out);
+void mtcomplex(const mfft *mtm, _Complex double *out);
 
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
@@ -201,7 +203,7 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *             
  *
  */
-void mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift);
+void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsamples, int shift);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
