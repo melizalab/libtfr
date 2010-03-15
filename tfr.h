@@ -22,6 +22,10 @@
  * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
  *
  */
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 #include <fftw3.h>
 
 #ifndef M_PI
@@ -176,7 +180,7 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *
  */
 void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	      double flock, int tlock, int freq, const double *fgrid);
+	      double flock, int tlock, int nfreq, const double *fgrid);
 
 /* taper generating functions */
 
@@ -279,3 +283,6 @@ void tfr_reassign(double *spec, const double *q, const double *tdispl, const dou
 		  int N, int nfreq, const double *fgrid,
 		  double dt, double qthresh, double flock, int tminlock, int tmaxlock);
 
+#ifdef __cplusplus
+}
+#endif
