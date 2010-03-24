@@ -48,14 +48,12 @@ installed. SCONS will attempt to detect whether this library exists;
 however, LAPACK libraries are notoriously difficult to find.  Edit the
 lapack_libs line in the Sconstruct file to help SCONS find them.
 
-To build the MATLAB mex file, after building the library type:
+To build the MATLAB mex file:
 
-mex tfrspec.c tfr.os mtm.os
+scons mex
 
-Note that you have to use the shared objects in order for MEX to
-generate a dynamically loadable file. Copy the mex file (the extension
-will depend on your platform) and the associated mfile to a location
-in your MATLAB path.
+Copy the mex file (the extension will depend on your platform) and the
+associated mfile (tfrspec.m) to a location in your MATLAB path.
 
 ** Algorithm and usage notes:
 

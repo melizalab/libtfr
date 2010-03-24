@@ -35,7 +35,8 @@ Type: 'scons' to build the library
 
 # build options
 env = Environment(LIBPATH = lib_path,
-                  CCFLAGS = ['-O2', '-std=c99'])
+                  CCFLAGS = ['-O2', '-std=c99'],
+                  tools=['default','mex'])
 
 # system-specific settings
 if system=='Darwin':
@@ -83,3 +84,9 @@ pylib = pyenv.SharedLibrary('_libtfr',['libtfr.c',sharedobjs])
 
 pyenv.Alias('python', pylib)
 pyenv.Alias('python-install', pyenv.Install(pybase, [pylib, 'libtfr.py']))
+
+# matlab mex-file
+
+mex_ext = env['MEX_EXT']
+mex = env.MEX('tfrspec.'+mex_ext, ['tfrspec.c', sharedobjs])
+env.Alias("mex",mex)

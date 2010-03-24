@@ -19,8 +19,6 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mfft* mtmh;
 
 	mxClassID data_type;
-	short *data_short;
-	float *data_float;
 	double *data_double;
 
 	if (nlhs < 1)
@@ -36,8 +34,8 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	nt = (m > n) ? m : n;
 	/* check data type */
 	data_type = mxGetClassID(prhs[0]);
-	if (!((data_type==mxINT16_CLASS) || (data_type==mxSINGLE_CLASS) || (data_type==mxDOUBLE_CLASS)))
-		mexErrMsgTxt("Input signal must be short int, float, or double precision");
+	if (!(data_type==mxDOUBLE_CLASS))
+		mexErrMsgTxt("Input signal must be double precision");
 
 	/*data_double = mxGetPr(prhs[0]);*/
 	nfft = mxGetScalar(prhs[1]);
@@ -60,19 +58,8 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mtmh = mtm_init_herm(nfft, npoints, ntapers, tm);
 
 	/* calculate spectrogram; use the right precision fxn */
-	if (data_type==mxDOUBLE_CLASS) {
-		data_double = mxGetPr(prhs[0]);
-		tfr_spec_double(mtmh, spec, data_double, nt, -1, step, flock, tlock);
-	} 
-	else if (data_type == mxSINGLE_CLASS) {
-		data_float = (float*)mxGetPr(prhs[0]);
-		tfr_spec_float(mtmh, spec, data_float, nt, -1, step, flock, tlock);
-	}
-	else if (data_type == mxINT16_CLASS) {
-		data_short = (short*)mxGetPr(prhs[0]);
-		tfr_spec(mtmh, spec, data_short, nt, -1, step, flock, tlock);
-	}
-
+	data_double = mxGetPr(prhs[0]);
+	tfr_spec(mtmh, spec, data_double, nt, -1, step, flock, tlock, -1, 0);
 
 	mtm_destroy(mtmh);
 }
