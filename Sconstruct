@@ -30,7 +30,10 @@ else:
 Help("""
 Type: 'scons' to build the library
       'scons install' to install library and headers under %s
-      (use --prefix  to change this)
+      'scons python' to build python extension module
+      'scons python-install' to install python extension module
+      'scons matlab' to compile mex file
+      (use --prefix  to change library installation location)
 """ % install_prefix)
 
 # build options
@@ -86,7 +89,6 @@ pyenv.Alias('python', pylib)
 pyenv.Alias('python-install', pyenv.Install(pybase, [pylib, 'libtfr.py']))
 
 # matlab mex-file
-
-mex_ext = env['MEX_EXT']
-mex = env.MEX('tfrspec.'+mex_ext, ['tfrspec.c', sharedobjs])
-env.Alias("mex",mex)
+if hasattr(env,'MEX'):
+    mex = env.MEX('tfrspec', ['tfrspec.c', sharedobjs])
+    env.Alias("mex",mex)
