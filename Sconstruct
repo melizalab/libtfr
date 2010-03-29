@@ -39,7 +39,7 @@ Type: 'scons' to build the library
 # build options
 env = Environment(LIBPATH = lib_path,
                   CCFLAGS = ['-O2', '-std=c99'],
-                  tools=['default','mex'])
+                  tools=['default','mex','pyext'])
 
 # system-specific settings
 if system=='Darwin':
@@ -68,25 +68,10 @@ env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_fi
 env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
 
 # Python module
-import distutils.sysconfig
-pybase = distutils.sysconfig.get_python_lib(plat_specific=1)
-pyvars = distutils.sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS', 'CCSHARED', 'LDSHARED', 'SO')
-(cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = [x if x!=None else '' for x in pyvars]
-nxdir = os.path.join(pybase, 'numpy/core/include')
+pylib = env.PyExt('_libtfr','libtfr.c',sharedobjs)
 
-pyenv = env.Clone()
-pyenv.Replace(CC=cc,
-              SHLINK=ldshared,
-              SHLINKFLAGS=[],
-              SHLIBPREFIX="",
-              SHLIBSUFFIX=so_ext,)
-pyenv.Append(CPPPATH=[distutils.sysconfig.get_python_inc(), nxdir],
-             CPPFLAGS=basecflags + " " + opt)
-
-pylib = pyenv.SharedLibrary('_libtfr',['libtfr.c',sharedobjs])
-
-pyenv.Alias('python', pylib)
-pyenv.Alias('python-install', pyenv.Install(pybase, [pylib, 'libtfr.py']))
+env.Alias('python', pylib)
+env.Alias('python-install', env.PyInstall([pylib, 'libtfr.py']))
 
 # matlab mex-file
 if hasattr(env,'MEX'):
