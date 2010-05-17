@@ -37,7 +37,8 @@ Type: 'scons' to build the library
 """ % install_prefix)
 
 # build options
-env = Environment(LIBPATH = lib_path,
+env = Environment(LIBS = ['fftw3'],
+                  LIBPATH = lib_path,
                   CCFLAGS = ['-O2', '-std=c99'],
                   tools=['default','mex','pyext'])
 
@@ -50,18 +51,10 @@ elif system=='Linux':
     env.Append(LIBS = ['atlas','cblas','f77blas','lapack'])
 
 
-# check platform configuration
-if not env.GetOption('clean'):
-    conf = Configure(env)
-    if not conf.CheckLibWithHeader('fftw3','fftw3.h','c'):
-        print "Did not find fftw3 library; exiting"
-        Exit(1)
-    env = conf.Finish()
-
-
 sharedobjs = env.SharedObject(src_files)
 slib = env.StaticLibrary('libtfr', source = src_files)
 dylib = env.SharedLibrary('libtfr', sharedobjs)
+test_prog = env.Program('test_tfr', ['test_tfr.c', slib])
 
 env.Alias('lib', [slib, dylib])
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
