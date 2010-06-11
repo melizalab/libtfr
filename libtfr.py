@@ -9,7 +9,7 @@ dmeliza@uchicago.edu
 
 import _libtfr
 
-#__version__ = _libtfr.__version__
+__version__ = "1.0.0"
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """

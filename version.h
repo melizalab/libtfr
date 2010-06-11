@@ -1,1 +1,1 @@
-#define LIBTFR_VERSION 0.99.6
+#define LIBTFR_VERSION 1.0.0
