@@ -276,12 +276,14 @@ fftconv(int N, const double *x, double *y)
 	memcpy(X, x, sizeof(double)*N);
 	plan = fftw_plan_dft_r2c_1d(N*2, X, X1, FFTW_ESTIMATE);
 	fftw_execute(plan);
+	fftw_destroy_plan(plan);
 
 	// flip x and compute again
 	for (i = 0; i < N; i++)
 		X[i] = x[N-1-i];
 	plan = fftw_plan_dft_r2c_1d(N*2, X, X2, FFTW_ESTIMATE);
 	fftw_execute(plan);
+	fftw_destroy_plan(plan);
 
 	for (i = 0; i < N; i++)
 		X1[i] *= X2[i];
@@ -289,13 +291,13 @@ fftconv(int N, const double *x, double *y)
 	// inverse fft
 	plan = fftw_plan_dft_c2r_1d(N*2, X1, X, FFTW_ESTIMATE);
 	fftw_execute(plan);
+	fftw_destroy_plan(plan);
 
 	for (i = 0; i < N; i++)
 		y[i] = X[i] / N / 2;
 	fftw_free(X1);
 	fftw_free(X2);
 	free(X);
-	fftw_destroy_plan(plan);
 }
 
 
