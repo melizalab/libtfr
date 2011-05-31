@@ -1,4 +1,3 @@
-
 import os
 
 if hasattr(os,'uname'):
@@ -10,8 +9,6 @@ else:
 src_files = ['mtm.c', 'tfr.c']
 hdr_files = ['tfr.h']
 libs = ['m']
-
-lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64',]
 
 # install location
 AddOption('--prefix',
@@ -31,12 +28,13 @@ Help("""
 Type: 'scons' to build the library
       'scons install' to install library and headers under %s
       'scons matlab' to compile mex file
+      'scons test' to compile the test program
       (use --prefix  to change library installation location)
 """ % install_prefix)
 
 # build options
-env = Environment(LIBS = ['fftw3'],
-                  LIBPATH = lib_path,
+env = Environment(ENV = os.environ,
+                  LIBS = ['fftw3'],
                   CCFLAGS = ['-O2', '-std=c99'],
                   tools=['default','mex'])
 

@@ -41,7 +41,6 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 		for (i = 0; i < ntapers; i++) mtm->lambdas[i] = 1.0;
 	}
 
-	//fftw_init_threads();
 
 	mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
 	//mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
@@ -54,7 +53,6 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
 		kind[i] = FFTW_R2HC;
 	}
 
-	//fftw_plan_with_nthreads(NTHREADS);
 	mtm->plan = fftw_plan_many_r2r(1, n_array, ntapers,
 				       mtm->buf, NULL, 1, nfft,
 				       mtm->buf, NULL, 1, nfft,
@@ -229,7 +227,7 @@ mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, 
 }
 
 
-/* these functions are all used for generated tapers for classic MTM spectrograms */
+/* these functions are all used in generating tapers for classic MTM spectrograms */
 
 /**
  * Scale a vector by its L2 norm

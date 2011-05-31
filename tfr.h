@@ -1,6 +1,6 @@
 /*
  * @file   tfr.h
- * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @author C Daniel Meliza <dmeliza@uchicago.edu>
  * @date   Mon Mar  1 13:35:27 2010
  *
  * The libtfrspec library computes multi-tapered time-frequency

@@ -85,7 +85,6 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
 
 	mfft* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
 
-	//printf("NFFT= %d; npoints= %d; ntapers=%d\n", mtm->nfft, mtm->npoints, mtm->ntapers);
 	return mtm;
 }
 
@@ -96,7 +95,6 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
  * (i.e. log).  Returns -1 if the test value is out of range.
  *
  */
-
 static int 
 find_bin(double f, const double *fgrid, int nfreq) {
 	double diff;
