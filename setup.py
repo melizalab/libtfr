@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 # -*- mode: python -*-
-from setuptools import setup, find_packages
+#from setuptools import setup, find_packages
 from numpy.distutils.core import setup, Extension
 import os,sys
 
@@ -27,8 +27,6 @@ setup(
                              sources=['libtfr.c','tfr.c','mtm.c'],
                              libraries=ext_libs,
                              include_dirs=ext_incl)],
-
-    install_requires = ["numpy>=1.3"],
 
     description = "Python package for calculating tfr and mtm spectrograms",
 

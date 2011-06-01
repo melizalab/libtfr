@@ -157,24 +157,6 @@ Additional improvements in resolution may be achievable averaging
 across different window sizes, or by using other averaging methods
 (i.e. as in Xiao and Flandrin)
 
-References:
-
-[fn:1] http://tftb.nongnu.org/
-
-[fn:2] Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment
-       for Nonstationary Spectrum Estimation and Chirp Enhancement
-       Signal Processing, IEEE Transactions on, Signal Processing, IEEE
-       Transactions on, 2007, 55, 2851-2860
-      
-       code: http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html
-
-[fn:3] Gardner, T. J. & Magnasco, M. O. Sparse time-frequency
-       representations. Proc. Natl. Acad. Sci. U S A, 2006, 103,
-       6094-6099
-
-       code: http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m 
-
-
 * License
 
 libtfrspec was written by C Daniel Meliza (dmeliza@uchicago.edu) and
@@ -189,3 +171,18 @@ OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR
 IMPLIED. IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO OR DR. MELIZA BE
 LIABLE FOR ANY DIRECT OR CONSEQUENTIAL DAMAGES RESULTING FROM USE OF
 THE PROGRAMS.  THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
+
+* References
+
+[fn:1] http://tftb.nongnu.org/
+
+[fn:2] Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment
+       for Nonstationary Spectrum Estimation and Chirp Enhancement
+       Signal Processing, IEEE Transactions on, Signal Processing, IEEE
+       Transactions on, 2007, 55, 2851-2860
+       code: http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html
+
+[fn:3] Gardner, T. J. & Magnasco, M. O. Sparse time-frequency
+       representations. Proc. Natl. Acad. Sci. U S A, 2006, 103,
+       6094-6099
+       code: http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m 

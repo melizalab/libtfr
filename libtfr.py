@@ -8,7 +8,8 @@ General Public License, Version 2.  See COPYING for details.
 """
 
 import _libtfr
-from _libtfr import __version__
+
+__version__ = _libtfr.__version__
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
