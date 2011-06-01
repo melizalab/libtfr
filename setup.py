@@ -18,10 +18,10 @@ if system=='Darwin':
     ext_incl.append('/opt/local/include')
 elif system=='Linux':
     ext_libs.extend(('atlas','cblas','f77blas','lapack'))
-    
+
 setup(
     name = 'libtfr',
-    version = "1.0.0",  
+    version = "1.0.1",
     py_modules = ['libtfr'],
     ext_modules = [Extension('_libtfr',
                              sources=['libtfr.c','tfr.c','mtm.c'],
@@ -31,7 +31,7 @@ setup(
     install_requires = ["numpy>=1.3"],
 
     description = "Python package for calculating tfr and mtm spectrograms",
-    
+
     author = "CD Meliza",
     maintainer = "CD Meliza",
     maintainer_email = "dmeliza@uchicago.edu",

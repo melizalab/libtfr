@@ -3,13 +3,12 @@
 """
 Interface to libtfrspec library using numpy. 
 
-Copyright C.D. Meliza, 2009
-dmeliza@uchicago.edu
+Copyright C Daniel Meliza 2010.  Licensed for use under GNU
+General Public License, Version 2.  See COPYING for details.
 """
 
 import _libtfr
-
-__version__ = "1.0.0"
+from _libtfr import __version__
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
@@ -204,8 +203,8 @@ def tgrid(siglen, Fs, shift):
 
 def dynamic_range(S, dB):
     """
-    Compress a spectrogram's dynamic range by thresholding all values dB less than
-    the peak of S (linear scale).
+    Compress a spectrogram's dynamic range by thresholding all values
+    dB less than the peak of S (linear scale).
     """
     from numpy import log10,where
     smax = S.max()

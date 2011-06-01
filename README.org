@@ -76,7 +76,7 @@ some noise to the signal as well.
 
 ** To build the MATLAB mex file:
 
-scons mex
+$ scons mex
 
 Copy the mex file (the extension will depend on your platform) and the
 associated mfile (tfrspec.m) to a location in your MATLAB path.
@@ -180,6 +180,9 @@ References:
 libtfrspec was written by C Daniel Meliza (dmeliza@uchicago.edu) and
 is licensed under the Gnu Public License (GPL) version 2; see COPYING
 for details.
+
+some code is adapted from chronux (http://www.chronux.org), by Partha
+Mitra and Hemant Bokil, also licensed under GPL version 2
 
 THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY
 OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR

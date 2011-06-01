@@ -36,7 +36,7 @@ Type: 'scons' to build the library
 env = Environment(ENV = os.environ,
                   LIBS = ['fftw3'],
                   CCFLAGS = ['-O2', '-std=c99'],
-                  tools=['default','mex'])
+                  tools=['default','mex','doxygen'])
 
 # system-specific settings
 if system=='Darwin':
@@ -52,7 +52,8 @@ slib = env.StaticLibrary('libtfr', source = src_files)
 dylib = env.SharedLibrary('libtfr', sharedobjs)
 test_prog = env.Program('test_tfr', ['test_tfr.c', slib])
 
-env.Alias('lib', [slib, dylib])
+env.Default(env.Alias('lib', [slib, dylib]))
+env.Alias('test',test_prog)
 env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
 env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
 
@@ -60,3 +61,7 @@ env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dyli
 if hasattr(env,'MEX'):
     mex = env.MEX('tfrspec', ['tfrspec.c', sharedobjs])
     env.Alias("mex",mex)
+
+if hasattr(env,'Doxygen'):
+    dox = env.Doxygen('doxy.cfg')
+    env.Alias("docs",dox)

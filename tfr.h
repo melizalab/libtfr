@@ -17,17 +17,20 @@
  * the power and time-frequency displacements.  All of these steps can
  * be combined by using the tfr_spec functions.
  *
- * Copyright C Daniel Meliza 2010.  Licensed for use under Creative
- * Commons Attribution-Noncommercial-Share Alike 3.0 United States
- * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
- *
+ * Copyright C Daniel Meliza 2010.  Licensed for use under GNU
+ * General Public License, Version 2.  See COPYING for details.
  */
+#ifndef _LIBTFR_H
+#define _LIBTFR_H
+
+#define LIBTFR_VERSION "1.0.1"
+
 #ifdef __cplusplus
 extern "C" {
 #include <complex>
 #else
 #include <complex.h>
-#endif 
+#endif
 
 #include <fftw3.h>
 
@@ -49,13 +52,13 @@ extern "C" {
  * plan   - FFTW plan
  */
 typedef struct {
-	int nfft;
-	int npoints;
-	int ntapers;
-	double *tapers;  
-	double *lambdas;
-	double *buf;
-	fftw_plan plan;
+        int nfft;
+        int npoints;
+        int ntapers;
+        double *tapers;
+        double *lambdas;
+        double *buf;
+        fftw_plan plan;
 } mfft;
 
 /* initialization and destruction functions */
@@ -119,10 +122,11 @@ void mtm_destroy(mfft *mtm);
 /* transformation functions */
 
 /**
- * Compute multitaper FFT of a signal. Note that this can be used for
- * single taper FFTs, if the mfft structure has been
+ * Compute multitaper FFT of a real-valued signal. Note that this can
+ * be used for single taper FFTs, if the mfft structure has been
  * initialized with a single window.  The result is stored in the mfft
- * buffer in half-complex format with dimension ntapers x nfft
+ * buffer in half-complex format with dimension ntapers x nfft.  Use
+ * mtpower or mtcomplex to extract the transformed signal.
  *
  * Inputs:
  *    mtm - parameters for the transform
@@ -181,7 +185,7 @@ void mtcomplex(const mfft *mtm, _Complex double *out);
  * Outputs:
  *  spec     - output spectrogram, with dimension  (nsamples/shift) by (nfft/2+1)
  *             needs to be allocated and zero-filled before calling
- *             
+ *
  *
  */
 void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
@@ -199,8 +203,8 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  shift    - number of samples to shift in each frame
  *
  * Outputs:
- *  spec     - output spectrogram, with dimension  (nsamples/shift) by (ntapers) by (nfft) 
- *             
+ *  spec     - output spectrogram, with dimension  (nsamples/shift) by (ntapers) by (nfft)
+ *
  *
  */
 void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsamples, int shift);
@@ -227,7 +231,7 @@ void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsam
  *
  */
 void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-	      double flock, int tlock, int nfreq, const double *fgrid);
+              double flock, int tlock, int nfreq, const double *fgrid);
 
 /* taper generating functions */
 
@@ -327,9 +331,11 @@ void tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdisp
  *  value in the grid (i.e. the grid specifies center frequencies)
  */
 void tfr_reassign(double *spec, const double *q, const double *tdispl, const double *fdispl,
-		  int N, int nfreq, const double *fgrid,
-		  double dt, double qthresh, double flock, int tminlock, int tmaxlock);
+                  int N, int nfreq, const double *fgrid,
+                  double dt, double qthresh, double flock, int tminlock, int tmaxlock);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
