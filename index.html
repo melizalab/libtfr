@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>libtfrspec - fast multi-taper and reassigned spectrograms</title>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2011-06-01 12:53:22 CDT"/>
+<meta name="author" content="Dan Meliza"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="index.css" />
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">libtfrspec - fast multi-taper and reassigned spectrograms</h1>
+<p>Libtfrspec is a library for calculating multi-taper conventional and
+time-frequency reassignment (TFR) spectrograms.
+</p>
+
+<div id="outline-container-1" class="outline-3">
+<h3 id="sec-1">Why use reassignment spectrograms? </h3>
+<div class="outline-text-3" id="text-1">
+
+
+<p>
+Mainly for readability. Compare the conventional windowed spectrogram
+on the right with the reassignment spectrogram on the right (click to
+see more detail).
+</p>
+<p>
+<a href="A7_hanning.png"><img src="A7_hanning_sm.png" alt="A7_hanning_sm.png"/></a> <a href="A7_tfr.png"><img src="A7_tfr_sm.png" alt="A7_tfr_sm.png"/></a>
+</p>
+<p>
+The spectral energy distribution is much sparser in the second image,
+and it's easier to see the high-frequency trill (the tone that's
+rapidly modulated up and down) right in the middle of
+the sound.  For some applications, reassignment spectrograms can
+provide much more precise measurements.  
+</p>
+<p>
+It's important to note that no signal processing tricks can
+do away with the fundamental tradeoff in time-frequency <i>resolution</i>.
+In the images above, the trill gets close enough to the lower-frequency
+tonal component that the two start to smear together.  Spectral
+resolution can only be increased by increasing the size of the
+analysis window, which reduces temporal resolution.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-3">
+<h3 id="sec-2">Why use libtfrspec? </h3>
+<div class="outline-text-3" id="text-2">
+
+
+<p>
+It's fast.  The library is written on top of the <a href="http://www.fftw.org">FFTW</a> library, one of
+the fastest Fourier transformation libraries, and the wrapping code is
+written in lightweight C99 code.  On a reasonably modern processor,
+libtfrspec can calculate a multitaper reassignment spectrogram in 1/2
+to 1/4 of the duration of the signal, making it usable for realtime
+applications.
+</p>
+<p>
+It's convenient.  The library is well-documented and comes with python
+and MATLAB interfaces.
+</p>
+<p>
+It's free and open-source.
+</p></div>
+</div>
+<div id="postamble">
+<p class="date">Date: 2011-06-01 12:53:22 CDT</p>
+<p class="author">Author: Dan Meliza</p>
+<p class="creator">Org version 7.5 with Emacs version 23</p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+</div>
+</div>
+</body>
+</html>
