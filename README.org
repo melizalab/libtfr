@@ -50,6 +50,9 @@ maintaining this part of the code please contact me.
 
 ** To build the library (static and shared)
 
+It may be necessary to edit the SConstruct file to make sure it points
+to the correct LAPACK libraries.
+
 $ scons lib
 
 To install the libraries and header (default to /usr/local/lib and /usr/local/include):
@@ -185,4 +188,4 @@ THE PROGRAMS.  THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
 [fn:3] Gardner, T. J. & Magnasco, M. O. Sparse time-frequency
        representations. Proc. Natl. Acad. Sci. U S A, 2006, 103,
        6094-6099
-       code: http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m 
+       code: http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m

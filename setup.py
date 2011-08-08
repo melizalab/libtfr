@@ -19,6 +19,31 @@ if system=='Darwin':
 elif system=='Linux':
     ext_libs.extend(('atlas','cblas','f77blas','lapack'))
 
+cls_txt = \
+"""
+Development Status :: 5 - Production/Stable
+Intended Audience :: Science/Research
+License :: OSI Approved :: GNU General Public License (GPL)
+Programming Language :: Python
+Topic :: Scientific/Engineering
+Operating System :: Unix
+Operating System :: POSIX :: Linux
+Operating System :: MacOS :: MacOS X
+Natural Language :: English
+"""
+
+short_desc = "Calculates multi-taper windowed and time-frequency reassignment spectrograms"
+
+long_desc = \
+"""
+libtfr provides high-performance C and Python libraries for
+calculating multitaper time-frequency reassignment (TFR) spectrograms
+as well as conventional STFTs.  TFR spectrograms have enhanced
+signal-to-noise characteristics and can provide very precise spectral
+estimates under many conditions. The library requires FFTW for the underlying
+FFT transformations.
+"""
+
 setup(
     name = 'libtfr',
     version = "1.0.1",
@@ -28,11 +53,14 @@ setup(
                              libraries=ext_libs,
                              include_dirs=ext_incl)],
 
-    description = "Python package for calculating tfr and mtm spectrograms",
-
-    author = "CD Meliza",
-    maintainer = "CD Meliza",
-    maintainer_email = "dmeliza@uchicago.edu",
+    description = short_desc,
+    long_description = long_desc,
+    author = 'C Daniel Meliza',
+    author_email = '"dan" at the domain "meliza.org"',
+    maintainer = 'C Daniel Meliza',
+    maintainer_email = '"dan" at the domain "meliza.org"',
+    url = 'https://dmeliza.github.com/libtfr',
+    download_url = 'https://github.com/dmeliza/libtfr',
 )
 
 

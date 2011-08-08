@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 # -*- mode: python -*-
 """
-Just some quick tests of the libtfr python interface.
+A quick test / example of the libtfr python interface.
 
 Copyright (C) 2009 Daniel Meliza <dmeliza@meliza-laptop-1.uchicago.edu>
 Created 2009-06-09
@@ -66,7 +66,7 @@ if __name__=="__main__":
 
     import sys
     nloop = 1 if len(sys.argv) == 1 else int(sys.argv[1])
-        
+
 
     # generate a nice dynamic signal
     siglen = 17590

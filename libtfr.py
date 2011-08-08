@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 """
-Interface to libtfrspec library using numpy. 
+Interface to libtfrspec library using numpy.
 
 Copyright C Daniel Meliza 2010.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
@@ -143,7 +143,7 @@ def log_fgrid(fmin, fmax, N, Fs=None):
              to relative frequencies
     """
     from numpy import log, logspace, e
-    lfmin, lfmax = log((fmin, fmax)) 
+    lfmin, lfmax = log((fmin, fmax))
     out = logspace(lfmin, lfmax, N, base=e)
     if Fs:
         assert Fs > fmax, "Fs must be greater than fmax"
@@ -167,7 +167,7 @@ def fgrid(Fs,nfft,fpass):
     findx     index of the frequencies in the full frequency grid.
 
     Example:
-    
+
     If Fs=1000, and nfft=1048, an fft calculation of a real signal
     generates 512 frequencies between 0 and 500 (i.e. Fs/2) Hz. Now if
     fpass=(0,100), findx will contain the indices in the frequency grid
@@ -176,7 +176,7 @@ def fgrid(Fs,nfft,fpass):
     From Chronux 1_50
     """
     from numpy import arange, abs
-    
+
     df = float(Fs)/ nfft
     f = arange(0,Fs,df)  # all possible frequencies
 
@@ -186,6 +186,7 @@ def fgrid(Fs,nfft,fpass):
         findx = abs(f-fpass).argmin()
 
     return f[findx], findx
+
 
 def tgrid(siglen, Fs, shift):
     """
