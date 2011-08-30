@@ -1,7 +1,7 @@
 /*
  * libtfr.c
  *
- * A python extension module interface to libtfrspec
+ * A python extension module interface to libtfr spectrogram library
  *
  * NB: most arrays are returned in fortran order to simplify plotting
  * (i.e. frequencies in columns).  However, windows are

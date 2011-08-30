@@ -1,13 +1,13 @@
 #-*- mode: org -*-
 #+STARTUP:    align showall hidestars oddeven
-#+TITLE:    libtfrspec - fast multi-taper and reassigned spectrograms
+#+TITLE:    libtfr - fast multi-taper and reassigned spectrograms
 #+AUTHOR:    Dan Meliza
 #+EMAIL:     dan@meliza.org
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t TeX:t LaTeX:nil skip:nil d:t tags:not-in-toc
 #+STYLE:    <link rel="stylesheet" type="text/css" href="index.css" />
 #+LANGUAGE:   en
 
-Libtfrspec is a library for calculating multi-taper conventional and
+Libtfr is a library for calculating multi-taper conventional and
 time-frequency reassignment (TFR) spectrograms.
 
 ** Why use reassignment spectrograms?
@@ -31,12 +31,12 @@ tonal component that the two start to smear together.  Spectral
 resolution can only be increased by increasing the size of the
 analysis window, which reduces temporal resolution.
 
-** Why use libtfrspec?
+** Why use libtfr?
 
 It's fast.  The library is written on top of the [[http://www.fftw.org][FFTW]] library, one of
 the fastest Fourier transformation libraries, and the wrapping code is
 written in lightweight C99 code.  On a reasonably modern processor,
-libtfrspec can calculate a multitaper reassignment spectrogram in 1/2
+libtfr can calculate a multitaper reassignment spectrogram in 1/2
 to 1/4 of the duration of the signal, making it usable for realtime
 applications.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 # -*- mode: python -*-
-#from setuptools import setup, find_packages
+from setuptools import setup, find_packages
 from numpy.distutils.core import setup, Extension
 import os,sys
 
@@ -17,7 +17,7 @@ if system=='Darwin':
     ext_libs.append('lapack')
     ext_incl.append('/opt/local/include')
 elif system=='Linux':
-    ext_libs.extend(('atlas','cblas','f77blas','lapack'))
+    ext_libs.append('lapack')
 
 cls_txt = \
 """
@@ -59,8 +59,8 @@ setup(
     author_email = '"dan" at the domain "meliza.org"',
     maintainer = 'C Daniel Meliza',
     maintainer_email = '"dan" at the domain "meliza.org"',
-    url = 'https://dmeliza.github.com/libtfr',
-    download_url = 'https://github.com/dmeliza/libtfr',
+    url = 'http://dmeliza.github.com/libtfr',
+    download_url = 'https://github.com/downloads/dmeliza/libtfr',
 )
 
 

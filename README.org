@@ -1,11 +1,11 @@
 #-*- mode: org -*-
 #+STARTUP:    align showall hidestars oddeven
-#+TITLE:    Libtfrspec - fast multi-taper reassigned spectrograms
+#+TITLE:    Libtfr - fast multi-taper reassigned spectrograms
 #+AUTHOR:    Dan Meliza
 #+EMAIL:     dan@meliza.org
 #+LANGUAGE:   en
 
-Libtfrspec is a library for calculating multi-taper time-frequency
+Libtfr is a library for calculating multi-taper time-frequency
 reassignment (TFR) spectrograms.  Time-frequency reassignment is a
 method that makes use of the instantaneous frequency and phase values
 in a spectrogram to 'deconvolve' the image, and can yield
@@ -162,7 +162,7 @@ across different window sizes, or by using other averaging methods
 
 * License
 
-libtfrspec was written by C Daniel Meliza (dmeliza@uchicago.edu) and
+libtfr was written by C Daniel Meliza (dmeliza@uchicago.edu) and
 is licensed under the Gnu Public License (GPL) version 2; see COPYING
 for details.
 

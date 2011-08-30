@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 """
-Interface to libtfrspec library using numpy.
+Interface to libtfr spectrogram library using numpy.
 
 Copyright C Daniel Meliza 2010.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
@@ -160,8 +160,8 @@ def fgrid(Fs,nfft,fpass):
 
     Fs        sampling frequency associated with the data
     nfft      number of points in fft
-    fpass     range of frequencies over which the fft is being calculated
-              [fmin fmax], in Hz
+    fpass     upper and lower frequencies of interest,
+              [fmin fmax), in same units as Fs
     Outputs:
     f         frequencies
     findx     index of the frequencies in the full frequency grid.
@@ -181,7 +181,7 @@ def fgrid(Fs,nfft,fpass):
     f = arange(0,Fs,df)  # all possible frequencies
 
     if len(fpass)!=1:
-        findx = ((f>=fpass[0]) & (f<=fpass[-1])).nonzero()[0]
+        findx = ((f>=fpass[0]) & (f<fpass[-1])).nonzero()[0]
     else:
         findx = abs(f-fpass).argmin()
 
