@@ -51,6 +51,7 @@ setup(
     ext_modules = [Extension('_libtfr',
                              sources=['libtfr.c','tfr.c','mtm.c'],
                              libraries=ext_libs,
+                             extra_compile_args=['-std=c99'],
                              include_dirs=ext_incl)],
 
     description = short_desc,
