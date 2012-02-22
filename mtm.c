@@ -202,8 +202,8 @@ void
 mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
 {
         int t;
-        int nbins = (nsamples - mtm->npoints + 1) / shift;
-        int real_count = mtm->nfft / 2 + 1;
+        int nbins = spec_nframes(mtm, nsamples, shift);
+        int real_count = spec_nfreq(mtm);
         double sigpow;
 
         for (t = 0; t < nbins; t++) {
@@ -216,8 +216,8 @@ void
 mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift)
 {
         int t;
-        int nbins = (nsamples - mtm->npoints + 1) / shift;
-        int N = mtm->nfft / 2 + 1;
+        int nbins = spec_nframes(mtm, nsamples, shift);
+        int N = spec_nfreq(mtm);
         int K = mtm->ntapers;
 
         for (t = 0; t < nbins; t++) {

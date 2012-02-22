@@ -53,12 +53,12 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (nrhs > 7)
                 tlock = mxGetScalar(prhs[7]);
 
-        /* allocate output array */
-        plhs[0] = mxCreateDoubleMatrix(nfft/2+1, nt/step,mxREAL);
-        spec = mxGetPr(plhs[0]);
-
         /* generate transform object */
         mtmh = mtm_init_herm(nfft, npoints, ntapers, tm);
+
+        /* allocate output array */
+        plhs[0] = mxCreateDoubleMatrix(spec_nfreq(mtmh), spec_nframes(mtmth,nt,step),mxREAL);
+        spec = mxGetPr(plhs[0]);
 
         /* calculate spectrogram; use the right precision fxn */
         data_double = mxGetPr(prhs[0]);

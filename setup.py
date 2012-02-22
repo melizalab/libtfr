@@ -46,7 +46,7 @@ FFT transformations.
 
 setup(
     name = 'libtfr',
-    version = "1.0.1",
+    version = "1.0.2",
     py_modules = ['libtfr'],
     ext_modules = [Extension('_libtfr',
                              sources=['libtfr.c','tfr.c','mtm.c'],

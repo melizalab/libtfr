@@ -59,7 +59,7 @@ To install the libraries and header (default to /usr/local/lib and /usr/local/in
 
 $ scons install
 
-A small test program, /test_tfr/, may be build with 'scons test'. The
+A small test program, /test_tfr/, may be built with 'scons test'. The
 program generates a signal with sinusoidally modulated frequency and
 then calculates a multitaper PSD, a multitaper spectrogram, and a
 time-frequency reassigned spectrogram.  The results are output in

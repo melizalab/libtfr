@@ -1,3 +1,5 @@
+# -*- coding: iso-8859-1 -*-
+# -*- mode: python -*-
 import os
 
 if hasattr(os,'uname'):
@@ -34,17 +36,20 @@ Type: 'scons' to build the library
 
 # build options
 env = Environment(ENV = os.environ,
-                  LIBS = ['fftw3'],
+                  LIBS = ['fftw3','lapack'],
                   CCFLAGS = ['-O2', '-std=c99'],
                   tools=['default','mex','doxygen'])
 
 # system-specific settings
 if system=='Darwin':
-    env.Append(LIBS = ['lapack'],
-               CPPPATH = ['/opt/local/include'],
+    # fftw is probably installed with macports; if elsewhere
+    # then adjust these paths
+    env.Append(CPPPATH = ['/opt/local/include'],
                LIBPATH = ['/opt/local/lib'])
 elif system=='Linux':
-    env.Append(LIBS = ['atlas','cblas','f77blas','lapack'])
+    # add additional items as needed, for example if lapack requires atlas:
+    #env.Prepend(LIBS = ['atlas','cblas','f77blas','lapack'])
+    pass
 
 
 sharedobjs = env.SharedObject(src_files)

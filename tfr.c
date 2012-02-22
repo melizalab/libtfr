@@ -187,9 +187,8 @@ tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, in
          double flock, int tlock, int nfreq, const double *fgrid)
 {
         int t,mink = 0;
-        int nbins = (nsamples - mtm->npoints + 1) / shift;
-	printf("tfr.c: l = %d\n", nbins);
-        int real_count = mtm->nfft / 2 + 1;
+        int nbins = spec_nframes(mtm, nsamples, shift);
+        int real_count = spec_nfreq(mtm);
         int K = mtm->ntapers / 3;
         if (nfreq <= 0) nfreq = real_count;
 

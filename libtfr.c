@@ -114,21 +114,24 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
                 }
         }
 
-        /* allocate output array */
-        out_shape[0] = nfreq;
-        out_shape[1] = (PyArray_SIZE(signal) - Np + 1) / step;
-        outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
-        spec = (double*) PyArray_DATA(outdata);
-
-        /* coerce data to proper type */
+        /* coerce input data to proper type */
         samples = coerce_ndarray_double(signal, &signal_cast);
         if (samples==NULL) {
                 PyErr_SetString(PyExc_TypeError, "Unable to cast signal to supported data type");
                 goto fail;
         }
 
-        /* do the transform */
+	/* initialize transform object - window size may be adjusted */
         mtmh = mtm_init_herm(N, Np, K, tm);
+
+        /* allocate output array  */
+        out_shape[0] = nfreq;
+        out_shape[1] = spec_nframes(mtmh,PyArray_SIZE(signal),step);
+        outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
+        spec = (double*) PyArray_DATA(outdata);
+
+
+        /* do the transform */
         tfr_spec(mtmh, spec, samples, PyArray_SIZE(signal),
                  -1, step, flock, tlock, nfreq, fgridp);
         mtm_destroy(mtmh);
@@ -143,7 +146,6 @@ fail:
         Py_XDECREF(fgrid);
         Py_XDECREF(signal_cast);
         Py_XDECREF(signal);
-        Py_XDECREF(outdata);
         return NULL;
 }
 
@@ -192,7 +194,7 @@ libtfr_stft(PyObject *self, PyObject *args)
         PyArrayObject *window = NULL;
         int step;
         int N = 0;
-        int Npoints, Ntapers, Ntimes;
+        int Npoints, Ntapers;
 
         /* output data */
         npy_intp out_shape[3];
@@ -229,7 +231,6 @@ libtfr_stft(PyObject *self, PyObject *args)
                 Ntapers = PyArray_DIM(window, 0);
                 Npoints = PyArray_DIM(window, 1);
         }
-        Ntimes =  (PyArray_SIZE(signal) - Npoints + 1) / step;
 
         /* coerce data to proper type */
         samples = coerce_ndarray_double(signal, &signal_cast);
@@ -252,7 +253,7 @@ libtfr_stft(PyObject *self, PyObject *args)
         out_shape[0] = N/2+1;
         if (do_complex) {
                 out_shape[1] = Ntapers;
-                out_shape[2] = Ntimes;
+                out_shape[2] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
                 outdata  = (PyArrayObject*) PyArray_ZEROS(3,out_shape,NPY_CDOUBLE,1); // fortran-order
                 zspec = (npy_cdouble*) PyArray_DATA(outdata);
                 //printf("output dimensions: %d, %d, %d\n", out_shape[0], out_shape[1], out_shape[2]);
@@ -262,7 +263,7 @@ libtfr_stft(PyObject *self, PyObject *args)
                 free(zspec_tmp);
         }
         else {
-                out_shape[1] = Ntimes;
+                out_shape[1] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
                 outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // fortran-order
                 spec = (double*) PyArray_DATA(outdata);
                 mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal), step, 0);
@@ -318,12 +319,6 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
                 K = NW*2-1;
         }
 
-        /* allocate output array */
-        out_shape[0] = N/2+1;
-        out_shape[1] = (PyArray_SIZE(signal) - N + 1) / step;
-        outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
-        spec = (double*) PyArray_DATA(outdata);
-
         /* coerce data to proper type */
         samples = coerce_ndarray_double(signal, &signal_cast);
         if (samples==NULL) {
@@ -331,8 +326,16 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
                 goto fail;
         }
 
-        /* do the transform */
+	/* initialize transform object - window size may be adjusted */
         mtmh = mtm_init_dpss(N, NW, K);
+
+        /* allocate output array */
+        out_shape[0] = spec_nfreq(mtmh);
+        out_shape[1] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
+        outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
+        spec = (double*) PyArray_DATA(outdata);
+
+        /* do the transform */
         mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal),
                  step, adapt);
         mtm_destroy(mtmh);
@@ -343,7 +346,6 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
 fail:
         Py_XDECREF(signal_cast);
         Py_XDECREF(signal);
-        Py_XDECREF(outdata);
         return NULL;
 }
 

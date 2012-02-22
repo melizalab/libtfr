@@ -56,7 +56,7 @@
 #ifndef _LIBTFR_H
 #define _LIBTFR_H
 
-#define LIBTFR_VERSION "1.0.1"
+#define LIBTFR_VERSION "1.0.2"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,7 +70,6 @@ extern "C" {
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
-
 
 /**
  * Multi-taper FFT transformation structure. Contains basic FFT
@@ -87,6 +86,29 @@ typedef struct {
         double *buf;     ///< workspace for FFTW, dim ntapers x npoints
         fftw_plan plan;  ///< FFTW plan
 } mfft;
+
+/**
+ * The number of frequencies in the spectrum of a real signal
+ */
+inline int
+spec_nfreq(const mfft *mtm)
+{
+	return (mtm->nfft/2 + 1);
+}
+
+/**
+ * The number of frames in a spectrogram that only includes frames
+ * with full support in the signal.
+ *
+ * @param mtm          transform object
+ * @param signal_size  number of points in the signal
+ * @param step_size    number of points shifted between frames
+ */
+inline int
+spec_nframes(const mfft *mtm, int signal_size, int step_size)
+{
+	return ((signal_size - mtm->npoints + 1)/step_size);
+}
 
 /* initialization and destruction functions */
 
@@ -198,8 +220,6 @@ void mtcomplex(const mfft *mtm, _Complex double *out);
  *
  * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
- *
- *
  */
 void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
 
