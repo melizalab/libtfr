@@ -188,19 +188,22 @@ def fgrid(Fs,nfft,fpass):
     return f[findx], findx
 
 
-def tgrid(siglen, Fs, shift):
+def tgrid(siglen, Fs, shift, winsize=None):
     """
     Calculate the time grid associated with an STFT
 
-    Usage: t = tgrid(siglen, Fs,shift)
+    @param siglen    length of signal (in samples)
+    @param Fs        sampling frequency associated with the data
+    @param shift     number of samples shifted between data frames
+    @param winsize   if not None, specfies window size, which is used
+                     to exclude frames that extend beyond the signal
 
-    Inputs:
-    siglen    length of signal (in samples)
-    Fs        sampling frequency associated with the data
-    shift     number of samples shifted between data frames
+    @returns a 1D array of frame start times
     """
-    from numpy import linspace
-    return linspace(0, 1. * siglen/Fs, siglen / shift)
+    from numpy import arange
+    if winsize is None: winsize = 1
+    maxlen = (siglen - winsize + 1)/shift
+    return arange(0, 1./Fs * (siglen - winsize + 1), 1./Fs * shift)[:maxlen]
 
 
 def dynamic_range(S, dB):

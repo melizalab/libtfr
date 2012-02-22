@@ -116,7 +116,7 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 
         /* allocate output array */
         out_shape[0] = nfreq;
-        out_shape[1] = PyArray_SIZE(signal) / step;
+        out_shape[1] = (PyArray_SIZE(signal) - Np + 1) / step;
         outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
         spec = (double*) PyArray_DATA(outdata);
 
@@ -229,7 +229,7 @@ libtfr_stft(PyObject *self, PyObject *args)
                 Ntapers = PyArray_DIM(window, 0);
                 Npoints = PyArray_DIM(window, 1);
         }
-        Ntimes =  PyArray_SIZE(signal) / step;
+        Ntimes =  (PyArray_SIZE(signal) - Npoints + 1) / step;
 
         /* coerce data to proper type */
         samples = coerce_ndarray_double(signal, &signal_cast);
@@ -320,7 +320,7 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
 
         /* allocate output array */
         out_shape[0] = N/2+1;
-        out_shape[1] = PyArray_SIZE(signal) / step;
+        out_shape[1] = (PyArray_SIZE(signal) - N + 1) / step;
         outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
         spec = (double*) PyArray_DATA(outdata);
 

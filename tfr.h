@@ -190,13 +190,13 @@ void mtcomplex(const mfft *mtm, _Complex double *out);
  *  This function 'fills' a spectrogram by calculating the PSD for each
  *  frame in the signal.
  *
- * @param mtm       mfft structure; needs to be initialized with hermite tapers
+ * @param mtm       mfft structure; needs to be initialized with tapers
  * @param samples   input signal
  * @param nsamples  number of points in input buffer
  * @param shift     number of samples to shift in each frame
  * @param adapt     if true, use adaptive averaging between tapers (otherwise 'high-res')
  *
- * @param spec      (output) spectrogram, dimension (nsamples/shift) by (nfft/2+1)
+ * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  *
  *
@@ -209,12 +209,12 @@ void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int 
  *  frame in the signal.  If the mfft object is configured for multiple tapers,
  *  these are not averaged.
  *
- * @param mtm  mfft structure; needs to be initialized with hermite tapers
+ * @param mtm  mfft structure; needs to be initialized with tapers
  * @param samples  input signal
  * @param nsamples  number of points in input buffer
  * @param shift     number of samples to shift in each frame
  *
- * @param spec      (output) spectrogram, dimension (nsamples/shift) by (ntapers) by (nfft)
+ * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by (ntapers) by (nfft)
  *                  must be allocated and zero-filled
  */
 void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsamples, int shift);
@@ -234,7 +234,7 @@ void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsam
  * @param nfreq     output frequency resolution; if <= 0, defaults to nfft/2+1
  * @param fgrid     output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
  *
- * @param spec      (output) spectrogram, dimension  (nsamples/shift) by (nfft/2+1)
+ * @param spec      (output) spectrogram, dimension  (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  *
  */

@@ -88,19 +88,20 @@ main(int argc, char **argv)
         write_file("tfr_out_psd.dat", psd, N, 1);
         free(psd);
 
+	const int l = (npoints - Np + 1) / step;
         printf("* MTM spectrogram to tfr_out_mtm\n");
-        specgram = (double*)calloc((npoints / step) * (N/2+1), sizeof(double));
+        specgram = (double*)calloc(l * (N/2+1), sizeof(double));
         mtm_spec(mtmh, specgram, sig, npoints, step, 1);
-        write_file("tfr_out_mtm.dat", specgram, (npoints/step), (N/2+1));
+        write_file("tfr_out_mtm.dat", specgram, l, (N/2+1));
         free(specgram);
 
         mtm_destroy(mtmh);
 
         printf("* TFR spectrogram to tfr_out_tfr\n");
         mtmh = mtm_init_herm(N, Np, k, tm);
-        specgram = (double*)calloc((npoints / step) * (N/2+1), sizeof(double));
+        specgram = (double*)calloc(l * (N/2+1), sizeof(double));
         tfr_spec(mtmh, specgram, sig, npoints, -1, step, 0.01, 5, 0, NULL);
-        write_file("tfr_out_tfr.dat", specgram, (npoints/step), (N/2+1));
+        write_file("tfr_out_tfr.dat", specgram, l, (N/2+1));
         free(specgram);
 
         mtm_destroy(mtmh);
