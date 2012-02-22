@@ -57,7 +57,7 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mtmh = mtm_init_herm(nfft, npoints, ntapers, tm);
 
         /* allocate output array */
-        plhs[0] = mxCreateDoubleMatrix(spec_nfreq(mtmh), spec_nframes(mtmth,nt,step),mxREAL);
+        plhs[0] = mxCreateDoubleMatrix(SPEC_NFREQ(mtmh), SPEC_NFRAMES(mtmh,nt,step),mxREAL);
         spec = mxGetPr(plhs[0]);
 
         /* calculate spectrogram; use the right precision fxn */

@@ -78,23 +78,19 @@ extern "C" {
  *
  */
 typedef struct {
-        int nfft;        ///< number of points in the transformm
-        int npoints;     ///< number of points in the taper(s)
-        int ntapers;     ///< number of tapers
-        double *tapers;  ///< array holding tapers, dim ntapers x npoints
-        double *lambdas; ///< array holding taper weights, dim ntapers
-        double *buf;     ///< workspace for FFTW, dim ntapers x npoints
-        fftw_plan plan;  ///< FFTW plan
+        int nfft;        /**< number of points in the transform */
+	int npoints;     /**< number of points in the taper(s) */
+        int ntapers;     /**< number of tapers */
+        double *tapers;  /**< array holding tapers, dim ntapers x npoints */
+        double *lambdas; /**< array holding taper weights, dim ntapers */
+        double *buf;     /**< workspace for FFTW, dim ntapers x npoints */
+        fftw_plan plan;  /**< FFTW plan */
 } mfft;
 
 /**
  * The number of frequencies in the spectrum of a real signal
  */
-inline int
-spec_nfreq(const mfft *mtm)
-{
-	return (mtm->nfft/2 + 1);
-}
+#define SPEC_NFREQ(mtm) (mtm->nfft/2 + 1)
 
 /**
  * The number of frames in a spectrogram that only includes frames
@@ -104,11 +100,7 @@ spec_nfreq(const mfft *mtm)
  * @param signal_size  number of points in the signal
  * @param step_size    number of points shifted between frames
  */
-inline int
-spec_nframes(const mfft *mtm, int signal_size, int step_size)
-{
-	return ((signal_size - mtm->npoints + 1)/step_size);
-}
+#define SPEC_NFRAMES(mtm,signal_size,step_size) ((signal_size - mtm->npoints + 1)/step_size)
 
 /* initialization and destruction functions */
 

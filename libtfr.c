@@ -126,7 +126,7 @@ libtfr_tfr_spec(PyObject *self, PyObject *args)
 
         /* allocate output array  */
         out_shape[0] = nfreq;
-        out_shape[1] = spec_nframes(mtmh,PyArray_SIZE(signal),step);
+        out_shape[1] = SPEC_NFRAMES(mtmh,PyArray_SIZE(signal),step);
         outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
         spec = (double*) PyArray_DATA(outdata);
 
@@ -253,7 +253,7 @@ libtfr_stft(PyObject *self, PyObject *args)
         out_shape[0] = N/2+1;
         if (do_complex) {
                 out_shape[1] = Ntapers;
-                out_shape[2] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
+                out_shape[2] = SPEC_NFRAMES(mtmh, PyArray_SIZE(signal), step);
                 outdata  = (PyArrayObject*) PyArray_ZEROS(3,out_shape,NPY_CDOUBLE,1); // fortran-order
                 zspec = (npy_cdouble*) PyArray_DATA(outdata);
                 //printf("output dimensions: %d, %d, %d\n", out_shape[0], out_shape[1], out_shape[2]);
@@ -263,7 +263,7 @@ libtfr_stft(PyObject *self, PyObject *args)
                 free(zspec_tmp);
         }
         else {
-                out_shape[1] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
+                out_shape[1] = SPEC_NFRAMES(mtmh, PyArray_SIZE(signal), step);
                 outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // fortran-order
                 spec = (double*) PyArray_DATA(outdata);
                 mtm_spec(mtmh, spec, samples, PyArray_SIZE(signal), step, 0);
@@ -330,8 +330,8 @@ libtfr_mtm_spec(PyObject *self, PyObject *args)
         mtmh = mtm_init_dpss(N, NW, K);
 
         /* allocate output array */
-        out_shape[0] = spec_nfreq(mtmh);
-        out_shape[1] = spec_nframes(mtmh, PyArray_SIZE(signal), step);
+        out_shape[0] = SPEC_NFREQ(mtmh);
+        out_shape[1] = SPEC_NFRAMES(mtmh, PyArray_SIZE(signal), step);
         outdata  = (PyArrayObject*) PyArray_ZEROS(2,out_shape,NPY_DOUBLE,1); // last arg give fortran-order
         spec = (double*) PyArray_DATA(outdata);
 
