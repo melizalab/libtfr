@@ -1,0 +1,10 @@
+/build/
+/dist/
+/libtfr.egg-info/
+*.[oa]
+*.os
+*.dat
+*.pyc
+*.so
+*.dylib
+.sconsign.dblite
