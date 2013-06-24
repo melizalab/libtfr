@@ -37,7 +37,7 @@ It is not necessary to build the library in the previous step as Python's distri
 
 The python interface can be tested with the script `test_tfr.py`, which does much the same as the test program for the library, but adds some noise to the signal as well.
 
-## MATLAB mex file:
+### MATLAB mex file:
 
     scons mex
 
@@ -113,12 +113,10 @@ some code is adapted from chronux (<http://www.chronux.org>), by Partha Mitra an
 
 THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO OR DR. MELIZA BE LIABLE FOR ANY DIRECT OR CONSEQUENTIAL DAMAGES RESULTING FROM USE OF THE PROGRAMS. THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
 
-# References
+## References
 
 * Time-frequency toolkit: <http://tftb.nongnu.org/>
-
 * Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment for Nonstationary Spectrum Estimation and Chirp Enhancement Signal Processing, IEEE Transactions on, Signal Processing, IEEE Transactions on, 2007, 55, 2851-2860 code: <http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html>
-
 * Gardner, T. J. & Magnasco, M. O. Sparse time-frequency representations. Proc. Natl. Acad. Sci. U S A, 2006, 103, 6094-6099 code: <http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m>
 
 
