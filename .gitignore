@@ -8,3 +8,5 @@
 *.so
 *.dylib
 .sconsign.dblite
+/MANIFEST
+/test_tfr

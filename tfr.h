@@ -56,7 +56,7 @@
 #ifndef _LIBTFR_H
 #define _LIBTFR_H
 
-#define LIBTFR_VERSION "1.0.2"
+#define LIBTFR_VERSION "1.0.3"
 
 #ifdef __cplusplus
 extern "C" {

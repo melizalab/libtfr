@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+ # -*- coding: utf-8 -*-
 """
 Interface to libtfr spectrogram library using numpy.
 
@@ -17,8 +17,8 @@ General Public License, Version 2.  See COPYING for details.
 """
 
 import _libtfr
-
 __version__ = _libtfr.__version__
+
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
@@ -31,7 +31,7 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     K - number of tapers to use (default 6)
     tm - time support of tapers (default 6.0)
     flock - frequency locking parameter; power is not reassigned
-	    more than this value (normalized frequency; default 0.01)
+            more than this value (normalized frequency; default 0.01)
     tlock - time locking parameter (in frames; default 5)
     fgrid - output frequency bins: monotonically increasing
             (default linear scale with N points; Nyquist is 1.0)
@@ -40,6 +40,7 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     fgrid.size by L
     """
     return _libtfr.tfr_spec(s, N, step, Np, K, tm, flock, tlock, fgrid)
+
 
 def stft(s, w, step, N=0, complex=False):
     """
@@ -55,7 +56,8 @@ def stft(s, w, step, N=0, complex=False):
     """
     S = _libtfr.stft(s, w, step, N, complex)
     # reorder axes here
-    return S.swapaxes(1,2) if complex else S
+    return S.swapaxes(1, 2) if complex else S
+
 
 def hermf(N, order=6, tm=6.0):
     """
@@ -70,69 +72,68 @@ def hermf(N, order=6, tm=6.0):
     """
     return _libtfr.hermf(N, order, tm)
 
-if hasattr(_libtfr,'mtm_spec'):
+
+if hasattr(_libtfr, 'mtm_spec'):
     def mtm_spec(s, N, step, NW, k=0, adapt=True):
-	"""
-	Compute multitaper spectrogram using DPSS tapers
+        """Compute multitaper spectrogram using DPSS tapers
 
-	@param s  input signal
-	@param N  number of frequency points (i.e. window size)
-	@param step  step size
-	@param NW time-frequency product
-	@param k  number of tapers (default NW*2-1)
-	@param adapt - compute adaptive spectrogram (default True)
+        @param s  input signal
+        @param N  number of frequency points (i.e. window size)
+        @param step  step size
+        @param NW time-frequency product
+        @param k  number of tapers (default NW*2-1)
+        @param adapt - compute adaptive spectrogram (default True)
 
-	@returns N/2+1 by L power spectrogram
-	"""
-	return _libtfr.mtm_spec(s, N, step, NW, k, adapt)
+        @returns N/2+1 by L power spectrogram
+        """
+        return _libtfr.mtm_spec(s, N, step, NW, k, adapt)
 
-if hasattr(_libtfr,'mtm_psd'):
+
+if hasattr(_libtfr, 'mtm_psd'):
     def mtm_psd(s, NW, k=0, adapt=True):
-	"""
-	Compute PSD of a signal using multitaper methods
+        """Compute PSD of a signal using multitaper methods
 
-	@param s  input signal
-	@param NW  time-frequency product
-	@param k  number of tapers (default NW*2-1)
-	@param adapt - compute adaptive spectrum (default True)
+        @param s  input signal
+        @param NW  time-frequency product
+        @param k  number of tapers (default NW*2-1)
+        @param adapt - compute adaptive spectrum (default True)
 
-	@returns  N/2+1 1D real power spectrum density
-	"""
-	return _libtfr.mtm_psd(s, NW, k, adapt)
+        @returns  N/2+1 1D real power spectrum density
+        """
+        return _libtfr.mtm_psd(s, NW, k, adapt)
 
 
-if hasattr(_libtfr,'mtfft'):
+if hasattr(_libtfr, 'mtfft'):
     def mtfft(s, NW, k=0, N=0):
-	"""
-	Compute multitaper transform of a signal
+        """Compute multitaper transform of a signal
 
-	@param s input signal
-	@param NW time-frequency product
-	@param k number of tapers (default NW*2-1)
+        @param s input signal
+        @param NW time-frequency product
+        @param k number of tapers (default NW*2-1)
         @param N number of points in FFT (default s.size)
 
-	@returns 2D complex array, dimension N x k
-	"""
-	return _libtfr.mtfft(s, NW, k, N)
+        @returns 2D complex array, dimension N x k
+        """
+        return _libtfr.mtfft(s, NW, k, N)
 
 
-if hasattr(_libtfr,'dpss'):
+if hasattr(_libtfr, 'dpss'):
     def dpss(N, NW, k):
-	"""
-	Computes the discrete prolate spherical sequences used in the
-	multitaper method power spectrum calculations.
+        """
+        Computes the discrete prolate spherical sequences used in the
+        multitaper method power spectrum calculations.
 
-	@param npoints   the number of points in the window
-	@param mtm_p     the time-bandwidth product. Must be an integer or half-integer
-	          	 (typical choices are 2, 5/2, 3, 7/2, or 4)
-	@param k         If a scalar, returns the 1:k DPSS vectors
+        @param npoints   the number of points in the window
+        @param mtm_p     the time-bandwidth product. Must be an integer or half-integer
+                         (typical choices are 2, 5/2, 3, 7/2, or 4)
+        @param k         If a scalar, returns the 1:k DPSS vectors
                          If a 2-ple, returns the k[0]:k[1] DPSS vectors
-		         Default is to return all vectors
+                         Default is to return all vectors
 
-	@returns (2D array of eigenvectors, shape (n,npoints),
+        @returns (2D array of eigenvectors, shape (n,npoints),
                   2D array of eigenvalues, length n = (mtm_p * 2 - 1))
-	"""
-	return _libtfr.dpss(N,NW,k)
+        """
+        return _libtfr.dpss(N, NW, k)
 
 
 def log_fgrid(fmin, fmax, N, Fs=None):
@@ -154,8 +155,9 @@ def log_fgrid(fmin, fmax, N, Fs=None):
     else:
         return out
 
+
 # utility functions
-def fgrid(Fs,nfft,fpass):
+def fgrid(Fs, nfft, fpass):
     """
     Calculate the frequency grid associated with an fft computation
 
@@ -178,15 +180,16 @@ def fgrid(Fs,nfft,fpass):
     """
     from numpy import arange, abs
 
-    df = float(Fs)/ nfft
-    f = arange(0,Fs,df)  # all possible frequencies
+    df = float(Fs) / nfft
+    f = arange(0, Fs, df)  # all possible frequencies
 
-    if len(fpass)!=1:
-        findx = ((f>=fpass[0]) & (f<fpass[-1])).nonzero()[0]
+    if len(fpass) != 1:
+        findx = ((f >= fpass[0]) & (f < fpass[-1])).nonzero()[0]
     else:
-        findx = abs(f-fpass).argmin()
+        findx = abs(f - fpass).argmin()
 
     return f[findx], findx
+
 
 def tgrid(S, Fs, shift):
     """
@@ -210,9 +213,10 @@ def tgrid(S, Fs, shift):
     from numpy import arange, ndarray
     if isinstance(S, ndarray):
         if S.ndim == 1: raise ValueError, "Input must be a scalar or a 2D numpy array"
-        return arange(0, 1./Fs * S.shape[1] * shift, 1./Fs * shift)
+        return arange(0, 1. / Fs * S.shape[1] * shift, 1. / Fs * shift)
     else:
-        return arange(0, 1./Fs * S, 1./Fs * shift)
+        return arange(0, 1. / Fs * S, 1. / Fs * shift)
+
 
 def dynamic_range(S, dB):
     """
@@ -224,8 +228,7 @@ def dynamic_range(S, dB):
 
     @returns copy of S after thresholding
     """
-    from numpy import log10,where
+    from numpy import log10, where
     smax = S.max()
-    thresh = 10**(log10(smax) - dB/10.)
+    thresh = 10 ** (log10(smax) - dB / 10.)
     return where(S >= thresh, S, thresh)
-
