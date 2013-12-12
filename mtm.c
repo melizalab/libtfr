@@ -12,11 +12,13 @@
 #include "tfr.h"
 
 /* some LAPACK prototypes */
+#ifndef NO_LAPACK
 extern void dsterf_(int *N, double *D, double *E, int *INFO);
 
 extern void dgtsv_(int *N, int *NRHS,
                    double *DL, double *D, double *DU, double *B,
                    int *LDB, int *INFO );
+#endif
 
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
 #define NTHREADS 1
@@ -300,7 +302,7 @@ fftconv(int N, const double *x, double *y)
         free(X);
 }
 
-
+#ifndef NO_LAPACK
 int
 dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 {
@@ -397,3 +399,5 @@ mtm_init_dpss(int nfft, double nw, int ntapers)
         dpss(tapers, lambdas, nfft, nw, ntapers);
         return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
 }
+
+#endif

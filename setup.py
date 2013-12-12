@@ -5,8 +5,13 @@ from setuptools import setup, find_packages
 from numpy.distutils.core import setup, Extension
 import os, sys
 
-ext_libs = ['fftw3']
+sources = ['libtfr.c','tfr.c','mtm.c']
+ext_libs = []
+ext_libdirs = []
 ext_incl = []
+compiler_defines = []
+compiler_args = []
+package_data = []
 
 if hasattr(os, 'uname'):
     system = os.uname()[0]
@@ -14,10 +19,16 @@ else:
     system = 'Windows'
 
 if system == 'Darwin':
-    ext_libs.append('lapack')
+    ext_libs.extend(('lapack','fftw3'))
     ext_incl.append('/opt/local/include')
 elif system == 'Linux':
-    ext_libs.append('lapack')
+    ext_libs.extend(('lapack','fftw3'))
+elif system == 'Windows':
+    ext_incl.append('fftw3')
+    ext_libs.append('fftw3-3')
+    ext_libdirs.append('fftw3')
+    compiler_defines.append(('NO_LAPACK', None))
+    package_data.append(('', ['fftw3/libfftw3-3.dll']))
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
@@ -43,23 +54,27 @@ FFT transformations.
 """
 
 setup(
-    name = 'libtfr',
-    version = "1.0.3",
-    py_modules = ['libtfr'],
-    ext_modules = [Extension('_libtfr',
-                             sources=['libtfr.c','tfr.c','mtm.c'],
+    name= 'libtfr',
+    version= "1.0.4",
+    py_modules= ['libtfr'],
+    ext_modules= [Extension('_libtfr',
+                             sources=sources,
+                             define_macros=compiler_defines,
                              libraries=ext_libs,
-                             extra_compile_args=['-std=c99'],
-                             include_dirs=ext_incl)],
+                             extra_compile_args=compiler_args,
+                             include_dirs=ext_incl,
+                             library_dirs=ext_libdirs)],
 
-    description = short_desc,
-    long_description = long_desc,
-    author = 'C Daniel Meliza',
-    author_email = '"dan" at the domain "meliza.org"',
-    maintainer = 'C Daniel Meliza',
-    maintainer_email = '"dan" at the domain "meliza.org"',
-    url = 'http://dmeliza.github.com/libtfr',
-    download_url = 'https://github.com/downloads/dmeliza/libtfr',
+    description= short_desc,
+    long_description= long_desc,
+    author= 'C Daniel Meliza',
+    author_email= '"dan" at the domain "meliza.org"',
+    maintainer= 'C Daniel Meliza',
+    maintainer_email= '"dan" at the domain "meliza.org"',
+    url= 'http://melizalab.github.com/libtfr',
+    download_url= 'https://github.com/downloads/melizalab/libtfr',
+    data_files= package_data,
+    zip_safe= False
 )
 
 
