@@ -9,7 +9,6 @@ Created 2009-06-09
 """
 
 import numpy as nx
-from scipy.signal import get_window
 from libtfr import *
 
 def fmsin(N, fnormin=0.05, fnormax=0.45, period=None, t0=None, fnorm0=0.25, pm1=1):
@@ -73,7 +72,7 @@ if __name__=="__main__":
     ss,iff = fmsin(siglen, .15, 0.45, 1024, 256/4,0.3,-1)
     s = ss.real + nx.random.randn(ss.size)/2
 
-    w = get_window('hamming',N)
+    w = nx.hamming(N)
 
     for i in range(nloop):
 	print "Loop %d" % i
