@@ -14,10 +14,16 @@
 /* some LAPACK prototypes */
 #ifndef NO_LAPACK
 extern void dsterf_(int *N, double *D, double *E, int *INFO);
-
+extern void dstemr_(char *JOBZ, char *RANGE,
+                    int *N, double *D, double *E,
+                    double *VL, double *VU, int *IL, int *IU,
+                    int *M, double *W,
+                    double *Z, int *LDZ, int *NZC, int *ISUPPZ,
+                    int *TRYAC, double *WORK, int *LWORK, int *IWORK, int *LIWORK, int *INFO);
 extern void dgtsv_(int *N, int *NRHS,
                    double *DL, double *D, double *DU, double *B,
                    int *LDB, int *INFO );
+
 #endif
 
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
@@ -303,11 +309,49 @@ fftconv(int N, const double *x, double *y)
 }
 
 #ifndef NO_LAPACK
+
+int
+tridieig(int N, double *D, double *E, int IL, int IU, double *W)
+{
+        int nfound = 0;
+        int ldz = 1;
+        int nzc = 0;
+        int tryac = 0;
+        double *work;
+        int *iwork;
+        double workdim;
+        int iworkdim;
+        int lwork = -1;
+        int liwork = -1;
+        int info = 0;
+        // do a workspace query
+        dstemr_("N", "I", &N, D, E, NULL, NULL, &IL, &IU,
+                &nfound, W, NULL, &ldz, &nzc, NULL, &tryac,
+                &workdim, &lwork, &iworkdim, &liwork, &info);
+        if (info == 0) {
+                lwork = (int)(workdim);
+                liwork = iworkdim;
+                work = (double*)malloc(lwork * sizeof(double));
+                iwork = (int*)malloc(liwork * sizeof(int));
+        }
+        else
+                return -2;
+
+        dstemr_("N", "I", &N, D, E, NULL, NULL, &IL, &IU,
+                &nfound, W, NULL, &ldz, &nzc, NULL, &tryac,
+                work, &lwork, iwork, &liwork, &info);
+
+        free(work);
+        free(iwork);
+        return info;
+
+}
+
 int
 dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 {
         int i, j, m, rv;
-        double *d, *sd, *dd1, *dd2, *ee1, *ee2;
+        double *d, *sd, *dd1, *w, *dd2, *ee1, *ee2;
         double *taper;
 
         double W, ff;
@@ -320,6 +364,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
         d = (double*)malloc(npoints*sizeof(double));
         sd = (double*)malloc(npoints*sizeof(double));
         dd1 = (double*)malloc(npoints*sizeof(double));
+        w = (double*)malloc(npoints*sizeof(double));
         dd2 = (double*)malloc(npoints*sizeof(double));
         ee1 = (double*)malloc((npoints)*sizeof(double));
         ee2 = (double*)malloc((npoints)*sizeof(double));
@@ -331,13 +376,14 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
         }
 
         // lapack eigenvalue solver; values stored in d in increasing order
-        dsterf_(&npoints,d,ee1,&rv);
+        //dsterf_(&npoints,d,ee1,&rv);
+        rv = tridieig(npoints, d, ee1, npoints-k+1, npoints, w);
         if (rv != 0) return -2;
 
         // set up tridiagonal equations:
         for (j = 0; j < k; j++) {
                 taper = tapers + j * npoints;  // point into tapers array
-                lambda[j] = d[npoints-(j+1)];
+                lambda[j] = w[k-(j+1)];
                 // initialize taper
                 for (i = 0; i < npoints; i++)
                         taper[i] = sin((j+1) * M_PI * i / (npoints-1));
@@ -383,6 +429,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
         free(d);
         free(sd);
         free(dd1);
+                free(w);
         free(dd2);
         free(ee1);
         free(ee2);
