@@ -310,7 +310,7 @@ fftconv(int N, const double *x, double *y)
 
 #ifndef NO_LAPACK
 
-int
+static int
 tridieig(int N, double *D, double *E, int IL, int IU, double *W)
 {
         int nfound = 0;
