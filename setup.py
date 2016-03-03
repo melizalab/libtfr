@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+ # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 from setuptools import setup, find_packages
 from numpy.distutils.core import setup, Extension
@@ -55,7 +55,7 @@ FFT transformations.
 
 setup(
     name= 'libtfr',
-    version= "1.0.5",
+    version= "1.0.6",
     py_modules= ['libtfr'],
     ext_modules= [Extension('_libtfr',
                              sources=sources,
