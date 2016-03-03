@@ -316,7 +316,7 @@ tridieig(int N, double *D, double *E, int IL, int IU, double *W)
         int nfound = 0;
         int ldz = 1;
         int nzc = 0;
-        int tryac = 0;
+        int tryac = 1;          // get high-accuracy solution when possible
         double *work;
         int *iwork;
         double workdim;
@@ -372,7 +372,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
         for (i = 0; i < npoints; i++) {
                 ff = (npoints - 1 - 2*i);
                 d[i] = dd1[i] = 0.25 * cos(2*M_PI*W) * ff * ff;
-                sd[i] = ee1[i] = (i+1) * (npoints-(i+1))/2.0;
+                sd[i] = ee1[i] = (i+1.0) * (npoints-(i+1.0))/2.0;
         }
 
         // lapack eigenvalue solver; values stored in d in increasing order
