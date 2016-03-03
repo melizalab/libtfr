@@ -85,10 +85,10 @@ main(int argc, char **argv)
         psd = (double*)malloc(N * sizeof(double));
         sigpow = mtfft(mtmh, sig+8300, N);
         mtpower(mtmh, psd, sigpow);
-        write_file("tfr_out_psd.dat", psd, N, 1);
+        write_file("tfr_out_psd.dat", psd, N/2 + 1, 1);
         free(psd);
 
-	const int l = (npoints - Np + 1) / step;
+        const int l = (npoints - Np + 1) / step;
         printf("* MTM spectrogram to tfr_out_mtm\n");
         specgram = (double*)calloc(l * (N/2+1), sizeof(double));
         mtm_spec(mtmh, specgram, sig, npoints, step, 1);

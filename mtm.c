@@ -40,7 +40,7 @@ mtm_init(int nfft, int npoints, int ntapers)
         mtm->nfft = nfft;
         mtm->npoints = npoints;
         mtm->ntapers = ntapers;
-        mtm->tapers = (double*)malloc(npoints*sizeof(double));
+        mtm->tapers = (double*)malloc(npoints*ntapers*sizeof(double));
         mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
         for (i = 0; i < mtm->ntapers; i++) mtm->lambdas[i] = 1.0;
 
@@ -68,7 +68,7 @@ mtm_init(int nfft, int npoints, int ntapers)
 void
 mtm_copy(mfft* mtmh, const double * tapers, const double * lambdas)
 {
-        memcpy(mtmh->tapers, tapers, mtmh->npoints*sizeof(double));
+        memcpy(mtmh->tapers, tapers, mtmh->npoints*mtmh->ntapers*sizeof(double));
         if (lambdas)
                 memcpy(mtmh->lambdas, lambdas, mtmh->ntapers*sizeof(double));
 }
