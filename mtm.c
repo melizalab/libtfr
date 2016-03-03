@@ -29,9 +29,8 @@ extern void dgtsv_(int *N, int *NRHS,
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
 #define NTHREADS 1
 
-
 mfft*
-mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
+mtm_init(int nfft, int npoints, int ntapers)
 {
         mfft *mtm;
         int *n_array, i;
@@ -41,14 +40,9 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
         mtm->nfft = nfft;
         mtm->npoints = npoints;
         mtm->ntapers = ntapers;
-        mtm->tapers = tapers;
-        if (lambdas)
-                mtm->lambdas = lambdas;
-        else {
-                mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
-                for (i = 0; i < ntapers; i++) mtm->lambdas[i] = 1.0;
-        }
-
+        mtm->tapers = (double*)malloc(npoints*sizeof(double));
+        mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
+        for (i = 0; i < mtm->ntapers; i++) mtm->lambdas[i] = 1.0;
 
         mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
         //mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
@@ -69,6 +63,14 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
         free(n_array);
         free(kind);
         return mtm;
+}
+
+void
+mtm_copy(mfft* mtmh, const double * tapers, const double * lambdas)
+{
+        memcpy(mtmh->tapers, tapers, mtmh->npoints*sizeof(double));
+        if (lambdas)
+                memcpy(mtmh->lambdas, lambdas, mtmh->ntapers*sizeof(double));
 }
 
 
@@ -440,11 +442,9 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 mfft*
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
-        double *tapers, *lambdas;
-        tapers = (double*)malloc(nfft*ntapers*sizeof(double));
-        lambdas = (double*)malloc(nfft*sizeof(double));
-        dpss(tapers, lambdas, nfft, nw, ntapers);
-        return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
+        mfft* mtmh = mtm_init(nfft, nfft, ntapers);
+        dpss(mtmh->tapers, mtmh->lambdas, nfft, nw, ntapers);
+        return mtmh;
 }
 
 #endif

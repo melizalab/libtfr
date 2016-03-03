@@ -56,7 +56,7 @@
 #ifndef _LIBTFR_H
 #define _LIBTFR_H
 
-#define LIBTFR_VERSION "1.0.3"
+#define LIBTFR_VERSION "2.0.0"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,7 +79,7 @@ extern "C" {
  */
 typedef struct {
         int nfft;        /**< number of points in the transform */
-	int npoints;     /**< number of points in the taper(s) */
+        int npoints;     /**< number of points in the taper(s) */
         int ntapers;     /**< number of tapers */
         double *tapers;  /**< array holding tapers, dim ntapers x npoints */
         double *lambdas; /**< array holding taper weights, dim ntapers */
@@ -105,19 +105,17 @@ typedef struct {
 /* initialization and destruction functions */
 
 /**
- * Initialize a multitaper mtm transform using preallocated tapers.
- * Use with an externally generated window function (e.g. hanning)
- * Input memory is owned by the returned mfft structure
+ * Initialize a multitaper mtm transform and allocate memory for tapers/window
+ * functions.
  *
  * @param nfft  number of points in the transform
  * @param npoints  number of points in the tapers (windows)
  * @param ntapers  number of tapers
- * @param tapers  pointer to ntapers*npoints array of windowing functions
- * @param lambdas  eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
  * @returns  pointer to mfft_params structure (owned by caller)
  *
  */
-mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
+mfft* mtm_init(int nfft, int npoints, int ntapers);
+
 
 /**
  * Initialize a mtfft transform using DPSS tapers
@@ -142,6 +140,15 @@ mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
  */
 mfft* mtm_init_herm(int nfft, int npoints, int order, double tm);
 
+/**
+ * Copy pre-calculated tapers/window functions (e.g. hanning) into a mtfft
+ * transform. Size of arrays must match memory allocated by the transform.
+ *
+ * @param tapers  pointer to ntapers*npoints array of windowing functions
+ * @param lambdas  eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
+ *
+ */
+void mtm_copy(mfft* mtmh, const double * tapers, const double * lambdas);
 
 /**
  * Frees up the mfft structure and dependent data.

@@ -37,7 +37,7 @@ Type: 'scons' to build the library
 # build options
 env = Environment(ENV = os.environ,
                   LIBS = ['m','fftw3','lapack'],
-                  CCFLAGS = ['-O2', '-std=c99'],
+                  CCFLAGS = ['-g2', '-std=c99'],
                   tools=['default','mex','doxygen'])
 
 # system-specific settings
