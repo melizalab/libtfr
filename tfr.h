@@ -131,10 +131,12 @@ void mtm_destroy(mfft * mtm);
 
 /* utility functions */
 
-int mtm_nfft(mfft const * mfft);
-int mtm_npoints(mfft const * mfft);
-int mtm_ntapers(mfft const * mfft);
-double * mtm_buffer(mfft * mfft);
+int mtm_nfft(mfft const * mtm);
+int mtm_npoints(mfft const * mtm);
+int mtm_ntapers(mfft const * mtm);
+int mtm_nreal(mfft const * mtm);
+int mtm_nframes(mfft const * mtm, int signal_size, int step_size);
+const double * mtm_buffer(const mfft * mtm);
 
 /* int mtm_spec_nfreq(mfft const * mfft); */
 

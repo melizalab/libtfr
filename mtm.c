@@ -36,7 +36,7 @@ mtm_init(int nfft, int npoints, int ntapers)
         mfft *mtm;
         int *n_array, i;
         fftw_r2r_kind *kind;
-        mtm = (mfft*)malloc(sizeof(struct mfft_s));
+        mtm = (mfft*)malloc(sizeof(mfft));
 
         mtm->nfft = nfft;
         mtm->npoints = npoints;
@@ -103,26 +103,26 @@ mtm_ntapers(mfft const * mtm)
         return mtm->ntapers;
 }
 
-double *
-mtm_buffer(mfft * mtm)
+int
+mtm_nreal(mfft const * mtm)
+{
+        return SPEC_NFREQ(mtm);
+}
+
+int
+mtm_nframes(mfft const * mtm, int signal_size, int step_size)
+{
+        return SPEC_NFRAMES(mtm, signal_size, step_size);
+}
+
+double const *
+mtm_buffer(mfft const * mtm)
 {
         return mtm->buf;
 }
 
-/* int mtm_spec_nfreq(mfft const * mtm) */
-/* { */
-/*         return mtm->nfft/2 + 1; */
-/* } */
-
-/* int */
-/* mtm_spec_nframes(mfft const * mtm, int signal_size, int step_size) */
-/* { */
-/*         return (signal_size - mtm->npoints + 1)/step_size; */
-/* } */
-
-
 double
-mtfft(mfft * mtm, const double *data, int nbins)
+mtfft(mfft * mtm, double const * data, int nbins)
 {
         // copy data * tapers to buffer
         int nfft = mtm->nfft;

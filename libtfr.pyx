@@ -27,7 +27,15 @@ ctypedef nx.double_t DTYPE_t
 CTYPE = nx.complex128
 ctypedef nx.complex128_t CTYPE_t
 
-def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
+
+# def class mfft:
+#     cdef tfr.mfft * _mfft
+#     def __cinit__(self):
+#         self._mfft = mtm_init
+
+
+def tfr_spec(s not None, int N, int step, int Np, int K=6,
+             double tm=6.0, double flock=0.01, int tlock=5, fgrid=None):
     """
     Compute time-frequency reassignment spectrogram of input signal s
 
@@ -46,7 +54,49 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     returns an N/2+1 by L power spectrogram, or if fgrid is specified,
     fgrid.size by L
     """
-    pass
+
+    # coerce data to proper type
+    cdef nx.ndarray[DTYPE_t, ndim=1] samples = nx.asarray(s).astype(DTYPE)
+
+    # generate/convert frequency grid
+    cdef int nfreq = N/2 + 1
+    cdef nx.ndarray[DTYPE_t, ndim=1] fgrid_cast
+    cdef double * fgridp = NULL
+    if fgrid is not None:
+        fgrid_cast = nx.asarray(fgrid).astype(DTYPE)
+        fgridp = &fgrid_cast[0]
+        nfreq = fgrid_cast.size
+
+    # initialize transform
+    cdef tfr.mfft * mtmh = tfr.mtm_init_herm(N, Np, K, tm)
+
+    # allocate output array
+    nt = tfr.mtm_nframes(mtmh, samples.size, step)
+    cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((nfreq, nt), dtype=DTYPE, order='F')
+
+    tfr.tfr_spec(mtmh, &out[0,0], &samples[0], samples.size, -1,
+                 step, flock, tlock, nfreq, fgridp);
+    tfr.mtm_destroy(mtmh)
+
+    return out
+
+
+def hermf(int N, int M=6, double tm=6.0):
+    """
+    Computes a set of orthogonal Hermite functions for use in computing
+    multi-taper reassigned spectrograms
+
+    @param N      the number of points in the window (must be odd)
+    @param M      the maximum order of the set of functions (default 6)
+    @param tm     half-time support (default 6)
+
+    @returns  hermite functions (MxN), first derivative of h (MxN), time-multiple of h (MxN)
+    """
+    cdef nx.ndarray[DTYPE_t, ndim=2] h = nx.empty((M, N), dtype=DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=2] Dh = nx.empty((M, N), dtype=DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=2] Th = nx.empty((M, N), dtype=DTYPE)
+    tfr.hermf(N, M, tm, &h[0,0], &Dh[0,0], &Th[0,0])
+    return (h, Dh, Th)
 
 
 def dpss(int N, double NW, int k):
@@ -77,24 +127,6 @@ def dpss(int N, double NW, int k):
         raise RuntimeError("Unknown error")
 
 
-def hermf(int N, int M=6, double tm=6.0):
-    """
-    Computes a set of orthogonal Hermite functions for use in computing
-    multi-taper reassigned spectrograms
-
-    @param N      the number of points in the window (must be odd)
-    @param M      the maximum order of the set of functions (default 6)
-    @param tm     half-time support (default 6)
-
-    @returns  hermite functions (MxN), first derivative of h (MxN), time-multiple of h (MxN)
-    """
-    cdef nx.ndarray[DTYPE_t, ndim=2] h = nx.empty((M, N), dtype=DTYPE)
-    cdef nx.ndarray[DTYPE_t, ndim=2] Dh = nx.empty((M, N), dtype=DTYPE)
-    cdef nx.ndarray[DTYPE_t, ndim=2] Th = nx.empty((M, N), dtype=DTYPE)
-    tfr.hermf(N, M, tm, &h[0,0], &Dh[0,0], &Th[0,0])
-    return (h, Dh, Th)
-
-
 def mtfft(s not None, double NW, int k=0, N=None):
     """Compute multitaper transform of a signal
 
@@ -109,8 +141,7 @@ def mtfft(s not None, double NW, int k=0, N=None):
     cdef int npoints
 
     # coerce data to proper type
-    cdef nx.ndarray signal = nx.asarray(s)
-    cdef nx.ndarray[DTYPE_t, ndim=1] samples = signal.astype(DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=1] samples = nx.asarray(s).astype(DTYPE)
 
     if k < 1:
         k = <int>(NW*2)-1;
@@ -126,15 +157,8 @@ def mtfft(s not None, double NW, int k=0, N=None):
     return spec
 
 
-# def casty(s not None):
-#     cdef nx.ndarray signal = nx.asarray(s)
-#     cdef DTYPE_t[:] samples = signal.astype(DTYPE)
-#     return samples
-
-# def blasty(nx.ndarray[ndim=1] s):
-#     return s
-
 cdef hc2cmplx(tfr.mfft * mtm):
+    """Copy data from workspace of mtm object into a complex array"""
     cdef int nfft = tfr.mtm_nfft(mtm)
     cdef int ntapers = tfr.mtm_ntapers(mtm)
     cdef int real_count = nfft / 2 + 1
@@ -146,7 +170,7 @@ cdef hc2cmplx(tfr.mfft * mtm):
     cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
     for t in range(ntapers):
         for n in range(0, real_count):
-            out[t, n].real = x
+            out[t, n].real = buf[t*nfft+n]
         for n in range(1, imag_count):
             out[t, n].imag = buf[t*nfft+(nfft-n)]
     return out
