@@ -86,7 +86,7 @@ mfft * mtm_init(int nfft, int npoints, int ntapers);
 
 
 /**
- * Initialize a mtfft transform using DPSS tapers
+o * Initialize a mtfft transform using DPSS tapers
  * (i.e. for a standard multitaper transform)
  *
  * @param nfft   number of points in the transform/dpss tapers
@@ -138,10 +138,6 @@ int mtm_nreal(mfft const * mtm);
 int mtm_nframes(mfft const * mtm, int signal_size, int step_size);
 const double * mtm_buffer(const mfft * mtm);
 
-/* int mtm_spec_nfreq(mfft const * mfft); */
-
-/* int mtm_spec_nframes(mfft const * mfft, int signal_size, int step_size); */
-
 
 /* transformation functions */
 
@@ -159,7 +155,7 @@ const double * mtm_buffer(const mfft * mtm);
  * @param nbins  the number of time points in the signal
  * @returns total power in signal (used in computing adaptive power spectra)
  */
-double mtfft(mfft * mtm, const double *data, int nbins);
+double mtfft(mfft * mtm, double const * data, int nbins);
 
 /* spectrogram functions */
 
@@ -172,9 +168,9 @@ double mtfft(mfft * mtm, const double *data, int nbins);
  * the total power in the signal.
  *
  * @param  mtm     mfft structure after running mtfft
- * @param  sigpow  total power in the signal. If zero or less, uses high-res method
  * @param  pow     (output) power spectral density (linear scale) of the signal. Needs to be
  *                 preallocated, with dimensions at least nfft/2 + 1;
+ * @param  sigpow  total power in the signal. If zero or less, uses high-res method
  */
 void mtpower(mfft const * mtm, double *pow, double sigpow);
 

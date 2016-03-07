@@ -15,10 +15,16 @@ cdef extern from "tfr.h":
     int mtm_nfft(const mfft * mtm)
     int mtm_npoints(const mfft * mtm)
     int mtm_ntapers(const mfft * mtm)
+    int mtm_nreal(const mfft * mtm)
     int mtm_nframes(const mfft * mtm, int signal_size, int step_size)
     const double * mtm_buffer(const mfft * mtm)
 
-    double mtfft(mfft * mtm, const double *data, int nbins)
+    double mtfft(mfft * mtm, const double * data, int nbins)
+    void mtpower(const mfft * mtm, double * pow, double sigpow)
+
+    void mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples,
+                  int shift, int adapt)
+
 
     void tfr_spec(mfft * mtm, double * spec, const double *samples, int nsamples,
                   int k, int shift, double flock, int tlock, int nfreq, const double *fgrid)

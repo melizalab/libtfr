@@ -129,17 +129,18 @@ mtfft(mfft * mtm, double const * data, int nbins)
         int size = mtm->npoints;
         int i,j;
         int nt = (nbins < size) ? nbins : size;
-        double pow = 0.0;
 
         //printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
         for (i = 0; i < mtm->ntapers; i++) {
                 for (j = 0; j < nt; j++) {
                         mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * data[j];
-                        pow += data[j] * data[j];
                 }
         }
 
-        pow /= mtm->ntapers;
+        double pow = 0.0;
+        for (j = 0; j < nt; j++) {
+                pow += (data[j] * data[j]);
+        }
         // zero-pad rest of buffer
         //printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
         for (i = 0; i < mtm->ntapers; i++) {
