@@ -10,6 +10,7 @@
 #include <math.h>
 #include <float.h>
 #include "tfr.h"
+#include "mtm_impl.h"
 
 /* some LAPACK prototypes */
 #ifndef NO_LAPACK
@@ -29,13 +30,13 @@ extern void dgtsv_(int *N, int *NRHS,
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
 #define NTHREADS 1
 
-mfft*
+mfft *
 mtm_init(int nfft, int npoints, int ntapers)
 {
         mfft *mtm;
         int *n_array, i;
         fftw_r2r_kind *kind;
-        mtm = (mfft*)malloc(sizeof(mfft));
+        mtm = (mfft*)malloc(sizeof(struct mfft_s));
 
         mtm->nfft = nfft;
         mtm->npoints = npoints;
@@ -66,7 +67,7 @@ mtm_init(int nfft, int npoints, int ntapers)
 }
 
 void
-mtm_copy(mfft* mtmh, const double * tapers, const double * lambdas)
+mtm_copy(mfft * mtmh, const double * tapers, const double * lambdas)
 {
         memcpy(mtmh->tapers, tapers, mtmh->npoints*mtmh->ntapers*sizeof(double));
         if (lambdas)
@@ -75,7 +76,7 @@ mtm_copy(mfft* mtmh, const double * tapers, const double * lambdas)
 
 
 void
-mtm_destroy(mfft *mtm)
+mtm_destroy(mfft * mtm)
 {
         if (mtm->plan) fftw_destroy_plan(mtm->plan);
         if (mtm->tapers) free(mtm->tapers);
@@ -84,9 +85,38 @@ mtm_destroy(mfft *mtm)
         free(mtm);
 }
 
+int
+mtm_nfft(mfft const * mtm)
+{
+        return mtm->nfft;
+}
+
+int
+mtm_npoints(mfft const * mtm)
+{
+        return mtm->npoints;
+}
+
+int
+mtm_ntapers(mfft const * mtm)
+{
+        return mtm->ntapers;
+}
+
+/* int mtm_spec_nfreq(mfft const * mtm) */
+/* { */
+/*         return mtm->nfft/2 + 1; */
+/* } */
+
+/* int */
+/* mtm_spec_nframes(mfft const * mtm, int signal_size, int step_size) */
+/* { */
+/*         return (signal_size - mtm->npoints + 1)/step_size; */
+/* } */
+
 
 double
-mtfft(mfft *mtm, const double *data, int nbins)
+mtfft(mfft * mtm, const double *data, int nbins)
 {
         // copy data * tapers to buffer
         int nfft = mtm->nfft;
@@ -117,7 +147,7 @@ mtfft(mfft *mtm, const double *data, int nbins)
 }
 
 void
-mtpower(const mfft *mtm, double *pow, double sigpow)
+mtpower(mfft const * mtm, double *pow, double sigpow)
 {
         int nfft = mtm->nfft;
         int ntapers = mtm->ntapers;
@@ -186,7 +216,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 }
 
 void
-mtcomplex(const mfft *mtm, double complex *out)
+mtcomplex(mfft const * mtm, double complex *out)
 {
         int nfft = mtm->nfft;
         int ntapers = mtm->ntapers;
@@ -209,7 +239,7 @@ mtcomplex(const mfft *mtm, double complex *out)
 
 
 void
-mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
+mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
 {
         int t;
         int nbins = SPEC_NFRAMES(mtm, nsamples, shift);
@@ -223,7 +253,7 @@ mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift
 }
 
 void
-mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift)
+mtm_zspec(mfft * mtm, double complex *spec, const double *samples, int nsamples, int shift)
 {
         int t;
         int nbins = SPEC_NFRAMES(mtm, nsamples, shift);
@@ -439,10 +469,10 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 }
 
 
-mfft*
+mfft *
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
-        mfft* mtmh = mtm_init(nfft, nfft, ntapers);
+        mfft * mtmh = mtm_init(nfft, nfft, ntapers);
         dpss(mtmh->tapers, mtmh->lambdas, nfft, nw, ntapers);
         return mtmh;
 }
