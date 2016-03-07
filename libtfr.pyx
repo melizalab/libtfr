@@ -16,13 +16,16 @@ with the signal are returned.
 Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
 """
-
+from cython cimport view
 import numpy as nx
 cimport numpy as nx
 nx.import_array()
-
-ctypedef nx.double_t DTYPE_t
 cimport tfr
+
+DTYPE = nx.double
+ctypedef nx.double_t DTYPE_t
+CTYPE = nx.complex128
+ctypedef nx.complex128_t CTYPE_t
 
 def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     """
@@ -46,7 +49,7 @@ def tfr_spec(s, N, step, Np, K=6, tm=6.0, flock=0.01, tlock=5, fgrid=None):
     pass
 
 
-def dpss(int N, float NW, int k):
+def dpss(int N, double NW, int k):
     """
     Computes the discrete prolate spherical sequences used in the
     multitaper method power spectrum calculations.
@@ -54,20 +57,96 @@ def dpss(int N, float NW, int k):
     @param npoints   the number of points in the window
     @param mtm_p     the time-bandwidth product. Must be an integer or half-integer
                      (typical choices are 2, 5/2, 3, 7/2, or 4)
-    @param k         Returns the 1:k DPSS vectors
-                     If a 2-ple, returns the k[0]:k[1] DPSS vectors
-                     Default is to return all vectors
+    @param k         the number of DPSS vectors to generate. Must be less than
+                     npoints, but k > NW*2 - 1 are not stable
 
     @returns (2D array of tapers, shape (k,npoints),
-              2D array of concentration values, length k
+              1D array of concentration values, length k)
     """
-    cdef nx.ndarray[DTYPE_t, ndim=2] tapers = nx.empty((k, N), dtype='d')
-    cdef nx.ndarray[DTYPE_t, ndim=1] lambdas = nx.empty(k, dtype='d')
+    cdef nx.ndarray[DTYPE_t, ndim=2] tapers = nx.empty((k, N), dtype=DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=1] lambdas = nx.empty(k, dtype=DTYPE)
 
     rv = tfr.dpss(&tapers[0,0], &lambdas[0], N, NW, k)
     if rv == 0:
         return tapers, lambdas
-    elif rv == 1:
+    elif rv == -1:
         raise ValueError("Invalid DPSS parameters")
+    elif rv == -2:
+        raise RuntimeError("Eigenvalue solver failed")
     else:
-        raise RuntimeError("Eigenvalue solver failed.")
+        raise RuntimeError("Unknown error")
+
+
+def hermf(int N, int M=6, double tm=6.0):
+    """
+    Computes a set of orthogonal Hermite functions for use in computing
+    multi-taper reassigned spectrograms
+
+    @param N      the number of points in the window (must be odd)
+    @param M      the maximum order of the set of functions (default 6)
+    @param tm     half-time support (default 6)
+
+    @returns  hermite functions (MxN), first derivative of h (MxN), time-multiple of h (MxN)
+    """
+    cdef nx.ndarray[DTYPE_t, ndim=2] h = nx.empty((M, N), dtype=DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=2] Dh = nx.empty((M, N), dtype=DTYPE)
+    cdef nx.ndarray[DTYPE_t, ndim=2] Th = nx.empty((M, N), dtype=DTYPE)
+    tfr.hermf(N, M, tm, &h[0,0], &Dh[0,0], &Th[0,0])
+    return (h, Dh, Th)
+
+
+def mtfft(s not None, double NW, int k=0, N=None):
+    """Compute multitaper transform of a signal
+
+    @param s 1D input signal
+    @param NW time-frequency product
+    @param k number of tapers (default NW*2-1)
+    @param N number of points in FFT (default s.size)
+
+    @returns 2D complex array, dimension N x k
+    """
+    cdef tfr.mfft * mtm
+    cdef int npoints
+
+    # coerce data to proper type
+    cdef nx.ndarray signal = nx.asarray(s)
+    cdef nx.ndarray[DTYPE_t, ndim=1] samples = signal.astype(DTYPE)
+
+    if k < 1:
+        k = <int>(NW*2)-1;
+    if N is None:
+        npoints = samples.size
+    else:
+        npoints = N
+
+    mtmh = tfr.mtm_init_dpss(npoints, NW, k)
+    tfr.mtfft(mtmh, &samples[0], npoints);
+    cdef nx.ndarray spec = hc2cmplx(mtmh)
+    tfr.mtm_destroy(mtmh)
+    return spec
+
+
+# def casty(s not None):
+#     cdef nx.ndarray signal = nx.asarray(s)
+#     cdef DTYPE_t[:] samples = signal.astype(DTYPE)
+#     return samples
+
+# def blasty(nx.ndarray[ndim=1] s):
+#     return s
+
+cdef hc2cmplx(tfr.mfft * mtm):
+    cdef int nfft = tfr.mtm_nfft(mtm)
+    cdef int ntapers = tfr.mtm_ntapers(mtm)
+    cdef int real_count = nfft / 2 + 1
+    cdef int imag_count = (nfft + 1) / 2
+    cdef size_t t, n
+    cdef double * buf = tfr.mtm_buffer(mtm)
+
+    # allocate output array
+    cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
+    for t in range(ntapers):
+        for n in range(0, real_count):
+            out[t, n].real = x
+        for n in range(1, imag_count):
+            out[t, n].imag = buf[t*nfft+(nfft-n)]
+    return out

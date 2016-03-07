@@ -103,6 +103,12 @@ mtm_ntapers(mfft const * mtm)
         return mtm->ntapers;
 }
 
+double *
+mtm_buffer(mfft * mtm)
+{
+        return mtm->buf;
+}
+
 /* int mtm_spec_nfreq(mfft const * mtm) */
 /* { */
 /*         return mtm->nfft/2 + 1; */
@@ -473,8 +479,13 @@ mfft *
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
         mfft * mtmh = mtm_init(nfft, nfft, ntapers);
-        dpss(mtmh->tapers, mtmh->lambdas, nfft, nw, ntapers);
-        return mtmh;
+        int rv = dpss(mtmh->tapers, mtmh->lambdas, nfft, nw, ntapers);
+        if (rv == 0)
+                return mtmh;
+        else {
+                mtm_destroy(mtmh);
+                return NULL;
+        }
 }
 
 #endif

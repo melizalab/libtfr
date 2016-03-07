@@ -134,6 +134,7 @@ void mtm_destroy(mfft * mtm);
 int mtm_nfft(mfft const * mfft);
 int mtm_npoints(mfft const * mfft);
 int mtm_ntapers(mfft const * mfft);
+double * mtm_buffer(mfft * mfft);
 
 /* int mtm_spec_nfreq(mfft const * mfft); */
 
