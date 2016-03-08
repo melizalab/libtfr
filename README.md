@@ -5,6 +5,52 @@ The library will also calculate conventional windowed spectrograms and multitape
 
 [![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
 
+## Quick start
+
+To use the python module, you'll need to install some system dependencies first. On Debian:
+
+```bash
+sudo apt-get install libfftw3-dev liblapack-dev
+```
+
+On OS X with Macports:
+
+```bash
+sudo port install fftw-3
+```
+
+To install the python module from source:
+
+```bash
+pip install -r requirements.txt
+python setup.py install
+```
+
+To install from PyPI:
+
+```bash
+pip install libtfr
+```
+
+To compute a time-frequency reassignment spectrogram in Python:
+
+```python
+import libtfr
+nfft = 256
+Np = 201
+shift = 10
+K = 6
+tm = 6.0
+flock = 0.01
+tlock = 5
+
+# load signal of dimension (npoints,)
+signal = ...
+S = libtfr.tfr_spec(signal, nfft, shift, Np, K, tm, flock, tlock)
+```
+
+See below for more information on the parameters.
+
 ## Requirements
 
 * FFTW, version 3.x: <http://www.fftw.org>. TFR spectrograms require 3 FFT transforms per taper, so most of the computational time will be spent computing FFTs. FFTW is fast, flexible, and portable.
@@ -15,69 +61,56 @@ The library will also calculate conventional windowed spectrograms and multitape
 
 * (optional) Python, version 2.7, 3.2, 3.3, or 3.4 with numpy 1.10+
 
-## Build/Installation
+### Mulitaper Spectral Analysis
 
-### Library
-
-It may be necessary to edit the SConstruct file to make sure it points to the correct LAPACK libraries.
-
-    scons lib
-
-To install the libraries and header (default to /usr/local/lib and /usr/local/include):
-
-    scons install
-
-A small test program, *test_tfr*, may be built with `scons test`. The program generates a signal with sinusoidally modulated frequency and then calculates a multitaper PSD, a multitaper spectrogram, and a time-frequency reassigned spectrogram. The results are output in ASCII format to `tfr_in.dat`, `tfr_out_psd.dat`, `tfr_out_mtm.dat`, and `tfr_out_tfr.dat`.
-
-### Python package
-
-It is not necessary to build the library in the previous step as Python's distribution tool will do this on its own.
-
-    pip install -r requirements.txt
-    python setup.py install
-
-## Use
-
-### C/C++
-
-```c
-int N = 256;
-int Np = 201;
-int step = 10;
-int k = 6;
-double tm = 6.0;
-
-// load signal with npoints frames
-double *sig = ...
-
-int l = (npoints - Np + 1) / step;
-double *specgram = (double*)calloc(l * (N/2+1), sizeof(double));
-mfft *mtmh = mtm_init_herm(N, Np, k, tm);
-tfr_spec(mtmh, specgram, sig, npoints, -1, step, 0.01, 5, 0, NULL);
-
-```
-
-### Python
+Libtfr can also calculate multitaper and standard windowed Fourier transforms. For example, discrete prolate spherical sequences can be used to obtain multiple independent estimates of spectral statistics while maintaining optimal time-frequency tradeoffs (Prieto et al, 2007). The Python interface for MT calculations is somewhat different:
 
 ```python
 import libtfr
-nfft = 256
-Np = 201
-shift = 10
-K = 6
-tm = 6.0
-flock = 0.01,
-tlock = 5,
 
 # load signal of dimension (npoints,)
 signal = ...
-S = libtfr.tfr_spec(signal, nfft, shift, Np, K, tm, flock, tlock)
 
+# generate a transform object with size equal to signal length and 5 tapers
+D = libtfr.mfft_dpss(npoints, 3, 5)
+# complex windowed FFTs, one per taper
+Z = D.mtfft(signal)
+# power spectrum density estimate using adaptive method to average tapers
+P = D.mtpsd(signal)
+
+# generate a transform object with size 512 samples and 5 tapers for short-time analysis
+D = libtfr.mfft_dpss(512, 3, 5)
+# complex STFT with frame shift of 10 samples
+Z = D.mtstft(signal, 10)
+# spectrogram with frame shift of 10 samples
+P = D.mtspec(signal, 10)
+
+# generate a transform object with 200-sample hanning window padded to 256 samples
+from numpy import hanning
+D = libtfr.mfft_precalc(256, hanning(200))
+# spectrogram with frame shift of 10 samples
+P = D.mtspec(signal, 10)
 ```
+
+### C Library
+
+To build the C library you will also need to have [scons](http://www.scons.org) installed. You may need to edit the SConstruct file to make sure it points to the correct LAPACK libraries. To build the shared library:
+
+    scons lib
+
+To install the libraries and header (default to `/usr/local/lib` and `/usr/local/include`):
+
+    scons install
+
+A small test program, *test_tfr*, can be built with `scons test`. The program generates a signal with sinusoidally modulated frequency and then calculates a multitaper PSD, a multitaper spectrogram, and a time-frequency reassigned spectrogram. The results are output in ASCII format to `tfr_in.dat`, `tfr_out_psd.dat`, `tfr_out_mtm.dat`, and `tfr_out_tfr.dat`.
+
+See `test_tfr.c` for an example of how to use the C API.
+
+### Documentation
 
 The C header `tfr.h` and python module `libtfr.pyx` are both extensively documented.
 
-## Algorithm and usage notes
+### Algorithm and usage notes
 
 The software was assembled from various MATLAB sources, including the time-frequency toolkit, Xiao and Flandrin's work on multitaper reassignment, and code from Gardner and Magnasco.
 
@@ -98,7 +131,7 @@ Increasing the order generally reduces the background 'froth', but interference 
 
 Additional improvements in resolution may be achievable averaging across different window sizes, or by using other averaging methods (i.e. as in Xiao and Flandrin)
 
-## License
+### License
 
 libtfr was written by C Daniel Meliza (dmeliza@uchicago.edu) and is licensed under the Gnu Public License (GPL) version 2; see COPYING for details.
 
@@ -106,8 +139,9 @@ some code is adapted from chronux (<http://www.chronux.org>), by Partha Mitra an
 
 THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO OR DR. MELIZA BE LIABLE FOR ANY DIRECT OR CONSEQUENTIAL DAMAGES RESULTING FROM USE OF THE PROGRAMS. THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
 
-## References
+### References
 
 * Time-frequency toolkit: <http://tftb.nongnu.org/>
 * Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment for Nonstationary Spectrum Estimation and Chirp Enhancement Signal Processing, IEEE Transactions on, Signal Processing, IEEE Transactions on, 2007, 55, 2851-2860 code: <http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html>
 * Gardner, T. J. & Magnasco, M. O. Sparse time-frequency representations. Proc. Natl. Acad. Sci. U S A, 2006, 103, 6094-6099 code: <http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m>
+* Prieto, G.A., Parker, R. L., Thomson D. J., Vernon, F. L., & Graham, R. L. Reducing the bias of multitaper spectrum estimates. Geophys. J. Int. 2007, doi: 10.1111/j.1365-246X.2007.03592.x.
