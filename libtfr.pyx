@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 # -*- mode: cython -*-
-# cython: profile=True
-# cython: linetrace=True
 """Interface to libtfr spectrogram library using numpy.
 
 Spectrograms are returned as 2D arrays with frequency indexed by row and time by
