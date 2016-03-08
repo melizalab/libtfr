@@ -42,8 +42,8 @@ mtm_init(int nfft, int npoints, int ntapers)
         mtm->npoints = npoints;
         mtm->ntapers = ntapers;
         mtm->tapers = (double*)malloc(npoints*ntapers*sizeof(double));
-        mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
-        for (i = 0; i < mtm->ntapers; i++) mtm->lambdas[i] = 1.0;
+        mtm->weights = (double*)malloc(ntapers*sizeof(double));
+        for (i = 0; i < mtm->ntapers; i++) mtm->weights[i] = 1.0;
 
         mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
         //mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
@@ -67,11 +67,11 @@ mtm_init(int nfft, int npoints, int ntapers)
 }
 
 void
-mtm_copy(mfft * mtmh, const double * tapers, const double * lambdas)
+mtm_copy(mfft * mtmh, const double * tapers, const double * weights)
 {
         memcpy(mtmh->tapers, tapers, mtmh->npoints*mtmh->ntapers*sizeof(double));
-        if (lambdas)
-                memcpy(mtmh->lambdas, lambdas, mtmh->ntapers*sizeof(double));
+        if (weights)
+                memcpy(mtmh->weights, weights, mtmh->ntapers*sizeof(double));
 }
 
 
@@ -80,7 +80,7 @@ mtm_destroy(mfft * mtm)
 {
         if (mtm->plan) fftw_destroy_plan(mtm->plan);
         if (mtm->tapers) free(mtm->tapers);
-        if (mtm->lambdas) free(mtm->lambdas);
+        if (mtm->weights) free(mtm->weights);
         if (mtm->buf) fftw_free(mtm->buf);
         free(mtm);
 }
@@ -166,9 +166,9 @@ mtpower(mfft const * mtm, double *pow, double sigpow)
                 memset(pow, 0, real_count*sizeof(double));
                 for (t = 0; t < ntapers; t++) {
                         for (n = 0; n < real_count; n++)
-                                pow[n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t]/ntapers;
+                                pow[n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->weights[t]/ntapers;
                         for (n = 1; n < imag_count; n++) {
-                                pow[n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t]/ntapers;
+                                pow[n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->weights[t]/ntapers;
                         }
                 }
         }
@@ -179,9 +179,9 @@ mtpower(mfft const * mtm, double *pow, double sigpow)
                 Sk = (double*)calloc(ntapers*real_count, sizeof(double));
                 for (t = 0; t < ntapers; t++) {
                         for (n = 0; n < real_count; n++)
-                                Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t];
+                                Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->weights[t];
                         for (n = 1; n < imag_count; n++)
-                                Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t];
+                                Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->weights[t];
                         //Sk[t*nfft+n] *= 2;
                 }
                 // initial guess is average of first two tapers
@@ -195,7 +195,7 @@ mtpower(mfft const * mtm, double *pow, double sigpow)
                 err /= nfft;
                 //printf("err: %3.4g; tol: %3.4g\n", err, tol);
                 //for(t = 0; t < ntapers; t++)
-                //      printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
+                //      printf("%3.4g ", sigpow * (1 - mtm->weights[t]));
                 //printf("\n");
                 while (err > tol) {
                         err = 0;
@@ -204,8 +204,8 @@ mtpower(mfft const * mtm, double *pow, double sigpow)
                                 num = den = 0;
                                 //printf("%d: est=%3.4g; ", n, est);
                                 for (t=0; t < ntapers; t++) {
-                                        w = est / (est * mtm->lambdas[t] + sigpow * (1 - mtm->lambdas[t]));
-                                        w = w * w * mtm->lambdas[t];
+                                        w = est / (est * mtm->weights[t] + sigpow * (1 - mtm->weights[t]));
+                                        w = w * w * mtm->weights[t];
                                         //printf("%3.4g ",Sk[t*real_count+n]);
                                         num += w * Sk[t*real_count+n];
                                         den += w;
@@ -455,7 +455,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
                                 taper[i] *= -1;
                 }
 
-                // calculate lambdas
+                // calculate weights
                 fftconv(npoints, taper, dd2);
 
                 ff = 2.0 * W * dd2[npoints-1];  // last point
@@ -480,7 +480,7 @@ mfft *
 mtm_init_dpss(int nfft, double nw, int ntapers)
 {
         mfft * mtmh = mtm_init(nfft, nfft, ntapers);
-        int rv = dpss(mtmh->tapers, mtmh->lambdas, nfft, nw, ntapers);
+        int rv = dpss(mtmh->tapers, mtmh->weights, nfft, nw, ntapers);
         if (rv == 0)
                 return mtmh;
         else {

@@ -58,9 +58,13 @@ cdef class mfft:
         s - input data (1D time series)
         returns array of complex numbers, dimension (nfft, ntapers)
         """
-        cdef double[::1] data = nx.asarray(s).astype(DTYPE)
+        cdef double[:] data = nx.asarray(s).astype(DTYPE)
+        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef size_t real_count = tfr.mtm_nreal(self._mfft)
+        cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
         tfr.mtfft(self._mfft, &data[0], data.size);
-        return hc2cmplx(self._mfft)
+        hc2cmplx(self._mfft, out)
+        return out.T
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods
@@ -70,7 +74,7 @@ cdef class mfft:
 
         @returns  N/2+1 1D real power spectrum density
         """
-        cdef double[::1] data = nx.asarray(s).astype(DTYPE)
+        cdef double[:] data = nx.asarray(s).astype(DTYPE)
         cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
         cdef nx.ndarray[DTYPE_t, ndim=1] spec = nx.zeros(nfreq, dtype=DTYPE)
         cdef double sigpow = tfr.mtfft(self._mfft, &data[0], data.size)
@@ -80,19 +84,40 @@ cdef class mfft:
         return spec
 
     def mtspec(self, s not None, int step, adapt=True):
-        """Compute STFT of a signal using multitaper methods
+        """Compute spectrogram of a signal using multitaper methods
 
-        s -  input data (1D time series)
+        s -     input data (1D time series)
+        step -  number of samples to step between frames
         adapt - compute adaptive spectrum (default True)
 
         @returns real power spectrogram, dim (N/2+1, L)
         """
-        cdef double[::1] data = nx.asarray(s).astype(DTYPE)
+        cdef double[:] data = nx.asarray(s).astype(DTYPE)
         cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
         cdef size_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
-        cdef nx.ndarray[DTYPE_t, ndim=2] spec = nx.zeros((nfreq, nt), dtype=DTYPE, order='F')
+        cdef nx.ndarray[DTYPE_t, ndim=2] spec = nx.zeros((nt, nfreq), dtype=DTYPE)
         tfr.mtm_spec(self._mfft, &spec[0,0], &data[0], data.size, step, adapt)
-        return spec
+        return spec.T
+
+    def mtstft(self, s not None, int step):
+        """Compute STFT of a signal using multiple tapers
+
+        s -     input data (1D time series)
+        step -  number of samples to step between frames
+
+        @returns complex STFT, dim (N/2+1, L, ntapers)
+        """
+        cdef double[:] data = nx.asarray(s).astype(DTYPE)
+        cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
+        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef size_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
+        cdef nx.ndarray[CTYPE_t, ndim=3] out = nx.zeros((nt, ntapers, nfreq), dtype=CTYPE)
+        cdef size_t t
+        for t in range(nt):
+            tfr.mtfft(self._mfft, &data[t*step], data.size - t*step)
+            hc2cmplx(self._mfft, out[t,:,:])
+        return out.transpose(2, 0, 1)
+
 
 
 def mfft_dpss(int nfft, double nw, int ntapers):
@@ -177,13 +202,13 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
 
     # allocate output array
     cdef size_t nt = tfr.mtm_nframes(mtmh, samples.size, step)
-    cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((nfreq, nt), dtype=DTYPE, order='F')
+    cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((nt, nfreq), dtype=DTYPE)
 
     tfr.tfr_spec(mtmh, &out[0,0], &samples[0], samples.size, -1,
                  step, flock, tlock, nfreq, fgridp);
     tfr.mtm_destroy(mtmh)
 
-    return out
+    return out.T
 
 
 def hermf(int N, int M=6, double tm=6.0):
@@ -232,50 +257,17 @@ def dpss(int N, double NW, int k):
         raise RuntimeError("Unknown error")
 
 
-def mtfft(s not None, double NW, int k=0, N=None):
-    """Compute multitaper transform of a signal
-
-    @param s 1D input signal
-    @param NW time-frequency product
-    @param k number of tapers (default NW*2-1)
-    @param N number of points in FFT (default s.size)
-
-    @returns 2D complex array, dimension N x k
-    """
-    cdef tfr.mfft * mtm
-    cdef int npoints
-
-    # coerce data to proper type
-    cdef nx.ndarray[DTYPE_t, ndim=1] samples = nx.asarray(s).astype(DTYPE)
-
-    if k < 1:
-        k = <int>(NW*2)-1;
-    if N is None:
-        npoints = samples.size
-    else:
-        npoints = N
-
-    mtmh = tfr.mtm_init_dpss(npoints, NW, k)
-    tfr.mtfft(mtmh, &samples[0], npoints);
-    cdef nx.ndarray spec = hc2cmplx(mtmh)
-    tfr.mtm_destroy(mtmh)
-    return spec
-
-
-cdef nx.ndarray hc2cmplx(tfr.mfft * mtm):
+cdef hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out):
     """Copy data from workspace of mtm object into a complex array"""
-    cdef int nfft = tfr.mtm_nfft(mtm)
-    cdef int ntapers = tfr.mtm_ntapers(mtm)
-    cdef int real_count = nfft / 2 + 1
-    cdef int imag_count = (nfft + 1) / 2
+    cdef size_t nfft = tfr.mtm_nfft(mtm)
+    cdef size_t ntapers = tfr.mtm_ntapers(mtm)
+    cdef size_t real_count = nfft / 2 + 1
+    cdef size_t imag_count = (nfft + 1) / 2
     cdef size_t t, n
     cdef double * buf = tfr.mtm_buffer(mtm)
 
-    # allocate output array
-    cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
     for t in range(ntapers):
         for n in range(0, real_count):
             out[t, n].real = buf[t*nfft+n]
         for n in range(1, imag_count):
             out[t, n].imag = buf[t*nfft+(nfft-n)]
-    return out

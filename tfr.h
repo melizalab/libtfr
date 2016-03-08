@@ -59,7 +59,7 @@
 #define LIBTFR_VERSION "2.0.0"
 
 #ifdef __cplusplus
-//extern "C" {
+extern "C" {
 #include <complex>
 #else
 #include <complex.h>
@@ -84,9 +84,8 @@ typedef struct mfft_s mfft;
  */
 mfft * mtm_init(int nfft, int npoints, int ntapers);
 
-
 /**
-o * Initialize a mtfft transform using DPSS tapers
+ * Initialize a mtfft transform using DPSS tapers
  * (i.e. for a standard multitaper transform)
  *
  * @param nfft   number of points in the transform/dpss tapers
@@ -112,11 +111,11 @@ mfft * mtm_init_herm(int nfft, int npoints, int order, double tm);
  * Copy pre-calculated tapers/window functions (e.g. hanning) into a mtfft
  * transform. Size of arrays must match memory allocated by the transform.
  *
- * @param tapers  pointer to ntapers*npoints array of windowing functions
- * @param lambdas  eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
+ * @param tapers   pointer to ntapers*npoints array of windowing functions
+ * @param weights  weights for tapers; if NULL, assign weight of 1.0 to each taper
  *
  */
-void mtm_copy(mfft * mtmh, const double * tapers, const double * lambdas);
+void mtm_copy(mfft * mtmh, const double * tapers, const double * weights);
 
 /**
  * Frees up the mfft structure and dependent data.
@@ -160,29 +159,28 @@ double mtfft(mfft * mtm, double const * data, int nbins);
 /* spectrogram functions */
 
 /**
- * Compute power spectrum from multiple taper spectrogram.
+ * Extract power spectrum from multiple taper FFT.
  *
- * The 'high-res' method is simply the average of the estimates for
- * each taper weighted by the eigenvalue of the taper.  The 'adaptive'
- * method attempts to fit the contribution from each taper to match
- * the total power in the signal.
+ * The 'high-res' method is simply a weighted average of the estimates for each
+ * taper. The 'adaptive' method attempts to fit the contribution from each taper
+ * to match the total power in the signal.
  *
  * @param  mtm     mfft structure after running mtfft
  * @param  pow     (output) power spectral density (linear scale) of the signal. Needs to be
  *                 preallocated, with dimensions at least nfft/2 + 1;
  * @param  sigpow  total power in the signal. If zero or less, uses high-res method
  */
-void mtpower(mfft const * mtm, double *pow, double sigpow);
+void mtpower(mfft const * mtm, double * pow, double sigpow);
 
 
 /**
- * Export complex multitaper transform of signal.
+ * Extract complex multitaper transform of signal from transform object
  *
  * @param mtm  mfft structure after running mtfft
  * @param out  (output) complex transform of signal. Needs to be preallocated with
  *             dimensions at least ntapers by nfft
  */
-void mtcomplex(mfft const * mtm, _Complex double *out);
+void mtcomplex(mfft const * mtm, _Complex double * out);
 
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
@@ -198,45 +196,47 @@ void mtcomplex(mfft const * mtm, _Complex double *out);
  * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  */
-void mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
+void mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift,
+              int adapt);
 
 /**
- *  Compute a multitaper complex spectrogram by stepping through a signal.
- *  This function 'fills' a spectrogram by calculating the complex FFT for each
- *  frame in the signal.  If the mfft object is configured for multiple tapers,
- *  these are not averaged.
+ *  Compute a multitaper complex spectrogram by stepping through a signal. This
+ *  function 'fills' a spectrogram by calculating the complex FFT for each taper
+ *  and for each frame in the signal.
  *
- * @param mtm  mfft structure; needs to be initialized with tapers
- * @param samples  input signal
+ * @param mtm       mfft structure; needs to be initialized with tapers
+ * @param samples   input signal
  * @param nsamples  number of points in input buffer
  * @param shift     number of samples to shift in each frame
  *
- * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by (ntapers) by (nfft)
- *                  must be allocated and zero-filled
+ * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift
+ *                  by (ntapers) by (nfft). Must be allocated and zero-filled.
  */
-void mtm_zspec(mfft * mtm, _Complex double *spec, const double *samples, int nsamples, int shift);
+void mtm_zspec(mfft * mtm, _Complex double *spec, const double *samples, int nsamples,
+               int shift);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
  *  This function 'fills' a spectrogram by calculating the displaced PSD for each
  *  frame in the signal.
  *
- * @param mtm  mfft structure; needs to be initialized with hermite tapers
- * @param samples  input signal
+ * @param mtm       mfft structure; needs to be initialized with hermite tapers
+ * @param samples   input signal
  * @param nsamples  number of points in input buffer
  * @param k         which taper to use; -1 for all tapers
  * @param shift     number of samples to shift in each frame
  * @param flock     frequency locking parameter (normalized frequency units)
  * @param tlock     time locking parameter (in frames)
  * @param nfreq     output frequency resolution; if <= 0, defaults to nfft/2+1
- * @param fgrid     output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
+ * @param fgrid     output frequency grid; if NULL, defaults to linear scale
+ *                  from 0 to 0.5 (normalized freq)
  *
  * @param spec      (output) spectrogram, dimension  (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  *
  */
-void tfr_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-              double flock, int tlock, int nfreq, const double *fgrid);
+void tfr_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int k,
+              int shift, double flock, int tlock, int nfreq, const double *fgrid);
 
 /* taper generating functions */
 

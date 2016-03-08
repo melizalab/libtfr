@@ -21,7 +21,7 @@ struct mfft_s {
         int npoints;     /**< number of points in the taper(s) */
         int ntapers;     /**< number of tapers */
         double *tapers;  /**< array holding tapers, dim ntapers x npoints */
-        double *lambdas; /**< array holding taper weights, dim ntapers */
+        double *weights; /**< array holding taper weights, dim ntapers */
         double *buf;     /**< workspace for FFTW, dim ntapers x npoints */
         fftw_plan plan;  /**< FFTW plan */
 };
