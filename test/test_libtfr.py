@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 
+from __future__ import division
+
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
 
@@ -67,7 +69,7 @@ def test_tfr():
     flock = 0.01
     tlock = 5
     Z = libtfr.tfr_spec(sig, nfft, shift, Np, K, tm, flock, tlock)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1, (sig.size - Np + 1)/ shift))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - Np + 1)// shift))
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 def test_dpss_mtfft():
@@ -75,7 +77,7 @@ def test_dpss_mtfft():
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers)
     Z = D.mtfft(sig)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1, ntapers))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
 def test_dpss_mtpsd():
@@ -83,7 +85,7 @@ def test_dpss_mtpsd():
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers)
     Z = D.mtpsd(sig)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1,))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1,))
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 def test_dpss_mtspec():
@@ -92,7 +94,7 @@ def test_dpss_mtspec():
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers)
     Z = D.mtspec(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1, (sig.size - nfft + 1)/ shift))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - nfft + 1)// shift))
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 def test_dpss_mtstft():
@@ -101,7 +103,7 @@ def test_dpss_mtstft():
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers)
     Z = D.mtstft(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1, (sig.size - nfft + 1)/ shift, ntapers))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - nfft + 1)// shift, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
 def test_hanning_mtstft():
@@ -111,7 +113,7 @@ def test_hanning_mtstft():
     window = hanning(nfft - 50)
     D = libtfr.mfft_precalc(nfft, window)
     Z = D.mtstft(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1, (sig.size - window.size + 1)/ shift, 1))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - window.size + 1)// shift, 1))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
 def test_precalc_psd():
@@ -119,5 +121,5 @@ def test_precalc_psd():
     E,V = libtfr.dpss(200, 3, 5)
     D = libtfr.mfft_precalc(nfft, E, V)
     Z = D.mtpsd(sig)
-    assert_tuple_equal(Z.shape, (nfft/2 + 1,))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1,))
     assert_equal(Z.dtype, libtfr.DTYPE)
