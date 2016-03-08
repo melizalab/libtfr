@@ -55,7 +55,7 @@ FFT transformations.
 
 setup(
     name= 'libtfr',
-    version= "1.0.6",
+    version= "1.0.7",
     py_modules= ['libtfr'],
     ext_modules= [Extension('_libtfr',
                              sources=sources,
@@ -74,7 +74,8 @@ setup(
     url= 'http://melizalab.github.com/libtfr',
     download_url= 'https://github.com/downloads/melizalab/libtfr',
     data_files= package_data,
-    zip_safe= False
+    zip_safe= False,
+    test_suite='nose.collector'
 )
 
 
