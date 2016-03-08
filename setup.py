@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 import sys
-if sys.hexversion < 0x02060000:
-    raise RuntimeError("Python 2.6 or higher required")
+if sys.hexversion < 0x02070000:
+    raise RuntimeError("Python 2.7 or higher required")
 
 # setuptools 0.7+ doesn't play nice with distribute, so try to use existing
 # package if possible
@@ -24,7 +24,7 @@ except ImportError:
 import numpy
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.0.0-SNAPSHOT'
+VERSION = '2.0.0b1'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable

@@ -3,17 +3,17 @@ Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR
 
 The library will also calculate conventional windowed spectrograms and multitaper spectrograms.
 
+[![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
+
 ## Requirements
 
 * FFTW, version 3.x: <http://www.fftw.org>. TFR spectrograms require 3 FFT transforms per taper, so most of the computational time will be spent computing FFTs. FFTW is fast, flexible, and portable.
 
-* LAPACK: <http://www.netlib.org/lapack>. Conventional multitaper spectrograms use discrete prolate spherical sequences as tapers. My algorithm for generating the tapers uses the LAPACK functions *dsterf* and *dgtsv*. For OS X users, LAPACK is included with the system; Linux and Windows users will probably have to install a package.
+* LAPACK: <http://www.netlib.org/lapack>. Conventional multitaper spectrograms use discrete prolate spherical sequences as tapers. My algorithm for generating the tapers uses the LAPACK functions *dstemr* and *dgtsv*. For OS X users, LAPACK is included with the system; Linux and Windows users will probably have to install a package.
 
 * Scons: <http://www.scons.org>. *scons* is a much-improved alternative to Make/Autoconf. A Makefile is included in the distribution but may require some fiddling to work.
 
-* (optional) Python, version 2.4+, with numpy 1.3+
-
-* (optional) MATLAB, R14 or later. The MATLAB interface has not been extensively tested, as I generally prefer to use Python. If anyone is interested in testing and maintaining this part of the code please contact me.
+* (optional) Python, version 2.7, 3.2, 3.3, or 3.4 with numpy 1.10+
 
 ## Build/Installation
 
@@ -33,15 +33,8 @@ A small test program, *test_tfr*, may be built with `scons test`. The program ge
 
 It is not necessary to build the library in the previous step as Python's distribution tool will do this on its own.
 
+    pip install -r requirements.txt
     python setup.py install
-
-The python interface can be tested with the script `test_tfr.py`, which does much the same as the test program for the library, but adds some noise to the signal as well.
-
-### MATLAB mex file:
-
-    scons mex
-
-Copy the mex file (the extension will depend on your platform) and the associated mfile (tfrspec.m) to a location in your MATLAB path.
 
 ## Use
 
@@ -82,7 +75,7 @@ S = libtfr.tfr_spec(signal, nfft, shift, Np, K, tm, flock, tlock)
 
 ```
 
-The C header `tfr.h` and python module `libtfr.py` are both extensively documented.
+The C header `tfr.h` and python module `libtfr.pyx` are both extensively documented.
 
 ## Algorithm and usage notes
 
@@ -118,5 +111,3 @@ THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY OR FITNESS 
 * Time-frequency toolkit: <http://tftb.nongnu.org/>
 * Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment for Nonstationary Spectrum Estimation and Chirp Enhancement Signal Processing, IEEE Transactions on, Signal Processing, IEEE Transactions on, 2007, 55, 2851-2860 code: <http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html>
 * Gardner, T. J. & Magnasco, M. O. Sparse time-frequency representations. Proc. Natl. Acad. Sci. U S A, 2006, 103, 6094-6099 code: <http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m>
-
-
