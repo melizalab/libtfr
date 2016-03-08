@@ -212,7 +212,7 @@ def tgrid(S, Fs, shift):
     """
     from numpy import arange, ndarray
     if isinstance(S, ndarray):
-        if S.ndim == 1: raise ValueError, "Input must be a scalar or a 2D numpy array"
+        if S.ndim == 1: raise ValueError("Input must be a scalar or a 2D numpy array")
         return arange(0, 1. / Fs * S.shape[1] * shift, 1. / Fs * shift)
     else:
         return arange(0, 1. / Fs * S, 1. / Fs * shift)
