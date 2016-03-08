@@ -2,21 +2,19 @@
 # -*- mode: cython -*-
 # cython: profile=True
 # cython: linetrace=True
-"""
-Interface to libtfr spectrogram library using numpy.
+"""Interface to libtfr spectrogram library using numpy.
 
-Spectrograms are returned as 2D arrays with frequency indexed by row
-and time by column.  Signals are assumed to be real; therefore real
-power spectrograms with a transform size of N have N/2+1 rows,
-corresponding to frequencies from 0 to Nyquist.  Complex spectrograms
-have N rows.  The number of time points in the spectrogram is (M - W +
-1)/S, where M is the length of the signal, S is the shift (S), and the
-analysis window size is W (this may be less than or equal to N).  Only
-time points corresponding to window positions that completely overlap
-with the signal are returned.
+Spectrograms are returned as 2D arrays with frequency indexed by row and time by
+column. Signals are assumed to be real; therefore real power spectrograms with a
+transform size of N have N/2+1 rows, corresponding to frequencies from 0 to
+Nyquist. The number of time points in the spectrogram is (M - W + 1)/S, where M
+is the length of the signal, S is the shift (S), and the analysis window size is
+W (this may be less than or equal to N). Only time points corresponding to
+window positions that completely overlap with the signal are returned.
 
 Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
+
 """
 from cython cimport view, boundscheck
 import numpy as nx
@@ -121,7 +119,6 @@ cdef class mfft:
         return out.transpose(2, 0, 1)
 
 
-
 def mfft_dpss(int nfft, double nw, int ntapers):
     """
     Initializes a mfft transform using DPSS tapers (i.e. for a standard
@@ -186,9 +183,8 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
     returns an N/2+1 by L power spectrogram, or if fgrid is specified,
     fgrid.size by L
     """
-
     # coerce data to proper type
-    cdef nx.ndarray[DTYPE_t, ndim=1] samples = nx.asarray(s).astype(DTYPE)
+    cdef double[:] samples = nx.asarray(s).astype(DTYPE)
 
     # generate/convert frequency grid
     cdef int nfreq = N/2 + 1
@@ -258,6 +254,7 @@ def dpss(int N, double NW, int k):
     else:
         raise RuntimeError("Unknown error")
 
+
 @boundscheck(False)
 cdef void hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out) nogil:
     """Copy data from workspace of mtm object into a complex array"""
@@ -273,6 +270,7 @@ cdef void hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out) nogil:
             out[t, n] = buf[t*nfft+n]
         for n in range(1, imag_count):
             out[t, n] += buf[t*nfft+(nfft-n)] * 1j
+
 
 ### Utility functions
 def log_fgrid(double fmin, double fmax, int N, Fs=None):

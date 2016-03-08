@@ -75,7 +75,8 @@ setup(
     url= 'http://melizalab.github.com/libtfr',
     download_url= 'https://github.com/downloads/melizalab/libtfr',
     install_requires=["pkgconfig==1.1.0"],
-    zip_safe= False
+    zip_safe= False,
+    test_suite='nose.collector'
 )
 
 
