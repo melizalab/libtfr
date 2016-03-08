@@ -3,6 +3,8 @@ Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR
 
 The library will also calculate conventional windowed spectrograms and multitaper spectrograms.
 
+Libtfr has C and Python APIs. The Python package is compatible with versions 2.7, 3.2, 3.3, and 3.4
+
 [![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
 
 ## Quick start
@@ -50,16 +52,6 @@ S = libtfr.tfr_spec(signal, nfft, shift, Np, K, tm, flock, tlock)
 ```
 
 See below for more information on the parameters.
-
-## Requirements
-
-* FFTW, version 3.x: <http://www.fftw.org>. TFR spectrograms require 3 FFT transforms per taper, so most of the computational time will be spent computing FFTs. FFTW is fast, flexible, and portable.
-
-* LAPACK: <http://www.netlib.org/lapack>. Conventional multitaper spectrograms use discrete prolate spherical sequences as tapers. My algorithm for generating the tapers uses the LAPACK functions *dstemr* and *dgtsv*. For OS X users, LAPACK is included with the system; Linux and Windows users will probably have to install a package.
-
-* Scons: <http://www.scons.org>. *scons* is a much-improved alternative to Make/Autoconf. A Makefile is included in the distribution but may require some fiddling to work.
-
-* (optional) Python, version 2.7, 3.2, 3.3, or 3.4 with numpy 1.10+
 
 ### Mulitaper Spectral Analysis
 
