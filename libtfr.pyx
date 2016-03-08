@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- mode: cython -*-
+# cython: profile=True
+# cython: linetrace=True
 """
 Interface to libtfr spectrogram library using numpy.
 
@@ -16,7 +18,7 @@ with the signal are returned.
 Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
 """
-from cython cimport view
+from cython cimport view, boundscheck
 import numpy as nx
 cimport numpy as nx
 nx.import_array()
@@ -256,8 +258,8 @@ def dpss(int N, double NW, int k):
     else:
         raise RuntimeError("Unknown error")
 
-
-cdef hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out):
+@boundscheck(False)
+cdef void hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out) nogil:
     """Copy data from workspace of mtm object into a complex array"""
     cdef size_t nfft = tfr.mtm_nfft(mtm)
     cdef size_t ntapers = tfr.mtm_ntapers(mtm)
@@ -268,6 +270,6 @@ cdef hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out):
 
     for t in range(ntapers):
         for n in range(0, real_count):
-            out[t, n].real = buf[t*nfft+n]
+            out[t, n] = buf[t*nfft+n]
         for n in range(1, imag_count):
-            out[t, n].imag = buf[t*nfft+(nfft-n)]
+            out[t, n] += buf[t*nfft+(nfft-n)] * 1j
