@@ -48,6 +48,17 @@ cdef class mfft:
     @property
     def npoints(self):
         return tfr.mtm_npoints(self._mfft)
+    @property
+    def tapers(self):
+        """A copy of the transform object's tapers, dimension (ntapers, npoints)"""
+        cdef nx.npy_intp dims[2]
+        cdef nx.ndarray out
+        dims[0] = tfr.mtm_ntapers(self._mfft)
+        dims[1] = tfr.mtm_npoints(self._mfft)
+        out = nx.PyArray_SimpleNewFromData(2, dims,
+                                           nx.NPY_DOUBLE, tfr.mtm_tapers(self._mfft))
+        return out.copy()
+
 
     def mtfft(self, s not None):
         """
@@ -353,7 +364,7 @@ def tgrid(S, double Fs, int shift):
         return arange(0, 1. / Fs * S, 1. / Fs * shift)
 
 
-def dynamic_range(S, dB):
+def dynamic_range(nx.ndarray S, double dB):
     """
     Compress a spectrogram's dynamic range by thresholding all values
     dB less than the peak of S (linear scale).
@@ -365,5 +376,5 @@ def dynamic_range(S, dB):
     """
     from numpy import log10, where
     cdef double smax = S.max()
-    thresh = 10 ** (log10(smax) - dB / 10.)
+    cdef double thresh = 10 ** (log10(smax) - dB / 10.)
     return where(S >= thresh, S, thresh)

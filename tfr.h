@@ -135,7 +135,8 @@ int mtm_npoints(mfft const * mtm);
 int mtm_ntapers(mfft const * mtm);
 int mtm_nreal(mfft const * mtm);
 int mtm_nframes(mfft const * mtm, int signal_size, int step_size);
-const double * mtm_buffer(const mfft * mtm);
+double const * mtm_buffer(mfft const * mtm);
+double const * mtm_tapers(mfft const * mtm);
 
 
 /* transformation functions */

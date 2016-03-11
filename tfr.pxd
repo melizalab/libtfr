@@ -18,6 +18,7 @@ cdef extern from "tfr.h":
     int mtm_nreal(const mfft * mtm) nogil
     int mtm_nframes(const mfft * mtm, int signal_size, int step_size) nogil
     const double * mtm_buffer(const mfft * mtm) nogil
+    const double * mtm_tapers(const mfft * mtm) nogil
 
     double mtfft(mfft * mtm, const double * data, int nbins) nogil
     void mtpower(const mfft * mtm, double * pow, double sigpow) nogil

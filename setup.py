@@ -24,7 +24,7 @@ except ImportError:
 import numpy
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.0.0b1'
+VERSION = '2.0.0b2'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable

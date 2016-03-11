@@ -121,6 +121,12 @@ mtm_buffer(mfft const * mtm)
         return mtm->buf;
 }
 
+double const *
+mtm_tapers(mfft const * mtm)
+{
+        return mtm->tapers;
+}
+
 double
 mtfft(mfft * mtm, double const * data, int nbins)
 {

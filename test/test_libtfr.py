@@ -4,7 +4,7 @@
 from __future__ import division
 
 from nose.tools import *
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import libtfr
 
@@ -120,6 +120,7 @@ def test_precalc_psd():
     nfft = 256
     E,V = libtfr.dpss(200, 3, 5)
     D = libtfr.mfft_precalc(nfft, E, V)
+    assert_array_equal(E, D.tapers)
     Z = D.mtpsd(sig)
     assert_tuple_equal(Z.shape, (nfft//2 + 1,))
     assert_equal(Z.dtype, libtfr.DTYPE)
