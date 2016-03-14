@@ -34,6 +34,8 @@ To install from PyPI:
 pip install libtfr
 ```
 
+Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
+
 To compute a time-frequency reassignment spectrogram in Python:
 
 ```python
