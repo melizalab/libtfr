@@ -39,4 +39,4 @@ struct mfft_s {
  * @param signal_size  number of points in the signal
  * @param step_size    number of points shifted between frames
  */
-#define SPEC_NFRAMES(mtm,signal_size,step_size) ((signal_size - mtm->npoints + 1)/step_size)
+#define SPEC_NFRAMES(mtm,signal_size,step_size) ((signal_size - mtm->npoints)/step_size + 1)
