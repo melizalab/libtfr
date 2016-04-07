@@ -1960,7 +1960,7 @@ static PyObject *__pyx_pf_6libtfr_4mfft_12mtfft(struct __pyx_obj_6libtfr_mfft *_
 static PyObject *__pyx_pf_6libtfr_4mfft_14mtpsd(struct __pyx_obj_6libtfr_mfft *__pyx_v_self, PyObject *__pyx_v_s, PyObject *__pyx_v_adapt); /* proto */
 static PyObject *__pyx_pf_6libtfr_4mfft_16mtspec(struct __pyx_obj_6libtfr_mfft *__pyx_v_self, PyObject *__pyx_v_s, int __pyx_v_step, PyObject *__pyx_v_adapt); /* proto */
 static PyObject *__pyx_pf_6libtfr_4mfft_18mtstft(struct __pyx_obj_6libtfr_mfft *__pyx_v_self, PyObject *__pyx_v_s, int __pyx_v_step); /* proto */
-static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_nfft, double __pyx_v_nw, int __pyx_v_ntapers); /* proto */
+static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_nfft, double __pyx_v_nw, int __pyx_v_ntapers, int __pyx_v_npoints); /* proto */
 static PyObject *__pyx_pf_6libtfr_2mfft_precalc(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_nfft, PyObject *__pyx_v_tapers, PyObject *__pyx_v_weights); /* proto */
 static PyObject *__pyx_pf_6libtfr_4tfr_spec(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_s, int __pyx_v_N, int __pyx_v_step, int __pyx_v_Np, int __pyx_v_K, double __pyx_v_tm, double __pyx_v_flock, int __pyx_v_tlock, PyObject *__pyx_v_fgrid); /* proto */
 static PyObject *__pyx_pf_6libtfr_6hermf(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_N, int __pyx_v_M, double __pyx_v_tm); /* proto */
@@ -3913,7 +3913,7 @@ static PyObject *__pyx_pf_6libtfr_4mfft_18mtstft(struct __pyx_obj_6libtfr_mfft *
 /* "libtfr.pyx":131
  * 
  * 
- * def mfft_dpss(int nfft, double nw, int ntapers):             # <<<<<<<<<<<<<<
+ * def mfft_dpss(int nfft, double nw, int ntapers, int npoints):             # <<<<<<<<<<<<<<
  *     """
  *     Initializes a mfft transform using DPSS tapers (i.e. for a standard
  */
@@ -3926,6 +3926,7 @@ static PyObject *__pyx_pw_6libtfr_1mfft_dpss(PyObject *__pyx_self, PyObject *__p
   int __pyx_v_nfft;
   double __pyx_v_nw;
   int __pyx_v_ntapers;
+  int __pyx_v_npoints;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -3933,12 +3934,13 @@ static PyObject *__pyx_pw_6libtfr_1mfft_dpss(PyObject *__pyx_self, PyObject *__p
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("mfft_dpss (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_nfft,&__pyx_n_s_nw,&__pyx_n_s_ntapers,0};
-    PyObject* values[3] = {0,0,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_nfft,&__pyx_n_s_nw,&__pyx_n_s_ntapers,&__pyx_n_s_npoints,0};
+    PyObject* values[4] = {0,0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
       switch (pos_args) {
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
         case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
         case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
         case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
@@ -3953,44 +3955,51 @@ static PyObject *__pyx_pw_6libtfr_1mfft_dpss(PyObject *__pyx_self, PyObject *__p
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_nw)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 3, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 4, 4, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ntapers)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 3, 3, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 4, 4, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        }
+        case  3:
+        if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_npoints)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 4, 4, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
         if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "mfft_dpss") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
       values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+      values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
     }
     __pyx_v_nfft = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_nfft == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_nw = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_nw == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_ntapers = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_ntapers == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_npoints = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_npoints == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("mfft_dpss", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("libtfr.mfft_dpss", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_6libtfr_mfft_dpss(__pyx_self, __pyx_v_nfft, __pyx_v_nw, __pyx_v_ntapers);
+  __pyx_r = __pyx_pf_6libtfr_mfft_dpss(__pyx_self, __pyx_v_nfft, __pyx_v_nw, __pyx_v_ntapers, __pyx_v_npoints);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_nfft, double __pyx_v_nw, int __pyx_v_ntapers) {
+static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_nfft, double __pyx_v_nw, int __pyx_v_ntapers, int __pyx_v_npoints) {
   struct __pyx_obj_6libtfr_mfft *__pyx_v_instance = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -4004,7 +4013,7 @@ static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, 
  *     ntapers -  number of tapers to generate
  *     """
  *     cdef mfft instance = mfft.__new__(mfft)             # <<<<<<<<<<<<<<
- *     instance._mfft = tfr.mtm_init_dpss(nfft, nw, ntapers)
+ *     instance._mfft = tfr.mtm_init_dpss(nfft, npoints, nw, ntapers)
  *     return instance
  */
   __pyx_t_1 = __pyx_tp_new_6libtfr_mfft(((PyTypeObject *)__pyx_ptype_6libtfr_mfft), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 140; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -4016,15 +4025,15 @@ static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, 
   /* "libtfr.pyx":141
  *     """
  *     cdef mfft instance = mfft.__new__(mfft)
- *     instance._mfft = tfr.mtm_init_dpss(nfft, nw, ntapers)             # <<<<<<<<<<<<<<
+ *     instance._mfft = tfr.mtm_init_dpss(nfft, npoints, nw, ntapers)             # <<<<<<<<<<<<<<
  *     return instance
  * 
  */
-  __pyx_v_instance->_mfft = mtm_init_dpss(__pyx_v_nfft, __pyx_v_nw, __pyx_v_ntapers);
+  __pyx_v_instance->_mfft = mtm_init_dpss(__pyx_v_nfft, __pyx_v_npoints, __pyx_v_nw, __pyx_v_ntapers);
 
   /* "libtfr.pyx":142
  *     cdef mfft instance = mfft.__new__(mfft)
- *     instance._mfft = tfr.mtm_init_dpss(nfft, nw, ntapers)
+ *     instance._mfft = tfr.mtm_init_dpss(nfft, npoints, nw, ntapers)
  *     return instance             # <<<<<<<<<<<<<<
  * 
  * 
@@ -4037,7 +4046,7 @@ static PyObject *__pyx_pf_6libtfr_mfft_dpss(CYTHON_UNUSED PyObject *__pyx_self, 
   /* "libtfr.pyx":131
  * 
  * 
- * def mfft_dpss(int nfft, double nw, int ntapers):             # <<<<<<<<<<<<<<
+ * def mfft_dpss(int nfft, double nw, int ntapers, int npoints):             # <<<<<<<<<<<<<<
  *     """
  *     Initializes a mfft transform using DPSS tapers (i.e. for a standard
  */
@@ -22559,14 +22568,14 @@ static int __Pyx_InitCachedConstants(void) {
   /* "libtfr.pyx":131
  * 
  * 
- * def mfft_dpss(int nfft, double nw, int ntapers):             # <<<<<<<<<<<<<<
+ * def mfft_dpss(int nfft, double nw, int ntapers, int npoints):             # <<<<<<<<<<<<<<
  *     """
  *     Initializes a mfft transform using DPSS tapers (i.e. for a standard
  */
-  __pyx_tuple__28 = PyTuple_Pack(4, __pyx_n_s_nfft, __pyx_n_s_nw, __pyx_n_s_ntapers, __pyx_n_s_instance); if (unlikely(!__pyx_tuple__28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__28 = PyTuple_Pack(5, __pyx_n_s_nfft, __pyx_n_s_nw, __pyx_n_s_ntapers, __pyx_n_s_npoints, __pyx_n_s_instance); if (unlikely(!__pyx_tuple__28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__28);
   __Pyx_GIVEREF(__pyx_tuple__28);
-  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(3, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_dmeliza_Devel_libtfr_libt, __pyx_n_s_mfft_dpss, 131, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(4, 0, 5, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_dmeliza_Devel_libtfr_libt, __pyx_n_s_mfft_dpss, 131, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "libtfr.pyx":145
  * 
@@ -23050,7 +23059,7 @@ PyMODINIT_FUNC PyInit_libtfr(void)
   /* "libtfr.pyx":131
  * 
  * 
- * def mfft_dpss(int nfft, double nw, int ntapers):             # <<<<<<<<<<<<<<
+ * def mfft_dpss(int nfft, double nw, int ntapers, int npoints):             # <<<<<<<<<<<<<<
  *     """
  *     Initializes a mfft transform using DPSS tapers (i.e. for a standard
  */

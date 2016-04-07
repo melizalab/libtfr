@@ -88,12 +88,13 @@ mfft * mtm_init(int nfft, int npoints, int ntapers);
  * Initialize a mtfft transform using DPSS tapers
  * (i.e. for a standard multitaper transform)
  *
- * @param nfft   number of points in the transform/dpss tapers
+ * @param nfft   number of points in the transform
+ * @param npoints  number of points in the tapers
  * @param nw     time-frequency parameter
  * @param ntapers  number of tapers to keep
  * @returns pointer to mfft structure (owned by caller)
  */
-mfft * mtm_init_dpss(int nfft, double nw, int ntapers);
+mfft * mtm_init_dpss(int nfft, int npoints, double nw, int ntapers);
 
 /**
  * Initialize mtfft transform for reassigned spectrogram

@@ -483,10 +483,10 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 
 
 mfft *
-mtm_init_dpss(int nfft, double nw, int ntapers)
+mtm_init_dpss(int nfft, int npoints, double nw, int ntapers)
 {
-        mfft * mtmh = mtm_init(nfft, nfft, ntapers);
-        int rv = dpss(mtmh->tapers, mtmh->weights, nfft, nw, ntapers);
+        mfft * mtmh = mtm_init(nfft, npoints, ntapers);
+        int rv = dpss(mtmh->tapers, mtmh->weights, npoints, nw, ntapers);
         if (rv == 0)
                 return mtmh;
         else {

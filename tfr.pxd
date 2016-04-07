@@ -7,7 +7,7 @@ cdef extern from "tfr.h":
     int hermf(int N, int M, double tm, double *h, double *Dh, double *Th) nogil
 
     mfft * mtm_init(int nfft, int npoints, int ntapers)
-    mfft * mtm_init_dpss(int nfft, double nw, int ntapers)
+    mfft * mtm_init_dpss(int nfft, int npoints, double nw, int ntapers)
     mfft * mtm_init_herm(int nfft, int npoints, int order, double tm)
     void mtm_copy(mfft * mtm, const double *, const double *)
     void mtm_destroy(mfft * mtm)
