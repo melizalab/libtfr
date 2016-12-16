@@ -1,34 +1,30 @@
 #!/usr/bin/env python
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # -*- mode: python -*-
-from setuptools import setup, find_packages
-from numpy.distutils.core import setup, Extension
-import os, sys
+import sys
+if sys.hexversion < 0x02070000:
+    raise RuntimeError("Python 2.7 or higher required")
 
-sources = ['libtfr.c','tfr.c','mtm.c']
-ext_libs = []
-ext_libdirs = []
-ext_incl = []
-compiler_defines = []
-compiler_args = []
-package_data = []
+# setuptools 0.7+ doesn't play nice with distribute, so try to use existing
+# package if possible
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, Extension
 
-if hasattr(os, 'uname'):
-    system = os.uname()[0]
-else:
-    system = 'Windows'
+try:
+    from Cython.Distutils import build_ext
+    SUFFIX = '.pyx'
+except ImportError:
+    from distutils.command.build_ext import build_ext
+    SUFFIX = '.c'
 
-if system == 'Darwin':
-    ext_libs.extend(('lapack','fftw3'))
-    ext_incl.append('/opt/local/include')
-elif system == 'Linux':
-    ext_libs.extend(('lapack','fftw3'))
-elif system == 'Windows':
-    ext_incl.append('fftw3')
-    ext_libs.append('fftw3-3')
-    ext_libdirs.append('fftw3')
-    compiler_defines.append(('NO_LAPACK', None))
-    package_data.append(('', ['fftw3/libfftw3-3.dll']))
+import numpy
+
+# --- Distutils setup and metadata --------------------------------------------
+VERSION = '2.0.0'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
@@ -53,27 +49,32 @@ estimates under many conditions. The library requires FFTW for the underlying
 FFT transformations.
 """
 
+import pkgconfig
+compiler_settings = pkgconfig.parse("fftw3")
+compiler_settings['include_dirs'].append(numpy.get_include())
+compiler_settings['libraries'].append('lapack')
+if sys.platform == 'darwin':
+    compiler_settings['include_dirs'].append('/opt/local/include')
+compiler_settings = dict((k,list(v)) for k,v in compiler_settings.items())
+
+sources = ['tfr.c','mtm.c', 'libtfr' + SUFFIX,]
+
 setup(
     name= 'libtfr',
-    version= "1.0.7",
-    py_modules= ['libtfr'],
-    ext_modules= [Extension('_libtfr',
+    version= VERSION,
+    ext_modules= [Extension('libtfr',
                              sources=sources,
-                             define_macros=compiler_defines,
-                             libraries=ext_libs,
-                             extra_compile_args=compiler_args,
-                             include_dirs=ext_incl,
-                             library_dirs=ext_libdirs)],
-
+                            **compiler_settings)],
+    cmdclass={'build_ext': build_ext},
     description= short_desc,
     long_description= long_desc,
     author= 'C Daniel Meliza',
-    author_email= '"dan" at the domain "meliza.org"',
+    author_email= 'dan@meliza.org',
     maintainer= 'C Daniel Meliza',
-    maintainer_email= '"dan" at the domain "meliza.org"',
+    maintainer_email= 'dan@meliza.org',
     url= 'http://melizalab.github.com/libtfr',
     download_url= 'https://github.com/downloads/melizalab/libtfr',
-    data_files= package_data,
+    setup_requires=["pkgconfig"],
     zip_safe= False,
     test_suite='nose.collector'
 )

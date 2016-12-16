@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "tfr.h"
+#include "mtm_impl.h"
 
 #ifndef SQR
 #define SQR(a) ( (a) * (a) )
@@ -74,18 +75,13 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
         return N;
 }
 
-mfft*
+mfft *
 mtm_init_herm(int nfft, int npoints, int order, double tm)
 {
-
-        double *tapers = (double*)malloc(npoints*order*3*sizeof(double));
-
+        mfft * mtm = mtm_init(nfft, npoints, order*3);
         tm = (tm > 0) ? tm : 6;
-
         npoints = hermf(npoints, order, tm,
-                        tapers, tapers + order*npoints, tapers + order*npoints*2);
-
-        mfft* mtm = mtm_init(nfft, npoints, order*3, tapers, 0);
+                        mtm->tapers, mtm->tapers + order*npoints, mtm->tapers + order*npoints*2);
 
         return mtm;
 }
@@ -111,7 +107,7 @@ find_bin(double f, const double *fgrid, int nfreq) {
 }
 
 void
-tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl)
+tfr_displacements(mfft const * mtm, double *q, double *tdispl, double *fdispl)
 {
 
         int i,j;
@@ -183,7 +179,7 @@ tfr_reassign(double *spec, const double *q, const double *tdispl, const double *
 }
 
 void
-tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
+tfr_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int k, int shift,
          double flock, int tlock, int nfreq, const double *fgrid)
 {
         int t,mink = 0;

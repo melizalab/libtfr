@@ -1,7 +1,7 @@
 /**
  * @file   tfr.h
- * @author C Daniel Meliza <dmeliza@uchicago.edu>
- * @date   Mon Mar  1 13:35:27 2010
+ * @author C Daniel Meliza
+ * @date   Mon Mar  7 2016
  */
 
 /**
@@ -50,13 +50,13 @@
  * For an example of how to use the library, see test_tfr.c
  *
  * @section lic License
- * Copyright C Daniel Meliza 2010.  Licensed for use under GNU
+ * Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
  * General Public License, Version 2.  See COPYING for details.
  */
 #ifndef _LIBTFR_H
 #define _LIBTFR_H
 
-#define LIBTFR_VERSION "1.0.3"
+#define LIBTFR_VERSION "2.0.0"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,70 +65,36 @@ extern "C" {
 #include <complex.h>
 #endif
 
-#include <fftw3.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
 /**
- * Multi-taper FFT transformation structure. Contains basic FFT
- * parameters as well as pointers to tapers (i.e. windowing
- * functions), output buffers, and the FFTW plan.
- *
+ * Opaque pointer type for multitaper fft transforms
  */
-typedef struct {
-        int nfft;        /**< number of points in the transform */
-	int npoints;     /**< number of points in the taper(s) */
-        int ntapers;     /**< number of tapers */
-        double *tapers;  /**< array holding tapers, dim ntapers x npoints */
-        double *lambdas; /**< array holding taper weights, dim ntapers */
-        double *buf;     /**< workspace for FFTW, dim ntapers x npoints */
-        fftw_plan plan;  /**< FFTW plan */
-} mfft;
-
-/**
- * The number of frequencies in the spectrum of a real signal
- */
-#define SPEC_NFREQ(mtm) (mtm->nfft/2 + 1)
-
-/**
- * The number of frames in a spectrogram that only includes frames
- * with full support in the signal.
- *
- * @param mtm          transform object
- * @param signal_size  number of points in the signal
- * @param step_size    number of points shifted between frames
- */
-#define SPEC_NFRAMES(mtm,signal_size,step_size) ((signal_size - mtm->npoints + 1)/step_size)
+typedef struct mfft_s mfft;
 
 /* initialization and destruction functions */
 
 /**
- * Initialize a multitaper mtm transform using preallocated tapers.
- * Use with an externally generated window function (e.g. hanning)
- * Input memory is owned by the returned mfft structure
+ * Initialize a multitaper mtm transform and allocate memory for tapers/window
+ * functions.
  *
  * @param nfft  number of points in the transform
  * @param npoints  number of points in the tapers (windows)
  * @param ntapers  number of tapers
- * @param tapers  pointer to ntapers*npoints array of windowing functions
- * @param lambdas  eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
  * @returns  pointer to mfft_params structure (owned by caller)
  *
  */
-mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
+mfft * mtm_init(int nfft, int npoints, int ntapers);
 
 /**
  * Initialize a mtfft transform using DPSS tapers
  * (i.e. for a standard multitaper transform)
  *
- * @param nfft   number of points in the transform/dpss tapers
+ * @param nfft   number of points in the transform
+ * @param npoints  number of points in the tapers
  * @param nw     time-frequency parameter
  * @param ntapers  number of tapers to keep
  * @returns pointer to mfft structure (owned by caller)
  */
-mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
+mfft * mtm_init_dpss(int nfft, int npoints, double nw, int ntapers);
 
 /**
  * Initialize mtfft transform for reassigned spectrogram
@@ -140,8 +106,17 @@ mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
  * @param tm     time support for the tapers. If 0 or less, use the default of 6
  * @returns pointer to mfft structure
  */
-mfft* mtm_init_herm(int nfft, int npoints, int order, double tm);
+mfft * mtm_init_herm(int nfft, int npoints, int order, double tm);
 
+/**
+ * Copy pre-calculated tapers/window functions (e.g. hanning) into a mtfft
+ * transform. Size of arrays must match memory allocated by the transform.
+ *
+ * @param tapers   pointer to ntapers*npoints array of windowing functions
+ * @param weights  weights for tapers; if NULL, assign weight of 1.0 to each taper
+ *
+ */
+void mtm_copy(mfft * mtmh, const double * tapers, const double * weights);
 
 /**
  * Frees up the mfft structure and dependent data.
@@ -152,7 +127,18 @@ mfft* mtm_init_herm(int nfft, int npoints, int order, double tm);
  *
  * @param mtm   the structure to release
  */
-void mtm_destroy(mfft *mtm);
+void mtm_destroy(mfft * mtm);
+
+/* utility functions */
+
+int mtm_nfft(mfft const * mtm);
+int mtm_npoints(mfft const * mtm);
+int mtm_ntapers(mfft const * mtm);
+int mtm_nreal(mfft const * mtm);
+int mtm_nframes(mfft const * mtm, int signal_size, int step_size);
+double const * mtm_buffer(mfft const * mtm);
+double const * mtm_tapers(mfft const * mtm);
+
 
 /* transformation functions */
 
@@ -170,34 +156,33 @@ void mtm_destroy(mfft *mtm);
  * @param nbins  the number of time points in the signal
  * @returns total power in signal (used in computing adaptive power spectra)
  */
-double mtfft(mfft *mtm, const double *data, int nbins);
+double mtfft(mfft * mtm, double const * data, int nbins);
 
 /* spectrogram functions */
 
 /**
- * Compute power spectrum from multiple taper spectrogram.
+ * Extract power spectrum from multiple taper FFT.
  *
- * The 'high-res' method is simply the average of the estimates for
- * each taper weighted by the eigenvalue of the taper.  The 'adaptive'
- * method attempts to fit the contribution from each taper to match
- * the total power in the signal.
+ * The 'high-res' method is simply a weighted average of the estimates for each
+ * taper. The 'adaptive' method attempts to fit the contribution from each taper
+ * to match the total power in the signal.
  *
  * @param  mtm     mfft structure after running mtfft
- * @param  sigpow  total power in the signal. If zero or less, uses high-res method
  * @param  pow     (output) power spectral density (linear scale) of the signal. Needs to be
  *                 preallocated, with dimensions at least nfft/2 + 1;
+ * @param  sigpow  total power in the signal. If zero or less, uses high-res method
  */
-void mtpower(const mfft *mtm, double *pow, double sigpow);
+void mtpower(mfft const * mtm, double * pow, double sigpow);
 
 
 /**
- * Export complex multitaper transform of signal.
+ * Extract complex multitaper transform of signal from transform object
  *
  * @param mtm  mfft structure after running mtfft
  * @param out  (output) complex transform of signal. Needs to be preallocated with
  *             dimensions at least ntapers by nfft
  */
-void mtcomplex(const mfft *mtm, _Complex double *out);
+void mtcomplex(mfft const * mtm, _Complex double * out);
 
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
@@ -213,45 +198,47 @@ void mtcomplex(const mfft *mtm, _Complex double *out);
  * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  */
-void mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt);
+void mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift,
+              int adapt);
 
 /**
- *  Compute a multitaper complex spectrogram by stepping through a signal.
- *  This function 'fills' a spectrogram by calculating the complex FFT for each
- *  frame in the signal.  If the mfft object is configured for multiple tapers,
- *  these are not averaged.
+ *  Compute a multitaper complex spectrogram by stepping through a signal. This
+ *  function 'fills' a spectrogram by calculating the complex FFT for each taper
+ *  and for each frame in the signal.
  *
- * @param mtm  mfft structure; needs to be initialized with tapers
- * @param samples  input signal
+ * @param mtm       mfft structure; needs to be initialized with tapers
+ * @param samples   input signal
  * @param nsamples  number of points in input buffer
  * @param shift     number of samples to shift in each frame
  *
- * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by (ntapers) by (nfft)
- *                  must be allocated and zero-filled
+ * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift
+ *                  by (ntapers) by (nfft). Must be allocated and zero-filled.
  */
-void mtm_zspec(mfft *mtm, _Complex double *spec, const double *samples, int nsamples, int shift);
+void mtm_zspec(mfft * mtm, _Complex double *spec, const double *samples, int nsamples,
+               int shift);
 
 /**
  *  Compute a time-frequency reassignment spectrogram by stepping through a signal.
  *  This function 'fills' a spectrogram by calculating the displaced PSD for each
  *  frame in the signal.
  *
- * @param mtm  mfft structure; needs to be initialized with hermite tapers
- * @param samples  input signal
+ * @param mtm       mfft structure; needs to be initialized with hermite tapers
+ * @param samples   input signal
  * @param nsamples  number of points in input buffer
  * @param k         which taper to use; -1 for all tapers
  * @param shift     number of samples to shift in each frame
  * @param flock     frequency locking parameter (normalized frequency units)
  * @param tlock     time locking parameter (in frames)
  * @param nfreq     output frequency resolution; if <= 0, defaults to nfft/2+1
- * @param fgrid     output frequency grid; if NULL, defaults to linear scale from 0 to 0.5 (normalized freq)
+ * @param fgrid     output frequency grid; if NULL, defaults to linear scale
+ *                  from 0 to 0.5 (normalized freq)
  *
  * @param spec      (output) spectrogram, dimension  (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  *
  */
-void tfr_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int k, int shift,
-              double flock, int tlock, int nfreq, const double *fgrid);
+void tfr_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int k,
+              int shift, double flock, int tlock, int nfreq, const double *fgrid);
 
 /* taper generating functions */
 
@@ -303,7 +290,7 @@ int hermf(int N, int M, double tm, double *h, double *Dh, double *Th);
  * @param tdispl  (output) time displacements (NFFT/2+1 x K)
  * @param fdispl  (output) frequency displacements (NFFT/2+1 x K)
  */
-void tfr_displacements(const mfft *mtm, double *q, double *tdispl, double *fdispl);
+void tfr_displacements(mfft const * mtm, double *q, double *tdispl, double *fdispl);
 
 /**
  *  Assign power from a spectrum to a spectrogram based on time-frequency displacements

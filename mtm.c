@@ -10,6 +10,7 @@
 #include <math.h>
 #include <float.h>
 #include "tfr.h"
+#include "mtm_impl.h"
 
 /* some LAPACK prototypes */
 #ifndef NO_LAPACK
@@ -29,9 +30,8 @@ extern void dgtsv_(int *N, int *NRHS,
 #define SINC(A) sin(M_PI * 2.0 * W * (A))/(M_PI * 2.0 * W * (A))
 #define NTHREADS 1
 
-
-mfft*
-mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
+mfft *
+mtm_init(int nfft, int npoints, int ntapers)
 {
         mfft *mtm;
         int *n_array, i;
@@ -41,14 +41,9 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
         mtm->nfft = nfft;
         mtm->npoints = npoints;
         mtm->ntapers = ntapers;
-        mtm->tapers = tapers;
-        if (lambdas)
-                mtm->lambdas = lambdas;
-        else {
-                mtm->lambdas = (double*)malloc(ntapers*sizeof(double));
-                for (i = 0; i < ntapers; i++) mtm->lambdas[i] = 1.0;
-        }
-
+        mtm->tapers = (double*)malloc(npoints*ntapers*sizeof(double));
+        mtm->weights = (double*)malloc(ntapers*sizeof(double));
+        for (i = 0; i < mtm->ntapers; i++) mtm->weights[i] = 1.0;
 
         mtm->buf = (double*)fftw_malloc(nfft*ntapers*sizeof(double));
         //mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
@@ -71,37 +66,87 @@ mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas)
         return mtm;
 }
 
+void
+mtm_copy(mfft * mtmh, const double * tapers, const double * weights)
+{
+        memcpy(mtmh->tapers, tapers, mtmh->npoints*mtmh->ntapers*sizeof(double));
+        if (weights)
+                memcpy(mtmh->weights, weights, mtmh->ntapers*sizeof(double));
+}
+
 
 void
-mtm_destroy(mfft *mtm)
+mtm_destroy(mfft * mtm)
 {
         if (mtm->plan) fftw_destroy_plan(mtm->plan);
         if (mtm->tapers) free(mtm->tapers);
-        if (mtm->lambdas) free(mtm->lambdas);
+        if (mtm->weights) free(mtm->weights);
         if (mtm->buf) fftw_free(mtm->buf);
         free(mtm);
 }
 
+int
+mtm_nfft(mfft const * mtm)
+{
+        return mtm->nfft;
+}
+
+int
+mtm_npoints(mfft const * mtm)
+{
+        return mtm->npoints;
+}
+
+int
+mtm_ntapers(mfft const * mtm)
+{
+        return mtm->ntapers;
+}
+
+int
+mtm_nreal(mfft const * mtm)
+{
+        return SPEC_NFREQ(mtm);
+}
+
+int
+mtm_nframes(mfft const * mtm, int signal_size, int step_size)
+{
+        return SPEC_NFRAMES(mtm, signal_size, step_size);
+}
+
+double const *
+mtm_buffer(mfft const * mtm)
+{
+        return mtm->buf;
+}
+
+double const *
+mtm_tapers(mfft const * mtm)
+{
+        return mtm->tapers;
+}
 
 double
-mtfft(mfft *mtm, const double *data, int nbins)
+mtfft(mfft * mtm, double const * data, int nbins)
 {
         // copy data * tapers to buffer
         int nfft = mtm->nfft;
         int size = mtm->npoints;
         int i,j;
         int nt = (nbins < size) ? nbins : size;
-        double pow = 0.0;
 
         //printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
         for (i = 0; i < mtm->ntapers; i++) {
                 for (j = 0; j < nt; j++) {
                         mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * data[j];
-                        pow += data[j] * data[j];
                 }
         }
 
-        pow /= mtm->ntapers;
+        double pow = 0.0;
+        for (j = 0; j < nt; j++) {
+                pow += (data[j] * data[j]);
+        }
         // zero-pad rest of buffer
         //printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
         for (i = 0; i < mtm->ntapers; i++) {
@@ -115,7 +160,7 @@ mtfft(mfft *mtm, const double *data, int nbins)
 }
 
 void
-mtpower(const mfft *mtm, double *pow, double sigpow)
+mtpower(mfft const * mtm, double *pow, double sigpow)
 {
         int nfft = mtm->nfft;
         int ntapers = mtm->ntapers;
@@ -127,9 +172,9 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
                 memset(pow, 0, real_count*sizeof(double));
                 for (t = 0; t < ntapers; t++) {
                         for (n = 0; n < real_count; n++)
-                                pow[n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t]/ntapers;
+                                pow[n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->weights[t]/ntapers;
                         for (n = 1; n < imag_count; n++) {
-                                pow[n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t]/ntapers;
+                                pow[n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->weights[t]/ntapers;
                         }
                 }
         }
@@ -140,9 +185,9 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
                 Sk = (double*)calloc(ntapers*real_count, sizeof(double));
                 for (t = 0; t < ntapers; t++) {
                         for (n = 0; n < real_count; n++)
-                                Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t];
+                                Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->weights[t];
                         for (n = 1; n < imag_count; n++)
-                                Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t];
+                                Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->weights[t];
                         //Sk[t*nfft+n] *= 2;
                 }
                 // initial guess is average of first two tapers
@@ -156,7 +201,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
                 err /= nfft;
                 //printf("err: %3.4g; tol: %3.4g\n", err, tol);
                 //for(t = 0; t < ntapers; t++)
-                //      printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
+                //      printf("%3.4g ", sigpow * (1 - mtm->weights[t]));
                 //printf("\n");
                 while (err > tol) {
                         err = 0;
@@ -165,8 +210,8 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
                                 num = den = 0;
                                 //printf("%d: est=%3.4g; ", n, est);
                                 for (t=0; t < ntapers; t++) {
-                                        w = est / (est * mtm->lambdas[t] + sigpow * (1 - mtm->lambdas[t]));
-                                        w = w * w * mtm->lambdas[t];
+                                        w = est / (est * mtm->weights[t] + sigpow * (1 - mtm->weights[t]));
+                                        w = w * w * mtm->weights[t];
                                         //printf("%3.4g ",Sk[t*real_count+n]);
                                         num += w * Sk[t*real_count+n];
                                         den += w;
@@ -184,7 +229,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 }
 
 void
-mtcomplex(const mfft *mtm, double complex *out)
+mtcomplex(mfft const * mtm, double complex *out)
 {
         int nfft = mtm->nfft;
         int ntapers = mtm->ntapers;
@@ -207,7 +252,7 @@ mtcomplex(const mfft *mtm, double complex *out)
 
 
 void
-mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
+mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift, int adapt)
 {
         int t;
         int nbins = SPEC_NFRAMES(mtm, nsamples, shift);
@@ -221,7 +266,7 @@ mtm_spec(mfft *mtm, double *spec, const double *samples, int nsamples, int shift
 }
 
 void
-mtm_zspec(mfft *mtm, double complex *spec, const double *samples, int nsamples, int shift)
+mtm_zspec(mfft * mtm, double complex *spec, const double *samples, int nsamples, int shift)
 {
         int t;
         int nbins = SPEC_NFRAMES(mtm, nsamples, shift);
@@ -416,7 +461,7 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
                                 taper[i] *= -1;
                 }
 
-                // calculate lambdas
+                // calculate weights
                 fftconv(npoints, taper, dd2);
 
                 ff = 2.0 * W * dd2[npoints-1];  // last point
@@ -437,14 +482,17 @@ dpss(double *tapers, double *lambda, int npoints, double NW, int k)
 }
 
 
-mfft*
-mtm_init_dpss(int nfft, double nw, int ntapers)
+mfft *
+mtm_init_dpss(int nfft, int npoints, double nw, int ntapers)
 {
-        double *tapers, *lambdas;
-        tapers = (double*)malloc(nfft*ntapers*sizeof(double));
-        lambdas = (double*)malloc(nfft*sizeof(double));
-        dpss(tapers, lambdas, nfft, nw, ntapers);
-        return mtm_init(nfft, nfft, ntapers, tapers, lambdas);
+        mfft * mtmh = mtm_init(nfft, npoints, ntapers);
+        int rv = dpss(mtmh->tapers, mtmh->weights, npoints, nw, ntapers);
+        if (rv == 0)
+                return mtmh;
+        else {
+                mtm_destroy(mtmh);
+                return NULL;
+        }
 }
 
 #endif
