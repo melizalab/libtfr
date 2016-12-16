@@ -51,10 +51,10 @@ FFT transformations.
 
 import pkgconfig
 compiler_settings = pkgconfig.parse("fftw3")
-compiler_settings['include_dirs'].add(numpy.get_include())
-compiler_settings['libraries'].add('lapack')
+compiler_settings['include_dirs'].append(numpy.get_include())
+compiler_settings['libraries'].append('lapack')
 if sys.platform == 'darwin':
-    compiler_settings['include_dirs'].add('/opt/local/include')
+    compiler_settings['include_dirs'].append('/opt/local/include')
 compiler_settings = dict((k,list(v)) for k,v in compiler_settings.items())
 
 sources = ['tfr.c','mtm.c', 'libtfr' + SUFFIX,]

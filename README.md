@@ -31,7 +31,7 @@ python setup.py install
 To install from PyPI:
 
 ```bash
-pip install libtfr
+pip install pkgconfig libtfr
 ```
 
 Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
