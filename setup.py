@@ -24,7 +24,7 @@ except ImportError:
 import numpy
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
@@ -74,7 +74,7 @@ setup(
     maintainer_email= 'dan@meliza.org',
     url= 'http://melizalab.github.com/libtfr',
     download_url= 'https://github.com/downloads/melizalab/libtfr',
-    setup_requires=["pkgconfig"],
+    setup_requires=["pkgconfig>=1.2"],
     zip_safe= False,
     test_suite='nose.collector'
 )
