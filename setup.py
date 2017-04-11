@@ -55,27 +55,27 @@ compiler_settings['include_dirs'].append(numpy.get_include())
 compiler_settings['libraries'].append('lapack')
 if sys.platform == 'darwin':
     compiler_settings['include_dirs'].append('/opt/local/include')
-compiler_settings = dict((k,list(v)) for k,v in compiler_settings.items())
+compiler_settings = dict((k, list(v)) for k, v in compiler_settings.items())
 
-sources = ['tfr.c','mtm.c', 'libtfr' + SUFFIX,]
+sources = ['tfr.c', 'mtm.c', 'libtfr' + SUFFIX, ]
 
 setup(
-    name= 'libtfr',
-    version= VERSION,
-    ext_modules= [Extension('libtfr',
-                             sources=sources,
-                            **compiler_settings)],
+    name='libtfr',
+    version=VERSION,
+    ext_modules=[Extension('libtfr',
+                           sources=sources,
+                           **compiler_settings)],
     cmdclass={'build_ext': build_ext},
-    description= short_desc,
-    long_description= long_desc,
-    author= 'C Daniel Meliza',
-    author_email= 'dan@meliza.org',
-    maintainer= 'C Daniel Meliza',
-    maintainer_email= 'dan@meliza.org',
-    url= 'http://melizalab.github.com/libtfr',
-    download_url= 'https://github.com/downloads/melizalab/libtfr',
+    description=short_desc,
+    long_description=long_desc,
+    author='C Daniel Meliza',
+    author_email='dan@meliza.org',
+    maintainer='C Daniel Meliza',
+    maintainer_email='dan@meliza.org',
+    url='https://melizalab.github.io/libtfr/',
+    download_url='https://github.com/melizalab/libtfr/archive/2.0.1.tar.gz',
     setup_requires=["pkgconfig>=1.2"],
-    zip_safe= False,
+    zip_safe=False,
     test_suite='nose.collector'
 )
 
