@@ -143,6 +143,18 @@ double const * mtm_tapers(mfft const * mtm);
 /* transformation functions */
 
 /**
+ * Compute FFT of the tapers.
+ *
+ * This function is used in calculating the FFT of a point process. The result
+ * is stored in the mfft buffer in half-complex format with dimension ntapers x
+ * nfft. Use mtcomplex to extract the transformed tapers.
+ *
+ * @param mtm    parameters for the transform
+ * @param scale  positive number to scale the tapers before transform
+ */
+void mtm_tapers_fft(mfft * mtm, double scale);
+
+/**
  * Compute multitaper FFT of a real-valued signal.
  *
  * Note that this can be used for single taper FFTs, if the mfft

@@ -42,12 +42,15 @@ cdef class mfft:
     @property
     def ntapers(self):
         return tfr.mtm_ntapers(self._mfft)
+
     @property
     def nfft(self):
         return tfr.mtm_nfft(self._mfft)
+
     @property
     def npoints(self):
         return tfr.mtm_npoints(self._mfft)
+
     @property
     def tapers(self):
         """A copy of the transform object's tapers, dimension (ntapers, npoints)"""
@@ -59,6 +62,14 @@ cdef class mfft:
                                            nx.NPY_DOUBLE, tfr.mtm_tapers(self._mfft))
         return out.copy()
 
+    def tapers_fft(self, double scale):
+        """The FFT of the transform object's tapers, dimension (ntapers, nfft / 2) """
+        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef size_t real_count = tfr.mtm_nreal(self._mfft)
+        cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
+        tfr.mtm_tapers_fft(self._mfft, scale)
+        hc2cmplx(self._mfft, out)
+        return out
 
     def mtfft(self, s not None):
         """
@@ -74,6 +85,34 @@ cdef class mfft:
         tfr.mtfft(self._mfft, &data[0], data.size);
         hc2cmplx(self._mfft, out)
         return out.T
+
+    def mtfftpt(self, events not None, double start, double stop):
+        """Multitaper fourier transform from point process times.
+
+        All event times must be between start and stop. The frequency resolution
+        of the transformation is nfft / (stop - start).
+
+        """
+        cdef int i
+        cdef nx.ndarray[DTYPE_t, ndim=1] data = nx.asarray(events).astype(DTYPE)
+        cdef size_t nfft = tfr.mtm_nfft(self._mfft)
+        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef double dt = (stop - start) / nfft
+        cdef double Fs = 1. / dt
+        cdef double[:] t = nx.arange(start, stop, dt)
+        cdef double[:] f = nx.arange(0, Fs, Fs / nfft)
+        cdef double nevents = data.size
+        cdef double rate = 1. * nevents / (stop - start)
+
+        cdef nx.ndarray[DTYPE_t, ndim=2] tapers = tfr.mtm_tapers(self._mfft)
+        # transform the tapers into frequency domain
+        cdef nx.ndarray[CTYPE_t, ndim=2] H = self.tapers_fft(sqrt(Fs))
+        # project the event times onto the tapers
+        cdef nx.ndarray[DTYPE_t, ndim=2] data_proj = nx.zeros((ntapers, nevents), dtype=DTYPE)
+        for i in range(ntapers):
+            data_proj[i,:] = nx.interp(data,
+        cdef double[:] w = 2 * M_PI * f
+
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods
