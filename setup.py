@@ -4,15 +4,7 @@
 import sys
 if sys.hexversion < 0x02070000:
     raise RuntimeError("Python 2.7 or higher required")
-
-# setuptools 0.7+ doesn't play nice with distribute, so try to use existing
-# package if possible
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from ez_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup, Extension
+from setuptools import setup, Extension
 
 try:
     from Cython.Distutils import build_ext
@@ -21,10 +13,9 @@ except ImportError:
     from distutils.command.build_ext import build_ext
     SUFFIX = '.c'
 
-import numpy
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.0.1'
+VERSION = '2.0.2'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
@@ -49,23 +40,54 @@ estimates under many conditions. The library requires FFTW for the underlying
 FFT transformations.
 """
 
-import pkgconfig
-compiler_settings = pkgconfig.parse("fftw3")
-compiler_settings['include_dirs'].append(numpy.get_include())
-compiler_settings['libraries'].append('lapack')
-if sys.platform == 'darwin':
-    compiler_settings['include_dirs'].append('/opt/local/include')
-compiler_settings = dict((k, list(v)) for k, v in compiler_settings.items())
 
-sources = ['tfr.c', 'mtm.c', 'libtfr' + SUFFIX, ]
+def has_flag(compiler, flagname):
+    """Return a boolean indicating whether a flag name is supported on
+    the specified compiler.
+    """
+    from setuptools import distutils
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except distutils.errors.CompileError:
+            return False
+    return True
+
+
+# these helper functions are used to postpone imports until dependencies are installed
+class BuildExt(build_ext):
+    def build_extensions(self):
+        import numpy
+        import pkgconfig
+        compiler_settings = pkgconfig.parse("fftw3")
+        compiler_settings['include_dirs'].append(numpy.get_include())
+        c_opts = []
+        if has_flag(self.compiler, '-ffast-math'):
+            c_opts.append('-ffast-math')
+        for ext in self.extensions:
+            for k, v in compiler_settings.items():
+                getattr(ext, k).extend(v)
+            ext.extra_compile_args.extend(c_opts)
+        build_ext.build_extensions(self)
+
+
+# import pkgconfig
+# compiler_settings = pkgconfig.parse("fftw3")
+# compiler_settings['include_dirs'].append(numpy.get_include())
+# compiler_settings['libraries'].append('lapack')
+# if sys.platform == 'darwin':
+#     compiler_settings['include_dirs'].append('/opt/local/include')
+# compiler_settings = dict((k, list(v)) for k, v in compiler_settings.items())
+
+sources = ['tfr.c', 'mtm.c', 'libtfr' + SUFFIX]
 
 setup(
     name='libtfr',
     version=VERSION,
-    ext_modules=[Extension('libtfr',
-                           sources=sources,
-                           **compiler_settings)],
-    cmdclass={'build_ext': build_ext},
+    ext_modules=[Extension('libtfr', sources=sources, libraries=['lapack'])],
+    cmdclass={'build_ext': BuildExt},
     description=short_desc,
     long_description=long_desc,
     author='C Daniel Meliza',
@@ -74,7 +96,7 @@ setup(
     maintainer_email='dan@meliza.org',
     url='https://melizalab.github.io/libtfr/',
     download_url='https://github.com/melizalab/libtfr/archive/2.0.1.tar.gz',
-    setup_requires=["pkgconfig>=1.2"],
+    setup_requires=["pkgconfig>=1.2", "numpy>=1.10"],
     zip_safe=False,
     test_suite='nose.collector'
 )

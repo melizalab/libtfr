@@ -2,10 +2,10 @@ sudo: false
 language: python
 python:
   - "2.7"
-  - "3.2"
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
 # command to install dependencies
 addons:
   apt:
@@ -13,7 +13,6 @@ addons:
       - liblapack-dev
       - libfftw3-dev
 install:
-  - pip install numpy==1.10.4
   - pip install -r requirements.txt
 # command to run tests
 script:
