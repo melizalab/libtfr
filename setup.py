@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 import sys
-if sys.hexversion < 0x02070000:
-    raise RuntimeError("Python 2.7 or higher required")
+if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 2):
+    raise RuntimeError("Python version 2.7 or >= 3.2 required.")
 from setuptools import setup, Extension
 
 try:
