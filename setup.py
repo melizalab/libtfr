@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
+from setuptools import setup, Extension
 import sys
 if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 2):
     raise RuntimeError("Python version 2.7 or >= 3.2 required.")
-from setuptools import setup, Extension
 
 try:
     from Cython.Distutils import build_ext
@@ -56,7 +56,6 @@ def has_flag(compiler, flagname):
     return True
 
 
-# these helper functions are used to postpone imports until dependencies are installed
 class BuildExt(build_ext):
     def build_extensions(self):
         import numpy
@@ -73,14 +72,6 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-# import pkgconfig
-# compiler_settings = pkgconfig.parse("fftw3")
-# compiler_settings['include_dirs'].append(numpy.get_include())
-# compiler_settings['libraries'].append('lapack')
-# if sys.platform == 'darwin':
-#     compiler_settings['include_dirs'].append('/opt/local/include')
-# compiler_settings = dict((k, list(v)) for k, v in compiler_settings.items())
-
 sources = ['tfr.c', 'mtm.c', 'libtfr' + SUFFIX]
 
 setup(
@@ -90,12 +81,11 @@ setup(
     cmdclass={'build_ext': BuildExt},
     description=short_desc,
     long_description=long_desc,
+    classifiers=[x for x in cls_txt.split("\n") if x],
     author='C Daniel Meliza',
-    author_email='dan@meliza.org',
     maintainer='C Daniel Meliza',
-    maintainer_email='dan@meliza.org',
     url='https://melizalab.github.io/libtfr/',
-    download_url='https://github.com/melizalab/libtfr/archive/2.0.1.tar.gz',
+    download_url='https://github.com/melizalab/libtfr/archive/%s.tar.gz' % VERSION,
     setup_requires=["pkgconfig>=1.2", "numpy>=1.10"],
     zip_safe=False,
     test_suite='nose.collector'
