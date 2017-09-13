@@ -14,6 +14,10 @@
 #include <math.h>
 #include "tfr.h"
 
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
+
 int npoints = 17590;
 int N = 256;
 int Np = 201;
@@ -74,12 +78,12 @@ main(int argc, char **argv)
 
         sig = (double*)malloc(17590 * sizeof(double));
 
-        fmsin(sig, npoints, 0.15, 0.45, 1024, 256./4, 0.3, -1);
+        fmsin(sig, Np, 0.15, 0.45, 1024, 256./4, 0.3, -1);
 
         printf("* Input signal to tfr_in.dat\n");
         write_file("tfr_in.dat", sig, npoints, 1);
 
-        mtmh = mtm_init_dpss(N, NW, (int)(NW*2-1));
+        mtmh = mtm_init_dpss(N, Np, NW, (int)(NW*2-1));
 
         printf("* MTM PSD to tfr_out_psd\n");
         psd = (double*)malloc(N * sizeof(double));

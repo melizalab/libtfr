@@ -8,8 +8,8 @@ else:
     system = 'Windows'
 
 # source files and libraries
-src_files = ['mtm.c', 'tfr.c']
-hdr_files = ['tfr.h']
+src_files = ['#src/mtm.c', '#src/tfr.c']
+hdr_files = ['#include/tfr.h']
 libs = ['m']
 
 # install location
@@ -36,8 +36,9 @@ Type: 'scons' to build the library
 
 # build options
 env = Environment(ENV = os.environ,
-                  LIBS = ['m','fftw3','lapack'],
-                  CCFLAGS = ['-g2', '-std=c99'],
+                  LIBS = ['m','fftw3'],
+                  CPPPATH = ['#include'],
+                  CCFLAGS = ['-O2', '-g', '-std=c99'],
                   tools=['default','mex','doxygen'])
 
 # system-specific settings
@@ -45,17 +46,19 @@ if system=='Darwin':
     # fftw is probably installed with macports; if elsewhere
     # then adjust these paths
     env.Append(CPPPATH = ['/opt/local/include'],
-               LIBPATH = ['/opt/local/lib'])
+               LIBPATH = ['/opt/local/lib'],
+               LIBS = ['lapack'])
 elif system=='Linux':
     # add additional items as needed, for example if lapack requires atlas:
-    #env.Prepend(LIBS = ['atlas','cblas','f77blas','lapack'])
+    env.Prepend(#LIBPATH = ['/usr/lib64/atlas', '/usr/lib/atlas'],
+                LIBS = ['openblas'])
     pass
 
 
 sharedobjs = env.SharedObject(src_files)
-slib = env.StaticLibrary('libtfr', source = src_files)
-dylib = env.SharedLibrary('libtfr', sharedobjs)
-test_prog = env.Program('test_tfr', ['test_tfr.c', slib])
+slib = env.StaticLibrary('#lib/libtfr', source = src_files)
+dylib = env.SharedLibrary('#lib/libtfr', sharedobjs)
+test_prog = env.Program('#test/test_tfr', ['test/test_tfr.c', slib])
 
 env.Default(env.Alias('lib', [slib, dylib]))
 env.Alias('test',test_prog)

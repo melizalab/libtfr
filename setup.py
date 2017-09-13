@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 from setuptools import setup, Extension
+import os
 import sys
-if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 2):
-    raise RuntimeError("Python version 2.7 or >= 3.2 required.")
+if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[:2] < (3, 2):
+    raise RuntimeError("Python version 2.6 or >= 3.2 required.")
 
 try:
     from Cython.Distutils import build_ext
@@ -61,23 +62,29 @@ class BuildExt(build_ext):
         import numpy
         import pkgconfig
         compiler_settings = pkgconfig.parse("fftw3")
+        compiler_settings['include_dirs'].insert(0, "include")
         compiler_settings['include_dirs'].append(numpy.get_include())
+        if os.environ.get('USE_OPENBLAS', False):
+            # this is for the manylinux wheels
+            compiler_settings['libraries'].append('openblas')
+        else:
+            compiler_settings['libraries'].append('lapack')
         c_opts = []
         if has_flag(self.compiler, '-ffast-math'):
             c_opts.append('-ffast-math')
         for ext in self.extensions:
             for k, v in compiler_settings.items():
-                getattr(ext, k).extend(v)
+                setattr(ext, k, v)
             ext.extra_compile_args.extend(c_opts)
         build_ext.build_extensions(self)
 
 
-sources = ['tfr.c', 'mtm.c', 'libtfr' + SUFFIX]
+sources = ['src/tfr.c', 'src/mtm.c', 'src/libtfr' + SUFFIX]
 
 setup(
     name='libtfr',
     version=VERSION,
-    ext_modules=[Extension('libtfr', sources=sources, libraries=['lapack'])],
+    ext_modules=[Extension('libtfr', sources=sources)],
     cmdclass={'build_ext': BuildExt},
     description=short_desc,
     long_description=long_desc,

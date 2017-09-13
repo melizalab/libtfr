@@ -9,4 +9,6 @@
 *.dylib
 .sconsign.dblite
 /MANIFEST
-/test_tfr
+test/test_tfr
+Dockerfile
+wheelhouse/
