@@ -36,7 +36,7 @@ Type: 'scons' to build the library
 
 # build options
 env = Environment(ENV = os.environ,
-                  LIBS = ['m','fftw3'],
+                  LIBS = ['m', 'fftw3', 'lapack'],
                   CPPPATH = ['#include'],
                   CCFLAGS = ['-O2', '-g', '-std=c99'],
                   tools=['default','mex','doxygen'])
@@ -46,12 +46,10 @@ if system=='Darwin':
     # fftw is probably installed with macports; if elsewhere
     # then adjust these paths
     env.Append(CPPPATH = ['/opt/local/include'],
-               LIBPATH = ['/opt/local/lib'],
-               LIBS = ['lapack'])
+               LIBPATH = ['/opt/local/lib'],)
 elif system=='Linux':
     # add additional items as needed, for example if lapack requires atlas:
-    env.Prepend(#LIBPATH = ['/usr/lib64/atlas', '/usr/lib/atlas'],
-                LIBS = ['openblas'])
+    env.Prepend(LIBPATH = ['/usr/lib64/atlas', '/usr/lib/atlas'],)
     pass
 
 

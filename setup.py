@@ -64,9 +64,12 @@ class BuildExt(build_ext):
         compiler_settings = pkgconfig.parse("fftw3")
         compiler_settings['include_dirs'].insert(0, "include")
         compiler_settings['include_dirs'].append(numpy.get_include())
-        if os.environ.get('USE_OPENBLAS', False):
-            # this is for the manylinux wheels
-            compiler_settings['libraries'].append('openblas')
+        if os.environ.get('STATIC_LAPACK', False):
+            # For the manylinux wheels: we have to build and statically
+            # link to lapack and blas.
+            compiler_settings['extra_link_args'].extend(("/usr/src/lapack/liblapack.a",
+                                                         "/usr/src/lapack/librefblas.a",
+                                                         "-lgfortran"))
         else:
             compiler_settings['libraries'].append('lapack')
         c_opts = []

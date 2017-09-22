@@ -10,5 +10,4 @@
 .sconsign.dblite
 /MANIFEST
 test/test_tfr
-Dockerfile
 wheelhouse/
