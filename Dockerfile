@@ -14,4 +14,5 @@ RUN cp make.inc.example make.inc \
  && sed -i -e "s/SRC$/SRC double/" Makefile \
  && make -j $(nproc) lapack_install lib blaslib
 
-WORKDIR /io
+WORKDIR /root
+CMD /io/dev/build-wheels.sh
