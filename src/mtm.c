@@ -294,7 +294,6 @@ mtm_zspec(mfft * mtm, double complex *spec, const double *samples, int nsamples,
         }
 }
 
-
 /* these functions are all used in generating tapers for classic MTM spectrograms */
 
 /**
@@ -305,7 +304,7 @@ mtm_zspec(mfft * mtm, double complex *spec, const double *samples, int nsamples,
  *   x - vector; altered in place
  */
 static void
-renormalize(int N, double *x)
+renormalize(int N, double * x)
 {
         int i;
         double norm = 0.0;
@@ -328,7 +327,7 @@ renormalize(int N, double *x)
  *   y - output vector (not allocated; needs to have N points)
  */
 static void
-fftconv(int N, const double *x, double *y)
+fftconv(int N, const double * x, double * y)
 {
         int i;
         double *X;
@@ -371,7 +370,7 @@ fftconv(int N, const double *x, double *y)
 #ifndef NO_LAPACK
 
 static int
-tridieig(int N, double *D, double *E, int IL, int IU, double *W)
+tridieig(int N, double * D, double * E, int IL, int IU, double * W)
 {
         int nfound = 0;
         int ldz = 1;
@@ -408,7 +407,7 @@ tridieig(int N, double *D, double *E, int IL, int IU, double *W)
 }
 
 int
-dpss(double *tapers, double *lambda, int npoints, double NW, int k)
+dpss(double * tapers, double * lambda, int npoints, double NW, int k)
 {
         int i, j, m, rv;
         double *d, *sd, *dd1, *w, *dd2, *ee1, *ee2;
