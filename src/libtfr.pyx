@@ -86,33 +86,6 @@ cdef class mfft:
         hc2cmplx(self._mfft, out)
         return out.T
 
-    def mtfftpt(self, events not None, double start, double stop):
-        """Multitaper fourier transform from point process times.
-
-        All event times must be between start and stop. The frequency resolution
-        of the transformation is nfft / (stop - start).
-
-        """
-        cdef int i
-        cdef nx.ndarray[DTYPE_t, ndim=1] data = nx.asarray(events).astype(DTYPE)
-        cdef size_t nfft = tfr.mtm_nfft(self._mfft)
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef double dt = (stop - start) / nfft
-        cdef double Fs = 1. / dt
-        cdef double[:] t = nx.arange(start, stop, dt)
-        cdef double[:] f = nx.arange(0, Fs, Fs / nfft)
-        cdef double nevents = data.size
-        cdef double rate = 1. * nevents / (stop - start)
-
-        cdef nx.ndarray[DTYPE_t, ndim=2] tapers = tfr.mtm_tapers(self._mfft)
-        # transform the tapers into frequency domain
-        cdef nx.ndarray[CTYPE_t, ndim=2] H = self.tapers_fft(sqrt(Fs))
-        # project the event times onto the tapers
-        cdef nx.ndarray[DTYPE_t, ndim=2] data_proj = nx.zeros((ntapers, nevents), dtype=DTYPE)
-        for i in range(ntapers):
-            data_proj[i,:] = nx.interp(data,
-        cdef double[:] w = 2 * M_PI * f
-
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods
@@ -368,9 +341,9 @@ def fgrid(double Fs, int nfft, fpass):
     cdef double df = Fs / nfft
     f = arange(0, Fs, df)  # all possible frequencies
 
-    if len(fpass) != 1:
+    try:
         findx = ((f >= fpass[0]) & (f < fpass[-1])).nonzero()[0]
-    else:
+    except TypeError:
         findx = abs(f - fpass).argmin()
 
     return f[findx], findx

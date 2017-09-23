@@ -150,7 +150,7 @@ double const * mtm_tapers(mfft const * mtm);
  * nfft. Use mtcomplex to extract the transformed tapers.
  *
  * @param mtm    parameters for the transform
- * @param scale  positive number to scale the tapers before transform
+ * @param scale  positive number to rescale the tapers before transform
  */
 void mtm_tapers_fft(mfft * mtm, double scale);
 
@@ -163,9 +163,9 @@ void mtm_tapers_fft(mfft * mtm, double scale);
  * ntapers x nfft.  Use mtpower or mtcomplex to extract the
  * transformed signal.
  *
- * @param mtm  parameters for the transform
- * @param data  input data (double-precision floating points)
- * @param nbins  the number of time points in the signal
+ * @param mtm     the mfft transform structure
+ * @param data    input data (double-precision floating points)
+ * @param nbins   the number of time points in the signal
  * @returns total power in signal (used in computing adaptive power spectra)
  */
 double mtfft(mfft * mtm, double const * data, int nbins);

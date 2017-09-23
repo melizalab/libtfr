@@ -34,30 +34,54 @@ hermf_vals = [((201, 6, 6.0),
                (0.038241135791969, 0.000000000000000, 0.027040563146761, 0.000000000000000, 0.023417748319781, -0.000000000000000),
                (0.001800000000000, 0.005400000000000, 0.008999999999995, 0.012599999999893, 0.016199999998273, 0.019799999978400))]
 
+## point process events
+events = [-1813.94999695, -726.300048828, -692.650024414, -532.099975586, 61.6000976562,
+          532.949951172, 5678.35009766, 5755.64990234, 5999.70019531, 6104.64990234,
+          6914.20019531, 7251.95019531, 10673.2998047, 12321.0498047]
+
 
 def run_dpss(args, concentrations, means):
     from numpy import ones_like
-    E,V = libtfr.dpss(*args)
+    E, V = libtfr.dpss(*args)
     assert_array_almost_equal(V, concentrations)
     assert_array_almost_equal(E.mean(1), means)
     assert_array_almost_equal((E**2).sum(1), ones_like(V))
+
 
 def test_dpss():
     for A, C, M in dpss_vals:
         yield run_dpss, A, C, M
 
+
+def run_dpss_fft(args):
+    from numpy import sqrt, fft
+    D = libtfr.mfft_dpss(args[0], args[1], args[2], args[0])
+    E = D.tapers
+    Z = D.tapers_fft(1.0)
+    assert_tuple_equal(Z.shape, (args[2], args[0]//2 + 1))
+    assert_array_almost_equal(Z, fft.fft(E, axis=1)[:, :Z.shape[1]])
+
+
+def test_dpss_fft():
+    for A, C, M in dpss_vals:
+        yield run_dpss_fft, A
+
+
 @raises(ValueError)
 def test_dpss_bad_args():
     E,V = libtfr.dpss(128, -5, 3)
+
 
 def run_hermf(args, hmeans, dnorms):
     h, Dh, Th = libtfr.hermf(*args)
     assert_array_almost_equal(h.mean(1), hmeans)
     assert_array_almost_equal((Dh**2).sum(1), dnorms)
 
+
 def test_hermf():
     for A, H, D in hermf_vals:
         yield run_hermf, A, H, D
+
 
 # these tests simply assert that the returned arrays have the correct shape and type
 def test_tfr():
@@ -82,6 +106,19 @@ def test_dpss_mtfft():
     assert_equal(Z.dtype, libtfr.CTYPE)
 
 
+def test_dpss_mtfftpt():
+    from numpy import exp, random
+    import pointproc
+    p = exp(sig - 1)
+    events = (p > random.uniform(size=p.size)).nonzero()[0]
+    nfft = sig.size
+    ntapers = 5
+    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+    J = pointproc.mtfft(D, events, 0, sig.size)
+    assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
+    assert_equal(J.dtype, libtfr.CTYPE)
+
+
 def test_dpss_mtpsd():
     nfft = sig.size
     ntapers = 5
@@ -100,6 +137,7 @@ def test_dpss_mtspec():
     Z = D.mtspec(sig, shift)
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes))
     assert_equal(Z.dtype, libtfr.DTYPE)
+
 
 def test_dpss_mtstft():
     nfft = 256

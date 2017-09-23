@@ -136,10 +136,9 @@ mtm_tapers_fft(mfft * mtm, double scale)
         // copy tapers to input buffer
         for (i = 0; i < mtm->ntapers; i++) {
                 for (j = 0; j < size; j++) {
-                        mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * scale
+                        mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * scale;
                 }
         }
-
         fftw_execute(mtm->plan);
 }
 
