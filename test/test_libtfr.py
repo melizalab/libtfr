@@ -107,16 +107,18 @@ def test_dpss_mtfft():
     assert_tuple_equal(Z.shape, (nfft//2 + 1, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
-@SkipTest
+
 def test_dpss_mtfftpt():
     from numpy import exp, random
     import pointproc
     p = exp(sig - 1)
-    events = (p > random.uniform(size=p.size)).nonzero()[0]
+    events = (p > random.uniform(size=p.size)).nonzero()[0].astype('d')
+    # jitter
+    events += random.uniform(low=-0.25, high=0.25, size=events.size)
     nfft = sig.size
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    J = pointproc.mtfft(D, events, 0, sig.size)
+    J = D.mtfft_pt(events, 0, sig.size)
     assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
     assert_equal(J.dtype, libtfr.CTYPE)
 
@@ -151,6 +153,7 @@ def test_dpss_mtstft():
     Z = D.mtstft(sig, shift)
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
+
 
 def test_hanning_mtstft():
     from numpy import hanning
@@ -191,7 +194,6 @@ def test_interpolation():
     D1 = libtfr.mfft_dpss(nfft1, 3, ntapers, nfft1)
     t1 = arange(0, nfft1, 1)
     t2 = arange(0, nfft1, nfft1 / nfft2)
-    #h1_interp = interpolate(D1.tapers.T, t2, 0, 1)
     h1_interp = D1.tapers_interpolate(t2, 0, 1)
     assert_tuple_equal(h1_interp.shape, (ntapers, nfft2))
     for i in range(ntapers):

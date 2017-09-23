@@ -52,18 +52,23 @@ cdef class mfft:
         return tfr.mtm_npoints(self._mfft)
 
     @property
+    def nreal(self):
+        return tfr.mtm_nreal(self._mfft)
+
+    @property
     def tapers(self):
         """A copy of the transform object's tapers, dimension (ntapers, npoints)"""
         cdef nx.npy_intp dims[2]
         cdef nx.ndarray out
         dims[0] = tfr.mtm_ntapers(self._mfft)
         dims[1] = tfr.mtm_npoints(self._mfft)
+        # TODO copy this more effectively
         out = nx.PyArray_SimpleNewFromData(2, dims,
                                            nx.NPY_DOUBLE, tfr.mtm_tapers(self._mfft))
         return out.copy()
 
-    def tapers_fft(self, double scale):
-        """The FFT of the transform object's tapers, dimension (ntapers, nfft / 2) """
+    cpdef nx.ndarray[CTYPE_t, ndim=2] tapers_fft(self, double scale):
+        """The FFT of the transform object's tapers, dimension (ntapers, nreal) """
         cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef size_t real_count = tfr.mtm_nreal(self._mfft)
         cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
@@ -71,14 +76,22 @@ cdef class mfft:
         hc2cmplx(self._mfft, out)
         return out
 
-    def tapers_interpolate(self, t not None, double t0, double dt):
-        """ The tapers, interpolated to times t """
-        cdef double[:] data = nx.asarray(t).astype(DTYPE)
-        cdef size_t ntimes = data.size
+    cpdef nx.ndarray[DTYPE_t, ndim=2] tapers_interpolate(self,
+                                                         double[:] t, double t0, double dt):
+        """
+        Interpolate the transform object's tapers at specified values. The time
+        support for the tapers is specified by a start time and a sampling interval.
+
+        t - input data (array of times)
+        t0 - the start time of the tapers
+        dt - the sampling interval of the tapers
+        returns a 2D array, dimension (ntapers, t.size)
+        """
+        cdef size_t ntimes = t.size
         cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef size_t npoints = tfr.mtm_npoints(self._mfft)
         cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((ntapers, ntimes), dtype=DTYPE)
-        tfr.mtm_tapers_interp(self._mfft, &out[0, 0], &data[0], ntimes, t0, dt)
+        tfr.mtm_tapers_interp(self._mfft, &out[0, 0], &t[0], ntimes, t0, dt)
         return out
 
     def mtfft(self, s not None):
@@ -86,7 +99,7 @@ cdef class mfft:
         Computes complex multitaper FFT of a real-valued signal.
 
         s - input data (1D time series)
-        returns array of complex numbers, dimension (nfft, ntapers)
+        returns array of complex numbers, dimension (nreal, ntapers)
         """
         cdef double[:] data = nx.asarray(s).astype(DTYPE)
         cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
@@ -95,6 +108,32 @@ cdef class mfft:
         tfr.mtfft(self._mfft, &data[0], data.size);
         hc2cmplx(self._mfft, out)
         return out.T
+
+    def mtfft_pt(self, t not None, double t0, double tN):
+        """
+        Computes complex multitaper FFT of a point process
+
+        times - input data (1D time series)
+        t0, dt - define the support of the window
+        returns array of complex numbers, dimension (nreal, ntapers)
+        """
+        cdef nx.ndarray[DTYPE_t] times = nx.asarray(t).astype(DTYPE)
+        nevents = times.size
+        npoints = tfr.mtm_npoints(self._mfft)
+        nfft = tfr.mtm_nfft(self._mfft)
+        dt = (tN - t0) / npoints
+        Fs = 1 / dt
+        # finite size correction
+        H = self.tapers_fft(nx.sqrt(Fs)).T
+        Msp = nevents / npoints
+        # apply tapers to input times
+        cdef nx.ndarray[DTYPE_t, ndim=2] ht = self.tapers_interpolate(times, t0, dt)
+        # exp(2 pi i omega t)
+        f, idx = fgrid(Fs, nfft, (0, Fs/2))
+        w = -2j * nx.pi * f
+        Y = nx.exp(nx.outer(w, times - t0))
+        # integrate  exp (2 pi i omega t) * ht with matrix multiplication
+        return nx.dot(Y, ht.T) - H * Msp
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods
