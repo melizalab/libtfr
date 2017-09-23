@@ -20,6 +20,8 @@ cdef extern from "tfr.h":
     const double * mtm_buffer(const mfft * mtm) nogil
     const double * mtm_tapers(const mfft * mtm) nogil
     void mtm_tapers_fft(mfft * mtm, double scale) nogil
+    void mtm_tapers_interp(const mfft * mtm, double * out, const double * times,
+                           int ntimes, double t0, double dt) nogil
 
     double mtfft(mfft * mtm, const double * data, int nbins) nogil
     void mtpower(const mfft * mtm, double * pow, double sigpow) nogil

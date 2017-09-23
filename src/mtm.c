@@ -142,6 +142,35 @@ mtm_tapers_fft(mfft * mtm, double scale)
         fftw_execute(mtm->plan);
 }
 
+void
+mtm_tapers_interp(mfft const * mtm, double * out, double const * times,
+                  int ntimes, double t0, double dt)
+{
+        int npoints = mtm->npoints;
+        int ntapers = mtm->ntapers;
+        int i, j, j0;
+        double t, ti, tid;
+        for (j = 0; j < ntimes; ++j) {
+                t = times[j];
+                ti = (t - t0) / dt;
+                j0 = (int) floor(ti);
+                if ((j0 + 1) == npoints) {
+                        for (i = 0; i < ntapers; ++i) {
+                                out[j+i*ntimes] = mtm->tapers[j0+i*npoints];
+                        }
+                }
+                else if ((j0 >= 0) && (j0 < npoints)) {
+                        tid = ti - j0;
+                        for (i = 0; i < ntapers; ++i) {
+                                out[j+i*ntimes] =
+                                        mtm->tapers[j0+i*npoints] * (1 - tid) +
+                                        mtm->tapers[j0+1+i*npoints] * tid;
+                        }
+                }
+        }
+}
+
+
 double
 mtfft(mfft * mtm, double const * data, int nbins)
 {

@@ -71,6 +71,16 @@ cdef class mfft:
         hc2cmplx(self._mfft, out)
         return out
 
+    def tapers_interpolate(self, t not None, double t0, double dt):
+        """ The tapers, interpolated to times t """
+        cdef double[:] data = nx.asarray(t).astype(DTYPE)
+        cdef size_t ntimes = data.size
+        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef size_t npoints = tfr.mtm_npoints(self._mfft)
+        cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((ntapers, ntimes), dtype=DTYPE)
+        tfr.mtm_tapers_interp(self._mfft, &out[0, 0], &data[0], ntimes, t0, dt)
+        return out
+
     def mtfft(self, s not None):
         """
         Computes complex multitaper FFT of a real-valued signal.
@@ -85,7 +95,6 @@ cdef class mfft:
         tfr.mtfft(self._mfft, &data[0], data.size);
         hc2cmplx(self._mfft, out)
         return out.T
-
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods

@@ -155,6 +155,24 @@ double const * mtm_tapers(mfft const * mtm);
 void mtm_tapers_fft(mfft * mtm, double scale);
 
 /**
+ * Compute interpolation of tapers
+ *
+ * This function calculates taper values at arbitrary values using linear
+ * interpolation. It's used when calculating a windowed FFT of a point process.
+ * The value of the tapers outside the support is assumed to be zero.
+ *
+ * @param mtm     the mfft transform structure
+ * @param out     (output) the interpolated values. Must be preallocated
+ *                with dimension ntapers x ntimes
+ * @param times   a series of times at which to evaluate the tapers
+ * @param ntimes  the number of time points
+ * @param t0      the start time of the tapers
+ * @param dt      the time resolution of the tapers
+ */
+void mtm_tapers_interp(mfft const * mtm, double * out, double const * times,
+                       int ntimes, double t0, double dt);
+
+/**
  * Compute multitaper FFT of a real-valued signal.
  *
  * Note that this can be used for single taper FFTs, if the mfft
@@ -210,7 +228,7 @@ void mtcomplex(mfft const * mtm, _Complex double * out);
  * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift by nfft/2+1
  *                  needs to be allocated and zero-filled before calling
  */
-void mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shift,
+void mtm_spec(mfft * mtm, double * spec, const double *samples, int nsamples, int shift,
               int adapt);
 
 /**

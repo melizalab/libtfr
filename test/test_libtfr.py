@@ -4,6 +4,7 @@
 from __future__ import division
 
 from nose.tools import *
+from nose.plugins.skip import SkipTest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import libtfr
@@ -97,6 +98,7 @@ def test_tfr():
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 
+@SkipTest
 def test_dpss_mtfft():
     nfft = sig.size
     ntapers = 5
@@ -105,7 +107,7 @@ def test_dpss_mtfft():
     assert_tuple_equal(Z.shape, (nfft//2 + 1, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
-
+@SkipTest
 def test_dpss_mtfftpt():
     from numpy import exp, random
     import pointproc
@@ -119,6 +121,7 @@ def test_dpss_mtfftpt():
     assert_equal(J.dtype, libtfr.CTYPE)
 
 
+@SkipTest
 def test_dpss_mtpsd():
     nfft = sig.size
     ntapers = 5
@@ -188,8 +191,9 @@ def test_interpolation():
     D1 = libtfr.mfft_dpss(nfft1, 3, ntapers, nfft1)
     t1 = arange(0, nfft1, 1)
     t2 = arange(0, nfft1, nfft1 / nfft2)
-    h1_interp = interpolate(D1.tapers.T, t2, 0, 1)
-    assert_tuple_equal(h1_interp.shape, (nfft2, ntapers))
+    #h1_interp = interpolate(D1.tapers.T, t2, 0, 1)
+    h1_interp = D1.tapers_interpolate(t2, 0, 1)
+    assert_tuple_equal(h1_interp.shape, (ntapers, nfft2))
     for i in range(ntapers):
-        assert_array_almost_equal(h1_interp[:, i],
+        assert_array_almost_equal(h1_interp[i],
                                   interp(t2, t1, D1.tapers[i]))
