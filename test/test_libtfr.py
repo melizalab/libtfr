@@ -178,3 +178,18 @@ def test_tgrid():
     tgrid1 = libtfr.tgrid(sig.size, 1, shift)
     tgrid2 = libtfr.tgrid(Z, 1, shift)
     #assert_array_equal(tgrid1, tgrid2)
+
+def test_interpolation():
+    from numpy import interp, arange
+    from pointproc import interpolate
+    nfft1 = 256
+    nfft2 = nfft1 * 2
+    ntapers = 5
+    D1 = libtfr.mfft_dpss(nfft1, 3, ntapers, nfft1)
+    t1 = arange(0, nfft1, 1)
+    t2 = arange(0, nfft1, nfft1 / nfft2)
+    h1_interp = interpolate(D1.tapers.T, t2, 0, 1)
+    assert_tuple_equal(h1_interp.shape, (nfft2, ntapers))
+    for i in range(ntapers):
+        assert_array_almost_equal(h1_interp[:, i],
+                                  interp(t2, t1, D1.tapers[i]))
