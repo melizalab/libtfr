@@ -65,7 +65,7 @@ env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dyli
 
 # matlab mex-file
 if hasattr(env,'MEX'):
-    mex = env.MEX('tfrspec', ['tfrspec.c', sharedobjs])
+    mex = env.MEX('#matlab/tfrspec', ['#matlab/tfrspec.c', sharedobjs])
     env.Alias("mex",mex)
 
 if hasattr(env,'Doxygen'):

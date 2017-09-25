@@ -207,8 +207,7 @@ cdef class mfft:
         cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef double window = npoints * dt
         cdef double Fs = 1 / dt
-        tgrid = nx.arange(t0, tN - window, step)
-        cdef size_t nframes = tgrid.size
+        cdef size_t nframes = int((tN - t0 - window) / step) + 1
         # exp(2 pi i omega t)
         f = fgrid(Fs, nfft)[0]
         w = -2j * nx.pi * f

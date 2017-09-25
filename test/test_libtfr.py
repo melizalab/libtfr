@@ -26,7 +26,7 @@ def ppt(sig):
     events += random.uniform(low=-0.25, high=0.25, size=events.size)
     return events
 
-sig = fmsin(17590, 0.15, 0.45, 1024, 256./4, 0.3, -1)
+sig = fmsin(17664, 0.15, 0.45, 1024, 256./4, 0.3, -1)
 events = ppt(sig)
 
 # these values are from matlab's implementation of DPSS. Note that Prieto's library
@@ -97,7 +97,7 @@ def test_tfr():
     flock = 0.01
     tlock = 5
     Z = libtfr.tfr_spec(sig, nfft, shift, Np, K, tm, flock, tlock)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - Np + 1)// shift))
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - Np)// shift + 1))
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 
