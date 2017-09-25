@@ -24,37 +24,31 @@ def interpolate(y, t, t0, dt):
     return out
 
 
-def mtfft(transform, events, start, stop):
+def mtfft(transform, events, dt, t0, tN):
     data = np.asarray(events, dtype='d')
+    idx = (data >= t0) & (data < (tN))
+    data = data[idx]
     nevents = data.size
-    dt = (stop - start) / transform.npoints
     Fs = 1. / dt
     # a finite size correction
     H = transform.tapers_fft(1.0).T
     Msp = nevents / transform.npoints
     # this is effectively events * tapers
     # h = transform.tapers
-    # X = interpolate(h.T, data, start, dt)
-    X = transform.tapers_interpolate(data, start, dt)
+    # X = interpolate(h.T, data, t0, dt)
+    X = transform.tapers_interpolate(data, t0, dt)
     # exp(2 pi i omega t)
     f, idx = libtfr.fgrid(Fs, transform.nfft)
     w = -2j * np.pi * f
-    Y = np.exp(np.outer(w, data - start))
+    Y = np.exp(np.outer(w, data - t0))
     # integrate over t as a matrix multiplication
     return np.dot(Y, X.T) - H * Msp
 
 
-def mtstft_pt(transform, t, window, step, t0, tN):
-    """
-    Computes complex multitaper STFT of a point process
-
-    times - input data (1D time series)
-    window, step - determine window size and t0, dt - define the support of the window
-    returns array of complex numbers, dimension (nreal, ntapers)
-    """
+def mtstft_pt(transform, t, dt, step, t0, tN):
     times = np.asarray(t).astype('d')
-    dt = window / transform.npoints
     Fs = 1 / dt
+    window = transform.npoints * dt
     tgrid = np.arange(t0, tN - window, step)
     nframes = tgrid.size
     # exp(2 pi i omega t)

@@ -114,7 +114,7 @@ def test_dpss_mtfftpt():
     nfft = sig.size
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    J = D.mtfft_pt(events, 0, sig.size)
+    J = D.mtfft_pt(events, 1, 0)
     assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
     assert_equal(J.dtype, libtfr.CTYPE)
 
@@ -149,6 +149,7 @@ def test_dpss_mtstft():
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
+
 def test_dpss_mtstft_pt():
     import pointproc
     nfft = 256
@@ -156,7 +157,7 @@ def test_dpss_mtstft_pt():
     ntapers = 5
     nframes = (sig.size - nfft) // shift + 1
     D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z, Nsp = pointproc.mtstft_pt(D, events, nfft, shift, 0, sig.size)
+    Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
     assert_equal(Nsp.size, nframes)
     assert_equal(Z.dtype, libtfr.CTYPE)

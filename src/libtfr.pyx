@@ -111,7 +111,7 @@ cdef class mfft:
         hc2cmplx(self._mfft, out)
         return out.T
 
-    def mtfft_pt(self, t not None, double t0, double tN):
+    def mtfft_pt(self, t not None, double dt, double t0):
         """
         Computes complex multitaper FFT of a point process
 
@@ -123,7 +123,6 @@ cdef class mfft:
         nevents = times.size
         npoints = tfr.mtm_npoints(self._mfft)
         nfft = tfr.mtm_nfft(self._mfft)
-        dt = (tN - t0) / npoints
         Fs = 1 / dt
         # finite size correction
         H = self.tapers_fft(1.0).T
@@ -189,12 +188,14 @@ cdef class mfft:
             hc2cmplx(self._mfft, out[t,:,:])
         return out.transpose(2, 0, 1)
 
-    def mtstft_pt(self, t not None, double window, double step, double t0, double tN):
+    def mtstft_pt(self, t not None, double dt, double step, double t0, double tN):
         """
         Computes complex multitaper STFT of a point process
 
         times - input data (1D time series)
-        window, step - determine window size and t0, dt - define the support of the window
+        dt    - implied sampling rate of the signal (determines frequency resolution)
+        step  - time interval between frames
+        t0, tN, - start and stop of the signal
         returns array of complex numbers, dimension (nreal, ntapers)
         """
         cdef int i
@@ -204,9 +205,9 @@ cdef class mfft:
         cdef size_t npoints = tfr.mtm_npoints(self._mfft)
         cdef size_t nfft = tfr.mtm_nfft(self._mfft)
         cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef double dt = window / npoints
+        cdef double window = npoints * dt
         cdef double Fs = 1 / dt
-        tgrid = nx.arange(t0, tN, step)
+        tgrid = nx.arange(t0, tN - window, step)
         cdef size_t nframes = tgrid.size
         # exp(2 pi i omega t)
         f = fgrid(Fs, nfft)[0]
