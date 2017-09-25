@@ -101,7 +101,6 @@ def test_tfr():
     assert_equal(Z.dtype, libtfr.DTYPE)
 
 
-@SkipTest
 def test_dpss_mtfft():
     nfft = sig.size
     ntapers = 5
@@ -120,7 +119,6 @@ def test_dpss_mtfftpt():
     assert_equal(J.dtype, libtfr.CTYPE)
 
 
-@SkipTest
 def test_dpss_mtpsd():
     nfft = sig.size
     ntapers = 5

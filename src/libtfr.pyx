@@ -126,7 +126,7 @@ cdef class mfft:
         dt = (tN - t0) / npoints
         Fs = 1 / dt
         # finite size correction
-        H = self.tapers_fft(nx.sqrt(Fs)).T
+        H = self.tapers_fft(1.0).T
         Msp = nevents / npoints
         # apply tapers to input times
         cdef nx.ndarray[DTYPE_t, ndim=2] ht = self.tapers_interpolate(times, t0, dt)
@@ -211,7 +211,7 @@ cdef class mfft:
         # exp(2 pi i omega t)
         f = fgrid(Fs, nfft)[0]
         w = -2j * nx.pi * f
-        cdef nx.ndarray[CTYPE_t, ndim=2] H = self.tapers_fft(nx.sqrt(Fs)).T
+        cdef nx.ndarray[CTYPE_t, ndim=2] H = self.tapers_fft(1.0).T
         # cdef nx.ndarray[DTYPE_t] tgrid = nx.arange(t0, tN, step)
         cdef nx.ndarray[CTYPE_t, ndim=3] J = nx.zeros((f.size, nframes, ntapers), dtype=CTYPE)
         cdef nx.ndarray[ITYPE_t, ndim=1] Nsp = nx.zeros(nframes, dtype=ITYPE)

@@ -30,14 +30,14 @@ def mtfft(transform, events, start, stop):
     dt = (stop - start) / transform.npoints
     Fs = 1. / dt
     # a finite size correction
-    H = transform.tapers_fft(np.sqrt(Fs)).T
+    H = transform.tapers_fft(1.0).T
     Msp = nevents / transform.npoints
     # this is effectively events * tapers
     # h = transform.tapers
     # X = interpolate(h.T, data, start, dt)
     X = transform.tapers_interpolate(data, start, dt)
     # exp(2 pi i omega t)
-    f, idx = libtfr.fgrid(Fs, transform.nfft, (0, Fs/2))
+    f, idx = libtfr.fgrid(Fs, transform.nfft)
     w = -2j * np.pi * f
     Y = np.exp(np.outer(w, data - start))
     # integrate over t as a matrix multiplication
@@ -60,7 +60,7 @@ def mtstft_pt(transform, t, window, step, t0, tN):
     # exp(2 pi i omega t)
     f = libtfr.fgrid(Fs, transform.nfft)[0]
     w = -2j * np.pi * f
-    H = transform.tapers_fft(np.sqrt(Fs)).T
+    H = transform.tapers_fft(1.0).T
     J = np.zeros((f.size, nframes, transform.ntapers), dtype=np.complex128)
     Nsp = np.zeros(nframes, dtype='i')
     for i in range(nframes):
