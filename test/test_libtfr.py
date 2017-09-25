@@ -151,7 +151,6 @@ def test_dpss_mtstft():
 
 
 def test_dpss_mtstft_pt():
-    import pointproc
     nfft = 256
     shift = 10
     ntapers = 5
@@ -209,7 +208,6 @@ def test_tgrid():
 
 def test_interpolation():
     from numpy import interp, arange
-    from pointproc import interpolate
     nfft1 = 256
     nfft2 = nfft1 * 2
     ntapers = 5
