@@ -3,7 +3,7 @@ Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR
 
 The library will also calculate conventional windowed spectrograms and multitaper spectrograms.
 
-Libtfr has C and Python APIs. The Python package is compatible with versions 2.7, 3.2, 3.3, and 3.4. It is known to work on Linux and OS X, but has not been tested on Windows.
+Libtfr has C and Python APIs. The Python package is compatible with versions 2.7, 3.2-3.6.
 
 [![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
 
@@ -34,7 +34,7 @@ To install from PyPI:
 pip install pkgconfig libtfr
 ```
 
-Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
+Wheels are available for most versions of linux and macosx. These are statically linked to generic LAPACK routines and a fairly old version of fftw, so if speed is a concern, consider compiling yourself against optimized libraries of your own. Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
 
 To compute a time-frequency reassignment spectrogram in Python:
 
@@ -98,7 +98,7 @@ To install the libraries and header (default to `/usr/local/lib` and `/usr/local
 
 A small test program, *test_tfr*, can be built with `scons test`. The program generates a signal with sinusoidally modulated frequency and then calculates a multitaper PSD, a multitaper spectrogram, and a time-frequency reassigned spectrogram. The results are output in ASCII format to `tfr_in.dat`, `tfr_out_psd.dat`, `tfr_out_mtm.dat`, and `tfr_out_tfr.dat`.
 
-See `test_tfr.c` for an example of how to use the C API.
+See `src/test_tfr.c` for an example of how to use the C API.
 
 ### Documentation
 
@@ -127,7 +127,7 @@ Additional improvements in resolution may be achievable averaging across differe
 
 ### License
 
-libtfr was written by C Daniel Meliza (dmeliza@uchicago.edu) and is licensed under the Gnu Public License (GPL) version 2; see COPYING for details.
+libtfr was written by C Daniel Meliza and is licensed under the Gnu Public License (GPL) version 2; see COPYING for details.
 
 some code is adapted from chronux (<http://www.chronux.org>), by Partha Mitra and Hemant Bokil, also licensed under GPL version 2
 
