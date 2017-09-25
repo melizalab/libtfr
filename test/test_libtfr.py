@@ -18,7 +18,16 @@ def fmsin(N, fnormin, fnormax, period, t0, fnorm0, pm1):
     phase = 2 * pi * fnormid * (t - t0) + delta * period * (sin(2 * pi * (t - t0) / period + phi) - sin(phi))
     return real(exp(1j * phase))
 
+def ppt(sig):
+    from numpy import exp, random
+    p = exp(sig - 1)
+    events = (p > random.uniform(size=p.size)).nonzero()[0].astype('d')
+    # jitter
+    events += random.uniform(low=-0.25, high=0.25, size=events.size)
+    return events
+
 sig = fmsin(17590, 0.15, 0.45, 1024, 256./4, 0.3, -1)
+events = ppt(sig)
 
 # these values are from matlab's implementation of DPSS. Note that Prieto's library
 # http://wwwprof.uniandes.edu.co/~gprieto/software/mwlib.html gives slightly
@@ -34,12 +43,6 @@ dpss_vals = [((128, 3, 5),
 hermf_vals = [((201, 6, 6.0),
                (0.038241135791969, 0.000000000000000, 0.027040563146761, 0.000000000000000, 0.023417748319781, -0.000000000000000),
                (0.001800000000000, 0.005400000000000, 0.008999999999995, 0.012599999999893, 0.016199999998273, 0.019799999978400))]
-
-## point process events
-events = [-1813.94999695, -726.300048828, -692.650024414, -532.099975586, 61.6000976562,
-          532.949951172, 5678.35009766, 5755.64990234, 5999.70019531, 6104.64990234,
-          6914.20019531, 7251.95019531, 10673.2998047, 12321.0498047]
-
 
 def run_dpss(args, concentrations, means):
     from numpy import ones_like
@@ -109,12 +112,6 @@ def test_dpss_mtfft():
 
 
 def test_dpss_mtfftpt():
-    from numpy import exp, random
-    import pointproc
-    p = exp(sig - 1)
-    events = (p > random.uniform(size=p.size)).nonzero()[0].astype('d')
-    # jitter
-    events += random.uniform(low=-0.25, high=0.25, size=events.size)
     nfft = sig.size
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
@@ -154,6 +151,18 @@ def test_dpss_mtstft():
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
+def test_dpss_mtstft_pt():
+    import pointproc
+    nfft = 256
+    shift = 10
+    ntapers = 5
+    nframes = (sig.size - nfft) // shift + 1
+    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+    Z, Nsp = pointproc.mtstft_pt(D, events, nfft, shift, 0, sig.size)
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
+    assert_equal(Nsp.size, nframes)
+    assert_equal(Z.dtype, libtfr.CTYPE)
+
 
 def test_hanning_mtstft():
     from numpy import hanning
@@ -166,6 +175,7 @@ def test_hanning_mtstft():
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, 1))
     assert_equal(Z.dtype, libtfr.CTYPE)
 
+
 def test_precalc_psd():
     nfft = 256
     E,V = libtfr.dpss(200, 3, 5)
@@ -174,6 +184,18 @@ def test_precalc_psd():
     Z = D.mtpsd(sig)
     assert_tuple_equal(Z.shape, (nfft//2 + 1,))
     assert_equal(Z.dtype, libtfr.DTYPE)
+
+
+def test_fgrid():
+    Fs = 100
+    nfft = 256
+    f, idx = libtfr.fgrid(Fs, nfft)
+    assert_equal(f.size, idx.size)
+    assert_equal(f[-1], Fs / 2)
+    f, idx = libtfr.fgrid(Fs, nfft, (10, 40))
+    assert_true(f[0] >= 10)
+    assert_true(f[-1] <= 40)
+
 
 def test_tgrid():
     nfft = 256
@@ -184,6 +206,7 @@ def test_tgrid():
     tgrid1 = libtfr.tgrid(sig.size, 1, shift)
     tgrid2 = libtfr.tgrid(Z, 1, shift)
     #assert_array_equal(tgrid1, tgrid2)
+
 
 def test_interpolation():
     from numpy import interp, arange
