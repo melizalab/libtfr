@@ -16,7 +16,7 @@ except ImportError:
 
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.1.1'
+VERSION = '2.1.2'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
