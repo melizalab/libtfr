@@ -127,6 +127,8 @@ cdef class mfft:
         # finite size correction
         H = self.tapers_fft(1.0).T
         Msp = nevents / npoints
+        if nevents == 0:
+            return nx.zeros_like(H)
         # apply tapers to input times
         cdef nx.ndarray[DTYPE_t, ndim=2] ht = self.tapers_interpolate(times, t0, dt)
         # exp(2 pi i omega t)
@@ -221,11 +223,13 @@ cdef class mfft:
             idx = (times >= tw0) & (times < (tw0 + window))
             events = times[idx]
             Nsp[i] = events.size
-            Msp = 1. * Nsp[i] / npoints
-            # apply tapers to input times
-            ht = self.tapers_interpolate(events, tw0, dt)
-            Y = nx.exp(nx.outer(w, events - tw0))
-            J[:, i, :] = nx.dot(Y, ht.T) - H * Msp
+            if Nsp[i] == 0:
+                J[:, i, :] = 0.0
+            else:
+                Msp = 1. * Nsp[i] / npoints
+                ht = self.tapers_interpolate(events, tw0, dt)
+                Y = nx.exp(nx.outer(w, events - tw0))
+                J[:, i, :] = nx.dot(Y, ht.T) - H * Msp
         return J, Nsp
 
 

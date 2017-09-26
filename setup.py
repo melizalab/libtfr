@@ -96,7 +96,6 @@ setup(
     author='C Daniel Meliza',
     maintainer='C Daniel Meliza',
     url='https://melizalab.github.io/libtfr/',
-    download_url='https://github.com/melizalab/libtfr/archive/%s.tar.gz' % VERSION,
     setup_requires=install_requires,
     zip_safe=False,
     test_suite='nose.collector'

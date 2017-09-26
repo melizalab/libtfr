@@ -110,7 +110,18 @@ def test_dpss_mtfft():
     assert_equal(Z.dtype, libtfr.CTYPE)
 
 
-def test_dpss_mtfftpt():
+def test_dpss_mtfft_pt_noevents():
+    from numpy import zeros_like
+    nfft = sig.size
+    ntapers = 5
+    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+    J = D.mtfft_pt([], 1, 0)
+    assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
+    assert_equal(J.dtype, libtfr.CTYPE)
+    assert_array_almost_equal(J, zeros_like(J))
+
+
+def test_dpss_mtfft_pt():
     nfft = sig.size
     ntapers = 5
     D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
@@ -148,6 +159,21 @@ def test_dpss_mtstft():
     Z = D.mtstft(sig, shift)
     assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
     assert_equal(Z.dtype, libtfr.CTYPE)
+
+
+def test_dpss_mtstft_pt_noevents():
+    from numpy import zeros_like
+    events = []
+    nfft = 256
+    shift = 10
+    ntapers = 5
+    nframes = (sig.size - nfft) // shift + 1
+    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+    Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
+    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
+    assert_equal(Nsp.size, nframes)
+    assert_equal(Z.dtype, libtfr.CTYPE)
+    assert_array_almost_equal(Z, zeros_like(Z))
 
 
 def test_dpss_mtstft_pt():
