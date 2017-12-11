@@ -6,6 +6,7 @@ The library will also calculate conventional windowed spectrograms and multitape
 Libtfr has C and Python APIs. The Python package is compatible with versions 2.7, 3.2-3.6.
 
 [![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
+[![DOI](https://zenodo.org/badge/1833187.svg)](https://zenodo.org/badge/latestdoi/1833187)
 
 ## Quick start
 

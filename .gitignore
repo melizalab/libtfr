@@ -11,3 +11,5 @@
 /MANIFEST
 test/test_tfr
 wheelhouse/
+.ipynb_checkpoints/
+.eggs/
