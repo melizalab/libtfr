@@ -1,3 +1,4 @@
+# libtfr
 
 Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR) spectrograms. Time-frequency reassignment is a method that makes use of the instantaneous frequency and phase values in a spectrogram to 'deconvolve' the image, and can yield substantially sharper spectrograms with better signal-noise resolution than conventional windowed spectrograms (i.e. short-time Fourier transforms) or multi-taper spectrograms (using the discrete prolate spherical sequences).
 
