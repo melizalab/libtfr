@@ -233,7 +233,7 @@ cdef class mfft:
         return J, Nsp
 
 
-def mfft_dpss(int nfft, double nw, int ntapers, int npoints=nfft):
+def mfft_dpss(int nfft, double nw, int ntapers, int npoints=0):
     """
     Initializes a mfft transform using DPSS tapers (i.e. for a standard
     multitaper transform)
@@ -241,8 +241,10 @@ def mfft_dpss(int nfft, double nw, int ntapers, int npoints=nfft):
     nfft -     number of points in the transform/dpss tapers
     nw -       time-frequency parameter
     ntapers -  number of tapers to generate
-    npoints -  number of points in the taper (defaults to nfft)
+    npoints -  number of points in the taper
     """
+    if npoints <=0:
+        npoints = nfft
     cdef mfft instance = mfft.__new__(mfft)
     instance._mfft = tfr.mtm_init_dpss(nfft, npoints, nw, ntapers)
     return instance

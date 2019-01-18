@@ -1,20 +1,19 @@
 sudo: false
 language: python
 python:
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-# command to install dependencies
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 addons:
   apt:
     packages:
-      - liblapack-dev
-      - libfftw3-dev
+    - liblapack-dev
+    - libfftw3-dev
 install:
-  - pip install -r requirements.txt
-# command to run tests
+- pip install -r requirements.txt
 script:
-  - python setup.py test
+- python setup.py test
+notifications:
+  slack:
+    secure: AgUY/TLpOZ8srnEPBMAaRa2QmwwChN7V8HJT6LZcyJVsPVjv7EuashaUMPo7lhTWAqoTnCxCLNtsGkZGvVP3UeIpUJc/LIlGcUl7lD5x9uLHxvyT/5qsW9DS/i1MDQ3cKe6RhxPhe4m1EHRvEgBuv42K94kfNXOZys7Sla7nNWM=
