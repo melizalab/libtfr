@@ -8,11 +8,6 @@ matrix:
     - os: osx
       language: generic
       env: PIP=pip2
-python:
-- '2.7'
-- '3.4'
-- '3.5'
-- '3.6'
 addons:
   apt:
     packages:
