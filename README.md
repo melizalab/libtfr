@@ -4,7 +4,7 @@ Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR
 
 The library will also calculate conventional windowed spectrograms and multitaper spectrograms.
 
-Libtfr has C and Python APIs. The Python package is compatible with versions 2.7, 3.2-3.6.
+Libtfr has C and Python APIs. The Python package is compatible and has been tested with versions 2.7, 3.5, 3.6, 3.7, and 3.8
 
 [![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
 [![DOI](https://zenodo.org/badge/1833187.svg)](https://zenodo.org/badge/latestdoi/1833187)
@@ -26,14 +26,13 @@ sudo port install fftw-3
 To install the python module from source:
 
 ```bash
-pip install -r requirements.txt
-python setup.py install
+pip install .
 ```
 
 To install from PyPI:
 
 ```bash
-pip install pkgconfig libtfr
+pip install libtfr
 ```
 
 Wheels are available for most versions of linux and macosx. These are statically linked to generic LAPACK routines and a fairly old version of fftw, so if speed is a concern, consider compiling yourself against optimized libraries of your own. Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`

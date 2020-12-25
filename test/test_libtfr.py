@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
-
 from __future__ import division
 
-from nose.tools import *
-from nose.plugins.skip import SkipTest
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+import unittest
+import numpy as np
 
 import libtfr
 
@@ -44,204 +42,197 @@ hermf_vals = [((201, 6, 6.0),
                (0.038241135791969, 0.000000000000000, 0.027040563146761, 0.000000000000000, 0.023417748319781, -0.000000000000000),
                (0.001800000000000, 0.005400000000000, 0.008999999999995, 0.012599999999893, 0.016199999998273, 0.019799999978400))]
 
-def run_dpss(args, concentrations, means):
-    from numpy import ones_like
-    E, V = libtfr.dpss(*args)
-    assert_array_almost_equal(V, concentrations)
-    assert_array_almost_equal(E.mean(1), means)
-    assert_array_almost_equal((E**2).sum(1), ones_like(V))
+
+class TestTapers(unittest.TestCase):
+
+    def test_dpss(self):
+        from numpy import ones_like
+        for A, C, M in dpss_vals:
+            with self.subTest(args=A, concentrations=C, means=M):
+                E, V = libtfr.dpss(*A)
+                self.assertTrue(np.allclose(V, C))
+                self.assertTrue(np.allclose(E.mean(1), M))
+                self.assertTrue(np.allclose((E**2).sum(1), ones_like(V)))
+
+    def test_dpss_bad_args(self):
+        with self.assertRaises(ValueError):
+            E,V = libtfr.dpss(128, -5, 3)
+
+    def test_hermf(self):
+        for A, H, D in hermf_vals:
+            with self.subTest(args=A, hmeans=H, dnorms=D):
+                h, Dh, Th = libtfr.hermf(*A)
+                self.assertTrue(np.allclose(h.mean(1), H))
+                self.assertTrue(np.allclose((Dh**2).sum(1), D))
 
 
-def test_dpss():
-    for A, C, M in dpss_vals:
-        yield run_dpss, A, C, M
+class TestTransforms(unittest.TestCase):
+    def test_dpss_fft(self):
+        from numpy import sqrt, fft
+        for args, C, M in dpss_vals:
+            with self.subTest(args=args, concentrations=C, means=M):
+                D = libtfr.mfft_dpss(args[0], args[1], args[2], args[0])
+                E = D.tapers
+                Z = D.tapers_fft(1.0)
+                self.assertTupleEqual(Z.shape, (args[2], args[0]//2 + 1))
+                self.assertTrue(np.allclose(Z, fft.fft(E, axis=1)[:, :Z.shape[1]]))
+
+    # these tests simply assert that the returned arrays have the correct shape and type
+    def test_tfr(self):
+        nfft = 256
+        Np = 201
+        shift = 10
+        K = 6
+        tm = 6.0
+        flock = 0.01
+        tlock = 5
+        Z = libtfr.tfr_spec(sig, nfft, shift, Np, K, tm, flock, tlock)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, (sig.size - Np)// shift + 1))
+        self.assertEqual(Z.dtype, libtfr.DTYPE)
 
 
-def run_dpss_fft(args):
-    from numpy import sqrt, fft
-    D = libtfr.mfft_dpss(args[0], args[1], args[2], args[0])
-    E = D.tapers
-    Z = D.tapers_fft(1.0)
-    assert_tuple_equal(Z.shape, (args[2], args[0]//2 + 1))
-    assert_array_almost_equal(Z, fft.fft(E, axis=1)[:, :Z.shape[1]])
+    def test_dpss_mtfft(self):
+        nfft = sig.size
+        ntapers = 5
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z = D.mtfft(sig)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, ntapers))
+        self.assertEqual(Z.dtype, libtfr.CTYPE)
 
 
-def test_dpss_fft():
-    for A, C, M in dpss_vals:
-        yield run_dpss_fft, A
+    def test_dpss_mtfft_pt_noevents(self):
+        from numpy import zeros_like
+        nfft = sig.size
+        ntapers = 5
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        J = D.mtfft_pt([], 1, 0)
+        self.assertTupleEqual(J.shape, (nfft//2 + 1, ntapers))
+        self.assertEqual(J.dtype, libtfr.CTYPE)
+        self.assertTrue(np.allclose(J, zeros_like(J)))
 
 
-@raises(ValueError)
-def test_dpss_bad_args():
-    E,V = libtfr.dpss(128, -5, 3)
+    def test_dpss_mtfft_pt(self):
+        nfft = sig.size
+        ntapers = 5
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        J = D.mtfft_pt(events, 1, 0)
+        self.assertTupleEqual(J.shape, (nfft//2 + 1, ntapers))
+        self.assertEqual(J.dtype, libtfr.CTYPE)
 
 
-def run_hermf(args, hmeans, dnorms):
-    h, Dh, Th = libtfr.hermf(*args)
-    assert_array_almost_equal(h.mean(1), hmeans)
-    assert_array_almost_equal((Dh**2).sum(1), dnorms)
+    def test_dpss_mtpsd(self):
+        nfft = sig.size
+        ntapers = 5
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z = D.mtpsd(sig)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1,))
+        self.assertEqual(Z.dtype, libtfr.DTYPE)
 
 
-def test_hermf():
-    for A, H, D in hermf_vals:
-        yield run_hermf, A, H, D
+    def test_dpss_mtspec(self):
+        nfft = 256
+        shift = 10
+        ntapers = 5
+        nframes = (sig.size - nfft) // shift + 1
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z = D.mtspec(sig, shift)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, nframes))
+        self.assertEqual(Z.dtype, libtfr.DTYPE)
 
 
-# these tests simply assert that the returned arrays have the correct shape and type
-def test_tfr():
-    nfft = 256
-    Np = 201
-    shift = 10
-    K = 6
-    tm = 6.0
-    flock = 0.01
-    tlock = 5
-    Z = libtfr.tfr_spec(sig, nfft, shift, Np, K, tm, flock, tlock)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, (sig.size - Np)// shift + 1))
-    assert_equal(Z.dtype, libtfr.DTYPE)
+    def test_dpss_mtstft(self):
+        nfft = 256
+        shift = 10
+        ntapers = 5
+        nframes = (sig.size - nfft) // shift + 1
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z = D.mtstft(sig, shift)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, nframes, ntapers))
+        self.assertEqual(Z.dtype, libtfr.CTYPE)
 
 
-def test_dpss_mtfft():
-    nfft = sig.size
-    ntapers = 5
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z = D.mtfft(sig)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, ntapers))
-    assert_equal(Z.dtype, libtfr.CTYPE)
+    def test_dpss_mtstft_pt_noevents(self):
+        from numpy import zeros_like
+        events = []
+        nfft = 256
+        shift = 10
+        ntapers = 5
+        nframes = (sig.size - nfft) // shift + 1
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, nframes, ntapers))
+        self.assertEqual(Nsp.size, nframes)
+        self.assertEqual(Z.dtype, libtfr.CTYPE)
+        self.assertTrue(np.allclose(Z, zeros_like(Z)))
 
 
-def test_dpss_mtfft_pt_noevents():
-    from numpy import zeros_like
-    nfft = sig.size
-    ntapers = 5
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    J = D.mtfft_pt([], 1, 0)
-    assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
-    assert_equal(J.dtype, libtfr.CTYPE)
-    assert_array_almost_equal(J, zeros_like(J))
+    def test_dpss_mtstft_pt(self):
+        nfft = 256
+        shift = 10
+        ntapers = 5
+        nframes = (sig.size - nfft) // shift + 1
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, nframes, ntapers))
+        self.assertEqual(Nsp.size, nframes)
+        self.assertEqual(Z.dtype, libtfr.CTYPE)
 
 
-def test_dpss_mtfft_pt():
-    nfft = sig.size
-    ntapers = 5
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    J = D.mtfft_pt(events, 1, 0)
-    assert_tuple_equal(J.shape, (nfft//2 + 1, ntapers))
-    assert_equal(J.dtype, libtfr.CTYPE)
+    def test_hanning_mtstft(self):
+        from numpy import hanning
+        nfft = 256
+        shift = 10
+        window = hanning(nfft - 50)
+        nframes = (sig.size - window.size) // shift + 1
+        D = libtfr.mfft_precalc(nfft, window)
+        Z = D.mtstft(sig, shift)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1, nframes, 1))
+        self.assertEqual(Z.dtype, libtfr.CTYPE)
 
 
-def test_dpss_mtpsd():
-    nfft = sig.size
-    ntapers = 5
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z = D.mtpsd(sig)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1,))
-    assert_equal(Z.dtype, libtfr.DTYPE)
+    def test_precalc_psd(self):
+        nfft = 256
+        E,V = libtfr.dpss(200, 3, 5)
+        D = libtfr.mfft_precalc(nfft, E, V)
+        self.assertTrue(np.allclose(E, D.tapers))
+        Z = D.mtpsd(sig)
+        self.assertTupleEqual(Z.shape, (nfft//2 + 1,))
+        self.assertEqual(Z.dtype, libtfr.DTYPE)
 
 
-def test_dpss_mtspec():
-    nfft = 256
-    shift = 10
-    ntapers = 5
-    nframes = (sig.size - nfft) // shift + 1
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z = D.mtspec(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes))
-    assert_equal(Z.dtype, libtfr.DTYPE)
+class TestUtility(unittest.TestCase):
+
+    def test_fgrid(self):
+        Fs = 100
+        nfft = 256
+        f, idx = libtfr.fgrid(Fs, nfft)
+        self.assertEqual(f.size, idx.size)
+        self.assertEqual(f[-1], Fs / 2)
+        f, idx = libtfr.fgrid(Fs, nfft, (10, 40))
+        self.assertTrue(f[0] >= 10)
+        self.assertTrue(f[-1] <= 40)
 
 
-def test_dpss_mtstft():
-    nfft = 256
-    shift = 10
-    ntapers = 5
-    nframes = (sig.size - nfft) // shift + 1
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z = D.mtstft(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
-    assert_equal(Z.dtype, libtfr.CTYPE)
+    def test_tgrid(self):
+        nfft = 256
+        shift = 10
+        ntapers = 5
+        D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
+        Z = D.mtstft(sig, shift)
+        tgrid1 = libtfr.tgrid(sig.size, 1, shift)
+        tgrid2 = libtfr.tgrid(Z, 1, shift)
+        #assert_array_equal(tgrid1, tgrid2)
 
 
-def test_dpss_mtstft_pt_noevents():
-    from numpy import zeros_like
-    events = []
-    nfft = 256
-    shift = 10
-    ntapers = 5
-    nframes = (sig.size - nfft) // shift + 1
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
-    assert_equal(Nsp.size, nframes)
-    assert_equal(Z.dtype, libtfr.CTYPE)
-    assert_array_almost_equal(Z, zeros_like(Z))
-
-
-def test_dpss_mtstft_pt():
-    nfft = 256
-    shift = 10
-    ntapers = 5
-    nframes = (sig.size - nfft) // shift + 1
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, ntapers))
-    assert_equal(Nsp.size, nframes)
-    assert_equal(Z.dtype, libtfr.CTYPE)
-
-
-def test_hanning_mtstft():
-    from numpy import hanning
-    nfft = 256
-    shift = 10
-    window = hanning(nfft - 50)
-    nframes = (sig.size - window.size) // shift + 1
-    D = libtfr.mfft_precalc(nfft, window)
-    Z = D.mtstft(sig, shift)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1, nframes, 1))
-    assert_equal(Z.dtype, libtfr.CTYPE)
-
-
-def test_precalc_psd():
-    nfft = 256
-    E,V = libtfr.dpss(200, 3, 5)
-    D = libtfr.mfft_precalc(nfft, E, V)
-    assert_array_equal(E, D.tapers)
-    Z = D.mtpsd(sig)
-    assert_tuple_equal(Z.shape, (nfft//2 + 1,))
-    assert_equal(Z.dtype, libtfr.DTYPE)
-
-
-def test_fgrid():
-    Fs = 100
-    nfft = 256
-    f, idx = libtfr.fgrid(Fs, nfft)
-    assert_equal(f.size, idx.size)
-    assert_equal(f[-1], Fs / 2)
-    f, idx = libtfr.fgrid(Fs, nfft, (10, 40))
-    assert_true(f[0] >= 10)
-    assert_true(f[-1] <= 40)
-
-
-def test_tgrid():
-    nfft = 256
-    shift = 10
-    ntapers = 5
-    D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
-    Z = D.mtstft(sig, shift)
-    tgrid1 = libtfr.tgrid(sig.size, 1, shift)
-    tgrid2 = libtfr.tgrid(Z, 1, shift)
-    #assert_array_equal(tgrid1, tgrid2)
-
-
-def test_interpolation():
-    from numpy import interp, arange
-    nfft1 = 256
-    nfft2 = nfft1 * 2
-    ntapers = 5
-    D1 = libtfr.mfft_dpss(nfft1, 3, ntapers, nfft1)
-    t1 = arange(0, nfft1, 1)
-    t2 = arange(0, nfft1, nfft1 / nfft2)
-    h1_interp = D1.tapers_interpolate(t2, 0, 1)
-    assert_tuple_equal(h1_interp.shape, (ntapers, nfft2))
-    for i in range(ntapers):
-        assert_array_almost_equal(h1_interp[i],
-                                  interp(t2, t1, D1.tapers[i]))
+    def test_interpolation(self):
+        from numpy import interp, arange
+        nfft1 = 256
+        nfft2 = nfft1 * 2
+        ntapers = 5
+        D1 = libtfr.mfft_dpss(nfft1, 3, ntapers, nfft1)
+        t1 = arange(0, nfft1, 1)
+        t2 = arange(0, nfft1, nfft1 / nfft2)
+        h1_interp = D1.tapers_interpolate(t2, 0, 1)
+        self.assertTupleEqual(h1_interp.shape, (ntapers, nfft2))
+        for i in range(ntapers):
+            self.assertTrue(np.allclose(h1_interp[i], interp(t2, t1, D1.tapers[i])))

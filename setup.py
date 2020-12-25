@@ -10,7 +10,7 @@ if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 5):
 from Cython.Distutils import build_ext
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.1.3'
+VERSION = '2.1.4'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
@@ -91,9 +91,8 @@ setup(
     url='https://melizalab.github.io/libtfr/',
     setup_requires=["pkgconfig", "numpy", "Cython"],
     install_requires=["numpy"],
-    test_requires=["nose"],
     zip_safe=False,
-    test_suite='nose.collector'
+    test_suite='tests'
 )
 
 
