@@ -1,4 +1,3 @@
-nose==1.3.7
-numpy==1.10.4
-Cython==0.29.21
 pkgconfig==1.5.1
+Cython==0.29.21
+numpy

@@ -90,6 +90,8 @@ setup(
     maintainer='C Daniel Meliza',
     url='https://melizalab.github.io/libtfr/',
     setup_requires=["pkgconfig", "numpy", "Cython"],
+    install_requires=["numpy"],
+    test_requires=["nose"],
     zip_safe=False,
     test_suite='nose.collector'
 )
