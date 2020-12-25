@@ -7,13 +7,7 @@ import sys
 if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 2):
     raise RuntimeError("Python version 2.7 or >= 3.2 required.")
 
-try:
-    from Cython.Distutils import build_ext
-    SUFFIX = '.pyx'
-except ImportError:
-    from distutils.command.build_ext import build_ext
-    SUFFIX = '.c'
-
+from Cython.Distutils import build_ext
 
 # --- Distutils setup and metadata --------------------------------------------
 VERSION = '2.1.3'
@@ -82,8 +76,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-sources = ['src/tfr.c', 'src/mtm.c', 'src/libtfr' + SUFFIX]
-install_requires = ["pkgconfig>=1.2", "numpy>=1.10"]
+sources = ['src/tfr.c', 'src/mtm.c', 'src/libtfr.pyx']
 
 setup(
     name='libtfr',
@@ -96,7 +89,7 @@ setup(
     author='C Daniel Meliza',
     maintainer='C Daniel Meliza',
     url='https://melizalab.github.io/libtfr/',
-    setup_requires=install_requires,
+    setup_requires=["pkgconfig", "numpy", "Cython"],
     zip_safe=False,
     test_suite='nose.collector'
 )
