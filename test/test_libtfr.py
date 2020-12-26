@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 from __future__ import division
+import sys
 
-import unittest
+if sys.hexversion < 0x03000000:
+    import unittest2 as unittest
+else:
+    import unittest
+
 import numpy as np
 
 import libtfr
