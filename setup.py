@@ -10,7 +10,7 @@ if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 5):
 from Cython.Distutils import build_ext
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.1.4'
+VERSION = '2.1.5'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
