@@ -5,7 +5,7 @@ set -e -x
 export STATIC_LAPACK=1
 
 # Compile wheels
-for PYBIN in /opt/python/{cp27*,cp3*}/bin; do
+for PYBIN in /opt/python/{cp27*,cp35*,cp36*,cp37*,cp38*}/bin; do
     "${PYBIN}/pip" install -r /io/requirements.txt
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/
 done
@@ -16,7 +16,8 @@ for whl in wheelhouse/*.whl; do
 done
 
 # Install packages and test
-for PYBIN in /opt/python/{cp27*,cp3*}/bin; do
+for PYBIN in /opt/python/{cp27*,cp35*,cp36*,cp37*,cp38*}/bin; do
+    "${PYBIN}/pip" install pytest
     "${PYBIN}/pip" install libtfr --no-index -f /io/wheelhouse
-    (cd "$HOME"; "${PYBIN}/nosetests" -w /io/test/)
+    (cd "$HOME"; "${PYBIN}/pytest" -v /io/test/)
 done

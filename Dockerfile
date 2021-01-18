@@ -1,6 +1,6 @@
 FROM quay.io/pypa/manylinux1_x86_64
 
-RUN yum install -y fftw3-devel gfortran
+RUN yum install -y fftw3-devel wget gfortran
 
 RUN wget http://www.netlib.org/lapack/lapack-3.7.1.tgz \
  && echo "84c4f7163b52b1bf1f6ca2193f6f48ed3dec0fab  lapack-3.7.1.tgz" | sha1sum -c - \
