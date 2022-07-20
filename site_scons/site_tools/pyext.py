@@ -15,18 +15,28 @@ from SCons.Action import Action
 import distutils.sysconfig
 
 
-def generate(env,**kw):
+def generate(env, **kw):
     pybase = distutils.sysconfig.get_python_lib(plat_specific=1)
-    pyvars = distutils.sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS', 'CCSHARED', 'LDSHARED', 'SO')
-    (cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = [x if x!=None else '' for x in pyvars]
-    nxdir = os.path.join(pybase, 'numpy/core/include')
+    pyvars = distutils.sysconfig.get_config_vars(
+        "CC", "CXX", "OPT", "BASECFLAGS", "CCSHARED", "LDSHARED", "SO"
+    )
+    (cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = [
+        x if x != None else "" for x in pyvars
+    ]
+    nxdir = os.path.join(pybase, "numpy/core/include")
 
     def build_module(env, target, csources, sharedobjects):
-        pycppath = [env.get('CPPPATH'), distutils.sysconfig.get_python_inc(), nxdir],
-        pycppflags = [env.get('CPPFLAGS'), env.Split(basecflags), env.Split(opt)]
+        pycppath = ([env.get("CPPPATH"), distutils.sysconfig.get_python_inc(), nxdir],)
+        pycppflags = [env.get("CPPFLAGS"), env.Split(basecflags), env.Split(opt)]
         obj = env.SharedObject(csources, CC=cc, CPPPATH=pycppath, CPPFLAGS=pycppflags)
-        return env.SharedLibrary(target, [obj + sharedobjects], SHLINK=ldshared, SHLINKFLAGS=[],
-                                 SHLIBPREFIX="", SHLIBSUFFIX=so_ext)
+        return env.SharedLibrary(
+            target,
+            [obj + sharedobjects],
+            SHLINK=ldshared,
+            SHLINKFLAGS=[],
+            SHLIBPREFIX="",
+            SHLIBSUFFIX=so_ext,
+        )
 
     def install_module(env, sources):
         return env.Install(pybase, sources)
@@ -36,9 +46,8 @@ def generate(env,**kw):
 
 
 def exists(env):
-    return env['BUILDERS'].has_key('PyExt')
-    
-    
+    return env["BUILDERS"].has_key("PyExt")
+
 
 # Variables:
 # End:

@@ -1,72 +1,81 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # -*- mode: python -*-
 import os
 
-if hasattr(os,'uname'):
+if hasattr(os, "uname"):
     system = os.uname()[0]
 else:
-    system = 'Windows'
+    system = "Windows"
 
 # source files and libraries
-src_files = ['#src/mtm.c', '#src/tfr.c']
-hdr_files = ['#include/tfr.h']
-libs = ['m']
+src_files = ["#src/mtm.c", "#src/tfr.c"]
+hdr_files = ["#include/tfr.h"]
+libs = ["m"]
 
 # install location
-AddOption('--prefix',
-          dest='prefix',
-          type='string',
-          nargs=1,
-          action='store',
-          metavar='DIR',
-          help='installation prefix')
+AddOption(
+    "--prefix",
+    dest="prefix",
+    type="string",
+    nargs=1,
+    action="store",
+    metavar="DIR",
+    help="installation prefix",
+)
 
-if not GetOption('prefix')==None:
-    install_prefix = GetOption('prefix')
+if not GetOption("prefix") == None:
+    install_prefix = GetOption("prefix")
 else:
-    install_prefix = '/usr/local/'
+    install_prefix = "/usr/local/"
 
-Help("""
+Help(
+    """
 Type: 'scons' to build the library
       'scons install' to install library and headers under %s
       'scons matlab' to compile mex file
       'scons test' to compile the test program
       (use --prefix  to change library installation location)
-""" % install_prefix)
+"""
+    % install_prefix
+)
 
 # build options
-env = Environment(ENV = os.environ,
-                  LIBS = ['m', 'fftw3', 'lapack'],
-                  CPPPATH = ['#include'],
-                  CCFLAGS = ['-O2', '-g', '-std=c99'],
-                  tools=['default','mex','doxygen'])
+env = Environment(
+    ENV=os.environ,
+    LIBS=["m", "fftw3", "lapack"],
+    CPPPATH=["#include"],
+    CCFLAGS=["-O2", "-g", "-std=c99"],
+    tools=["default", "mex", "doxygen"],
+)
 
 # system-specific settings
-if system=='Darwin':
+if system == "Darwin":
     # fftw is probably installed with macports; if elsewhere
     # then adjust these paths
-    env.Append(CPPPATH = ['/opt/local/include'],
-               LIBPATH = ['/opt/local/lib'],)
-elif system=='Linux':
+    env.Append(
+        CPPPATH=["/opt/local/include"],
+        LIBPATH=["/opt/local/lib"],
+    )
+elif system == "Linux":
     # add additional items as needed (usually not required on modern debian)
     pass
 
 
 sharedobjs = env.SharedObject(src_files)
-slib = env.StaticLibrary('#lib/libtfr', source = src_files)
-dylib = env.SharedLibrary('#lib/libtfr', sharedobjs)
-test_prog = env.Program('#test/test_tfr', ['test/test_tfr.c', slib])
+slib = env.StaticLibrary("#lib/libtfr", source=src_files)
+dylib = env.SharedLibrary("#lib/libtfr", sharedobjs)
+test_prog = env.Program("#test/test_tfr", ["test/test_tfr.c", slib])
 
-env.Default(env.Alias('lib', [slib, dylib]))
-env.Alias('test',test_prog)
-env.Alias('install', env.Install(os.path.join(install_prefix, 'include'), hdr_files))
-env.Alias('install', env.Install(os.path.join(install_prefix,'lib'), [slib, dylib]))
+env.Default(env.Alias("lib", [slib, dylib]))
+env.Alias("test", test_prog)
+env.Alias("install", env.Install(os.path.join(install_prefix, "include"), hdr_files))
+env.Alias("install", env.Install(os.path.join(install_prefix, "lib"), [slib, dylib]))
 
 # matlab mex-file
-if hasattr(env,'MEX'):
-    mex = env.MEX('#matlab/tfrspec', ['#matlab/tfrspec.c', sharedobjs])
-    env.Alias("mex",mex)
+if hasattr(env, "MEX"):
+    mex = env.MEX("#matlab/tfrspec", ["#matlab/tfrspec.c", sharedobjs])
+    env.Alias("mex", mex)
 
-if hasattr(env,'Doxygen'):
-    dox = env.Doxygen('doxy.cfg')
-    env.Alias("docs",dox)
+if hasattr(env, "Doxygen"):
+    dox = env.Doxygen("doxy.cfg")
+    env.Alias("docs", dox)

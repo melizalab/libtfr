@@ -25,234 +25,274 @@ import os.path
 import glob
 from fnmatch import fnmatch
 
+
 def DoxyfileParse(file_contents):
-   """
-   Parse a Doxygen source file and return a dictionary of all the values.
-   Values will be strings and lists of strings.
-   """
-   import shlex
-   from io import StringIO
-   data = {}
-   stream = StringIO(file_contents.decode("utf-8"))
+    """
+    Parse a Doxygen source file and return a dictionary of all the values.
+    Values will be strings and lists of strings.
+    """
+    import shlex
+    from io import StringIO
 
-   lex = shlex.shlex(instream = stream, posix = True)
-   lex.wordchars += "*+./-:"
-   lex.whitespace = lex.whitespace.replace("\n", "")
-   lex.escape = ""
+    data = {}
+    stream = StringIO(file_contents.decode("utf-8"))
 
-   lineno = lex.lineno
-   token = lex.get_token()
-   key = token   # the first token should be a key
-   last_token = ""
-   key_token = False
-   next_key = False
-   new_data = True
+    lex = shlex.shlex(instream=stream, posix=True)
+    lex.wordchars += "*+./-:"
+    lex.whitespace = lex.whitespace.replace("\n", "")
+    lex.escape = ""
 
-   def append_data(data, key, new_data, token):
-      if new_data or len(data[key]) == 0:
-         data[key].append(token)
-      else:
-         data[key][-1] += token
+    lineno = lex.lineno
+    token = lex.get_token()
+    key = token  # the first token should be a key
+    last_token = ""
+    key_token = False
+    next_key = False
+    new_data = True
 
-   while token:
-      if token in ['\n']:
-         if last_token not in ['\\']:
-            key_token = True
-      elif token in ['\\']:
-         pass
-      elif key_token:
-         key = token
-         key_token = False
-      else:
-         if token == "+=":
-            if key not in data:
-               data[key] = list()
-         elif token == "=":
-            if key == "TAGFILES" and key in data:
-               append_data( data, key, False, "=" )
-               new_data=False
+    def append_data(data, key, new_data, token):
+        if new_data or len(data[key]) == 0:
+            data[key].append(token)
+        else:
+            data[key][-1] += token
+
+    while token:
+        if token in ["\n"]:
+            if last_token not in ["\\"]:
+                key_token = True
+        elif token in ["\\"]:
+            pass
+        elif key_token:
+            key = token
+            key_token = False
+        else:
+            if token == "+=":
+                if key not in data:
+                    data[key] = list()
+            elif token == "=":
+                if key == "TAGFILES" and key in data:
+                    append_data(data, key, False, "=")
+                    new_data = False
+                else:
+                    data[key] = list()
             else:
-               data[key] = list()
-         else:
-            append_data( data, key, new_data, token )
-            new_data = True
+                append_data(data, key, new_data, token)
+                new_data = True
 
-      last_token = token
-      token = lex.get_token()
+        last_token = token
+        token = lex.get_token()
 
-      if last_token == '\\' and token != '\n':
-         new_data = False
-         append_data( data, key, new_data, '\\' )
+        if last_token == "\\" and token != "\n":
+            new_data = False
+            append_data(data, key, new_data, "\\")
 
-   # compress lists of len 1 into single strings
-   out = {}
-   for (k, v) in data.items():
-      if len(v) == 0:
-         pass
+    # compress lists of len 1 into single strings
+    out = {}
+    for (k, v) in data.items():
+        if len(v) == 0:
+            pass
 
-      # items in the following list will be kept as lists and not converted to strings
-      elif k in ["INPUT", "FILE_PATTERNS", "EXCLUDE_PATTERNS", "TAGFILES"]:
-         out[k] = v
+        # items in the following list will be kept as lists and not converted to strings
+        elif k in ["INPUT", "FILE_PATTERNS", "EXCLUDE_PATTERNS", "TAGFILES"]:
+            out[k] = v
 
-      elif len(v) == 1:
-         out[k] = v[0]
+        elif len(v) == 1:
+            out[k] = v[0]
 
-   return out
+    return out
+
 
 def DoxySourceScan(node, env, path):
-   """
-   Doxygen Doxyfile source scanner.  This should scan the Doxygen file and add
-   any files used to generate docs to the list of source files.
-   """
-   default_file_patterns = [
-      '*.c', '*.cc', '*.cxx', '*.cpp', '*.c++', '*.java', '*.ii', '*.ixx',
-      '*.ipp', '*.i++', '*.inl', '*.h', '*.hh ', '*.hxx', '*.hpp', '*.h++',
-      '*.idl', '*.odl', '*.cs', '*.php', '*.php3', '*.inc', '*.m', '*.mm',
-      '*.py',
-   ]
+    """
+    Doxygen Doxyfile source scanner.  This should scan the Doxygen file and add
+    any files used to generate docs to the list of source files.
+    """
+    default_file_patterns = [
+        "*.c",
+        "*.cc",
+        "*.cxx",
+        "*.cpp",
+        "*.c++",
+        "*.java",
+        "*.ii",
+        "*.ixx",
+        "*.ipp",
+        "*.i++",
+        "*.inl",
+        "*.h",
+        "*.hh ",
+        "*.hxx",
+        "*.hpp",
+        "*.h++",
+        "*.idl",
+        "*.odl",
+        "*.cs",
+        "*.php",
+        "*.php3",
+        "*.inc",
+        "*.m",
+        "*.mm",
+        "*.py",
+    ]
 
-   default_exclude_patterns = [
-      '*~',
-   ]
+    default_exclude_patterns = [
+        "*~",
+    ]
 
-   sources = []
+    sources = []
 
-   data = DoxyfileParse(node.get_contents())
+    data = DoxyfileParse(node.get_contents())
 
-   if data.get("RECURSIVE", "NO") == "YES":
-      recursive = True
-   else:
-      recursive = False
+    if data.get("RECURSIVE", "NO") == "YES":
+        recursive = True
+    else:
+        recursive = False
 
-   file_patterns = data.get("FILE_PATTERNS", default_file_patterns)
-   exclude_patterns = data.get("EXCLUDE_PATTERNS", default_exclude_patterns)
+    file_patterns = data.get("FILE_PATTERNS", default_file_patterns)
+    exclude_patterns = data.get("EXCLUDE_PATTERNS", default_exclude_patterns)
 
-   # We're running in the top-level directory, but the doxygen
-   # configuration file is in the same directory as node; this means
-   # that relative pathnames in node must be adjusted before they can
-   # go onto the sources list
-   conf_dir = os.path.dirname(str(node))
+    # We're running in the top-level directory, but the doxygen
+    # configuration file is in the same directory as node; this means
+    # that relative pathnames in node must be adjusted before they can
+    # go onto the sources list
+    conf_dir = os.path.dirname(str(node))
 
-   for node in data.get("INPUT", []):
-      if not os.path.isabs(node):
-         node = os.path.join(conf_dir, node)
-      if os.path.isfile(node):
-         sources.append(node)
-      elif os.path.isdir(node):
-         if recursive:
-            for root, dirs, files in os.walk(node):
-               for f in files:
-                  filename = os.path.join(root, f)
+    for node in data.get("INPUT", []):
+        if not os.path.isabs(node):
+            node = os.path.join(conf_dir, node)
+        if os.path.isfile(node):
+            sources.append(node)
+        elif os.path.isdir(node):
+            if recursive:
+                for root, dirs, files in os.walk(node):
+                    for f in files:
+                        filename = os.path.join(root, f)
 
-                  pattern_check = reduce(lambda x, y: x or bool(fnmatch(filename, y)), file_patterns, False)
-                  exclude_check = reduce(lambda x, y: x and fnmatch(filename, y), exclude_patterns, True)
+                        pattern_check = reduce(
+                            lambda x, y: x or bool(fnmatch(filename, y)),
+                            file_patterns,
+                            False,
+                        )
+                        exclude_check = reduce(
+                            lambda x, y: x and fnmatch(filename, y),
+                            exclude_patterns,
+                            True,
+                        )
 
-                  if pattern_check and not exclude_check:
-                     sources.append(filename)
-         else:
-            for pattern in file_patterns:
-               sources.extend(glob.glob("/".join([node, pattern])))
+                        if pattern_check and not exclude_check:
+                            sources.append(filename)
+            else:
+                for pattern in file_patterns:
+                    sources.extend(glob.glob("/".join([node, pattern])))
 
-   # Add tagfiles to the list of source files:
-   for node in data.get("TAGFILES", []):
-      file = node.split("=")[0]
-      if not os.path.isabs(file):
-         file = os.path.join(conf_dir, file)
-      sources.append(file)
-
-   # Add additional files to the list of source files:
-   def append_additional_source(option):
-      file = data.get(option, "")
-      if file != "":
-         if not os.path.isabs(file):
+    # Add tagfiles to the list of source files:
+    for node in data.get("TAGFILES", []):
+        file = node.split("=")[0]
+        if not os.path.isabs(file):
             file = os.path.join(conf_dir, file)
-         if os.path.isfile(file):
-            sources.append(file)
+        sources.append(file)
 
-   append_additional_source("HTML_STYLESHEET")
-   append_additional_source("HTML_HEADER")
-   append_additional_source("HTML_FOOTER")
+    # Add additional files to the list of source files:
+    def append_additional_source(option):
+        file = data.get(option, "")
+        if file != "":
+            if not os.path.isabs(file):
+                file = os.path.join(conf_dir, file)
+            if os.path.isfile(file):
+                sources.append(file)
 
-   sources = map( lambda path: env.File(path), sources )
-   return sources
+    append_additional_source("HTML_STYLESHEET")
+    append_additional_source("HTML_HEADER")
+    append_additional_source("HTML_FOOTER")
+
+    sources = map(lambda path: env.File(path), sources)
+    return sources
 
 
 def DoxySourceScanCheck(node, env):
-   """Check if we should scan this file"""
-   return os.path.isfile(node.path)
+    """Check if we should scan this file"""
+    return os.path.isfile(node.path)
+
 
 def DoxyEmitter(source, target, env):
-   """Doxygen Doxyfile emitter"""
-   # possible output formats and their default values and output locations
-   output_formats = {
-      "HTML": ("YES", "html"),
-      "LATEX": ("YES", "latex"),
-      "RTF": ("NO", "rtf"),
-      "MAN": ("YES", "man"),
-      "XML": ("NO", "xml"),
-   }
+    """Doxygen Doxyfile emitter"""
+    # possible output formats and their default values and output locations
+    output_formats = {
+        "HTML": ("YES", "html"),
+        "LATEX": ("YES", "latex"),
+        "RTF": ("NO", "rtf"),
+        "MAN": ("YES", "man"),
+        "XML": ("NO", "xml"),
+    }
 
-   data = DoxyfileParse(source[0].get_contents())
+    data = DoxyfileParse(source[0].get_contents())
 
-   targets = []
-   out_dir = data.get("OUTPUT_DIRECTORY", ".")
-   if not os.path.isabs(out_dir):
-      conf_dir = os.path.dirname(str(source[0]))
-      out_dir = os.path.join(conf_dir, out_dir)
+    targets = []
+    out_dir = data.get("OUTPUT_DIRECTORY", ".")
+    if not os.path.isabs(out_dir):
+        conf_dir = os.path.dirname(str(source[0]))
+        out_dir = os.path.join(conf_dir, out_dir)
 
-   # add our output locations
-   for (k, v) in output_formats.items():
-      if data.get("GENERATE_" + k, v[0]) == "YES":
-         targets.append(env.Dir( os.path.join(out_dir, data.get(k + "_OUTPUT", v[1]))) )
+    # add our output locations
+    for (k, v) in output_formats.items():
+        if data.get("GENERATE_" + k, v[0]) == "YES":
+            targets.append(
+                env.Dir(os.path.join(out_dir, data.get(k + "_OUTPUT", v[1])))
+            )
 
-   # add the tag file if neccessary:
-   tagfile = data.get("GENERATE_TAGFILE", "")
-   if tagfile != "":
-      if not os.path.isabs(tagfile):
-         conf_dir = os.path.dirname(str(source[0]))
-         tagfile = os.path.join(conf_dir, tagfile)
-      targets.append(env.File(tagfile))
+    # add the tag file if neccessary:
+    tagfile = data.get("GENERATE_TAGFILE", "")
+    if tagfile != "":
+        if not os.path.isabs(tagfile):
+            conf_dir = os.path.dirname(str(source[0]))
+            tagfile = os.path.join(conf_dir, tagfile)
+        targets.append(env.File(tagfile))
 
-   # don't clobber targets
-   for node in targets:
-      env.Precious(node)
+    # don't clobber targets
+    for node in targets:
+        env.Precious(node)
 
-   # set up cleaning stuff
-   for node in targets:
-      env.Clean(node, node)
+    # set up cleaning stuff
+    for node in targets:
+        env.Clean(node, node)
 
-   return (targets, source)
+    return (targets, source)
+
 
 def generate(env):
-   """
-   Add builders and construction variables for the
-   Doxygen tool.  This is currently for Doxygen 1.4.6.
-   """
-   doxyfile_scanner = env.Scanner(
-      DoxySourceScan,
-      "DoxySourceScan",
-      scan_check = DoxySourceScanCheck,
-   )
+    """
+    Add builders and construction variables for the
+    Doxygen tool.  This is currently for Doxygen 1.4.6.
+    """
+    doxyfile_scanner = env.Scanner(
+        DoxySourceScan,
+        "DoxySourceScan",
+        scan_check=DoxySourceScanCheck,
+    )
 
-   import SCons.Builder
-   doxyfile_builder = SCons.Builder.Builder(
-      action = "cd ${SOURCE.dir}  &&  ${DOXYGEN} ${SOURCE.file}",
-      emitter = DoxyEmitter,
-      target_factory = env.fs.Entry,
-      single_source = True,
-      source_scanner =  doxyfile_scanner,
-   )
+    import SCons.Builder
 
-   env.Append(BUILDERS = {
-      'Doxygen': doxyfile_builder,
-   })
+    doxyfile_builder = SCons.Builder.Builder(
+        action="cd ${SOURCE.dir}  &&  ${DOXYGEN} ${SOURCE.file}",
+        emitter=DoxyEmitter,
+        target_factory=env.fs.Entry,
+        single_source=True,
+        source_scanner=doxyfile_scanner,
+    )
 
-   env.AppendUnique(
-      DOXYGEN = 'doxygen',
-   )
+    env.Append(
+        BUILDERS={
+            "Doxygen": doxyfile_builder,
+        }
+    )
+
+    env.AppendUnique(
+        DOXYGEN="doxygen",
+    )
+
 
 def exists(env):
-   """
-   Make sure doxygen exists.
-   """
-   return env.Detect("doxygen")
+    """
+    Make sure doxygen exists.
+    """
+    return env.Detect("doxygen")
