@@ -4,9 +4,8 @@ Libtfr is a library for calculating multi-taper time-frequency reassignment (TFR
 
 The library will also calculate conventional windowed spectrograms and multitaper spectrograms.
 
-Libtfr has C and Python APIs. The Python package is compatible and has been tested with versions 2.7, 3.5, 3.6, 3.7, and 3.8
+Libtfr has C and Python APIs. The Python package has been tested on CPython 3.7 through 3.10.
 
-[![Build Status](https://travis-ci.org/melizalab/libtfr.png?branch=master)](https://travis-ci.org/melizalab/libtfr)
 [![DOI](https://zenodo.org/badge/1833187.svg)](https://zenodo.org/badge/latestdoi/1833187)
 
 ## Quick start
