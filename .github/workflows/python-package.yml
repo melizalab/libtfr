@@ -25,8 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
           if [ -f src/libtfr.c]; then rm src/libtfr.c; fi
           pip install -e .
       - name: Test with pytest

@@ -89,8 +89,7 @@ setup(
     author='C Daniel Meliza',
     maintainer='C Daniel Meliza',
     url='https://melizalab.github.io/libtfr/',
-    setup_requires=["pkgconfig", "numpy", "Cython"],
-    install_requires=["numpy"],
+    install_requires=["numpy>=1.23.1"],
     zip_safe=False,
     test_suite='tests'
 )
