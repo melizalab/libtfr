@@ -30,10 +30,12 @@ def DoxyfileParse(file_contents):
    Parse a Doxygen source file and return a dictionary of all the values.
    Values will be strings and lists of strings.
    """
-   data = {}
-
    import shlex
-   lex = shlex.shlex(instream = file_contents, posix = True)
+   from io import StringIO
+   data = {}
+   stream = StringIO(file_contents.decode("utf-8"))
+
+   lex = shlex.shlex(instream = stream, posix = True)
    lex.wordchars += "*+./-:"
    lex.whitespace = lex.whitespace.replace("\n", "")
    lex.escape = ""
@@ -63,10 +65,10 @@ def DoxyfileParse(file_contents):
          key_token = False
       else:
          if token == "+=":
-            if not data.has_key(key):
+            if key not in data:
                data[key] = list()
          elif token == "=":
-            if key == "TAGFILES" and data.has_key(key):
+            if key == "TAGFILES" and key in data:
                append_data( data, key, False, "=" )
                new_data=False
             else:
@@ -83,18 +85,19 @@ def DoxyfileParse(file_contents):
          append_data( data, key, new_data, '\\' )
 
    # compress lists of len 1 into single strings
+   out = {}
    for (k, v) in data.items():
       if len(v) == 0:
-         data.pop(k)
+         pass
 
       # items in the following list will be kept as lists and not converted to strings
-      if k in ["INPUT", "FILE_PATTERNS", "EXCLUDE_PATTERNS", "TAGFILES"]:
-         continue
+      elif k in ["INPUT", "FILE_PATTERNS", "EXCLUDE_PATTERNS", "TAGFILES"]:
+         out[k] = v
 
-      if len(v) == 1:
-         data[k] = v[0]
+      elif len(v) == 1:
+         out[k] = v[0]
 
-   return data
+   return out
 
 def DoxySourceScan(node, env, path):
    """
@@ -129,7 +132,7 @@ def DoxySourceScan(node, env, path):
    # that relative pathnames in node must be adjusted before they can
    # go onto the sources list
    conf_dir = os.path.dirname(str(node))
-   
+
    for node in data.get("INPUT", []):
       if not os.path.isabs(node):
          node = os.path.join(conf_dir, node)
@@ -156,7 +159,7 @@ def DoxySourceScan(node, env, path):
       if not os.path.isabs(file):
          file = os.path.join(conf_dir, file)
       sources.append(file)
-   
+
    # Add additional files to the list of source files:
    def append_additional_source(option):
       file = data.get(option, "")

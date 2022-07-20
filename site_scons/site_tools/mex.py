@@ -39,10 +39,10 @@ def generate(env):
         bld = Builder(action = '$MEXC $SOURCES -o $TARGET',
                       suffix=env['MEX_EXT'])
         env['BUILDERS']['MEX'] = bld
-    except OSError, e:
+    except OSError:
         # couldn't find matlab most likely
         SCons.Warnings.warn(SCons.Warnings.DependencyWarning, "Could not find matlab program.")
 
 def exists(env):
-    print "exists?"
+    print("exists?")
     return env['BUILDERS'].has_key('MEX')
