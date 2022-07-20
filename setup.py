@@ -65,7 +65,7 @@ class BuildExt(build_ext):
                                                          "/usr/src/lapack/librefblas.a",
                                                          "-lgfortran"))
         else:
-            compiler_settings['libraries'].append('lapack', "m")
+            compiler_settings['libraries'].extend(("lapack", "m"))
         c_opts = []
         if has_flag(self.compiler, '-ffast-math'):
             c_opts.append('-ffast-math')
