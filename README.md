@@ -8,9 +8,19 @@ Libtfr has C and Python APIs. The Python package has been tested on CPython 3.7 
 
 [![DOI](https://zenodo.org/badge/1833187.svg)](https://zenodo.org/badge/latestdoi/1833187)
 
-## Quick start
+## Python package
 
-To use the python module, you'll need to install some system dependencies first. On Debian:
+To install from PyPI:
+
+```bash
+pip install libtfr
+```
+
+Wheels are built for most versions of linux and macosx using [cibuildwheel](https://github.com/pypa/cibuildwheel/). These are statically linked to generic LAPACK routines and a fairly old version of fftw, so if speed is a concern, consider compiling yourself against optimized libraries of your own following the instructions below. Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl), but they are somewhat out of date. Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
+
+### Installing from source
+
+To build the python module, you'll need to install some system dependencies first. On Debian:
 
 ```bash
 sudo apt-get install libfftw3-dev liblapack-dev
@@ -22,19 +32,13 @@ On OS X with Macports:
 sudo port install fftw-3
 ```
 
-To install the python module from source:
+To build and install the python module from source:
 
 ```bash
 pip install .
 ```
 
-To install from PyPI:
-
-```bash
-pip install libtfr
-```
-
-Wheels are available for most versions of linux and macosx. These are statically linked to generic LAPACK routines and a fairly old version of fftw, so if speed is a concern, consider compiling yourself against optimized libraries of your own. Windows wheels with statically linked FFTW and LAPACK libraries have kindly been developed by [carlkl](https://github.com/carlkl). Install with `pip install -i https://pypi.anaconda.org/carlkl/simple libtfr`
+### Use
 
 To compute a time-frequency reassignment spectrogram in Python:
 
@@ -86,7 +90,7 @@ D = libtfr.mfft_precalc(256, hanning(200))
 P = D.mtspec(signal, 10)
 ```
 
-### C Library
+## C Library
 
 To build the C library you will also need to have [scons](http://www.scons.org) installed. You may need to edit the SConstruct file to make sure it points to the correct LAPACK libraries. To build the shared library:
 
@@ -100,19 +104,19 @@ A small test program, *test_tfr*, can be built with `scons test`. The program ge
 
 See `src/test_tfr.c` for an example of how to use the C API.
 
-### Documentation
+## Documentation
 
 The C header `tfr.h` and python module `libtfr.pyx` are both extensively documented.
 
-### Algorithm and usage notes
+## Algorithm and usage notes
 
 The software was assembled from various MATLAB sources, including the time-frequency toolkit, Xiao and Flandrin's work on multitaper reassignment, and code from Gardner and Magnasco.
 
 The basic principle is to use reassignment to increase the precision of the time-frequency localization, essentially by deconvolving the spectrogram with the TF representation of the window, recovering the center of mass of the spectrotemporal energy. Reassigned TFRs typically show a 'froth' for noise, and strong narrow lines for coherent signals like pure tones, chirps, and so forth. The use of multiple tapers reinforces the coherent signals while averaging out the froth, giving a very clean spectrogram with optimal precision and resolution properties.
 
-Gardner & Magnasco calculate reassignment based on a different algorithm from Xiao and Flandrin. The latter involves 3 different FFT operations on the signal windowed with the hermitian taper *h(t)*, its derivative *h'(t)*, and its time product *t × h(t)*. The G&M algorithm only uses two FFTs, on the signal windowed with a Gaussian and its time derivative. If I understand their methods correctly, however, this derivation is based on properties of the fourier transform of the gaussian, and isn't appropriate for window functions based on the Hermitian tapers, which have more optimal distribution of energy over the TF plane (i.e., it takes fewer Hermitian tapers than Gaussian tapers to achieve the same quality spectrogram)
+Gardner & Magnasco (2006) calculate reassignment based on a different algorithm from Xiao and Flandrin (2007). The latter involves 3 different FFT operations on the signal windowed with the hermitian taper *h(t)*, its derivative *h'(t)*, and its time product *t × h(t)*. The G&M algorithm only uses two FFTs, on the signal windowed with a Gaussian and its time derivative. If I understand their methods correctly, however, this derivation is based on properties of the fourier transform of the gaussian, and isn't appropriate for window functions based on the Hermitian tapers, which have more optimal distribution of energy over the TF plane (i.e., it takes fewer Hermitian tapers than Gaussian tapers to achieve the same quality spectrogram)
 
-Therefore, the algorithm is mostly from X&F, though I include time and frequency locking parameters from G&M, which specify how far energy is allowed to be reassigned in the TF plane. Large displacements generally arise from numerical errors, so this helps to sharpen the lines somewhat. I also included the time/frequency interpolation from , which can be used to get higher precision (at the expense of less averaging) from smaller analysis windows.
+Therefore, the algorithm is mostly from X&F, though I include time and frequency locking parameters from G&M, which specify how far energy is allowed to be reassigned in the TF plane. Large displacements generally arise from numerical errors, so this helps to sharpen the lines somewhat. I also included the time/frequency interpolation from Prieto et al (2007), which can be used to get higher precision (at the expense of less averaging) from smaller analysis windows.
 
 Some fiddling with parameters is necessary to get the best spectrograms from a given sort of signal. Like the window size in an STFT, the taper parameters control the time-frequency resolution. However, in the reassignment spectrogram the precision (i.e. localization) is not affected by the taper size, so the effects of taper size will generally only be seen when two coherent signals are close to each other in time or frequency. `Nh` controls the size of the tapers; one can also adjust `tm`, the time support of the tapers, but depending on the number of tapers used, this shouldn't get a whole lot smaller than 5. Increased values of `Nh` result in improved narrowband resolution (i.e. between pure tones) but closely spaced clicks can become smeared. Decreasing `Nh` increases the resolution between broadband components (i.e. clicks) but smears closely spaced narrowband components. The effect of smearing can be ameliorated to some extent by adjusting the frequency/time locking parameters.
 
@@ -123,9 +127,9 @@ The frequency zoom parameter can be used to speed up calculation quite a bit. Si
 
 Increasing the order generally reduces the background 'froth', but interference between closely spaced components may increase.
 
-Additional improvements in resolution may be achievable averaging across different window sizes, or by using other averaging methods (i.e. as in Xiao and Flandrin)
+Additional improvements in resolution may be achievable averaging across different window sizes, or by using other averaging methods (i.e. as in Xiao and Flandrin 2007)
 
-### License
+## License
 
 libtfr was written by C Daniel Meliza and is licensed under the Gnu Public License (GPL) version 2; see COPYING for details.
 
@@ -133,7 +137,7 @@ some code is adapted from chronux (<http://www.chronux.org>), by Partha Mitra an
 
 THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO OR DR. MELIZA BE LIABLE FOR ANY DIRECT OR CONSEQUENTIAL DAMAGES RESULTING FROM USE OF THE PROGRAMS. THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
 
-### References
+## References
 
 * Time-frequency toolkit: <http://tftb.nongnu.org/>
 * Xiao, J. & Flandrin, P. Multitaper Time-Frequency Reassignment for Nonstationary Spectrum Estimation and Chirp Enhancement Signal Processing, IEEE Transactions on, Signal Processing, IEEE Transactions on, 2007, 55, 2851-2860 code: <http://perso.ens-lyon.fr/patrick.flandrin/multitfr.html>

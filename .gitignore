@@ -13,3 +13,4 @@ test/test_tfr
 wheelhouse/
 .ipynb_checkpoints/
 .eggs/
+.DS_Store

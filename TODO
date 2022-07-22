@@ -1,0 +1,7 @@
+
+- make spectrogram methods agnostic to input type (i.e., they should operate on
+  any complex array
+- optimize point process methods: arrays can be quite sparse. at the least,
+  avoid overhead of moving data in and out of numpy arrays
+- consider replacing cython with pybind11 for more flexible type handling
+- consider dropping C api
