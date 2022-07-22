@@ -4,8 +4,8 @@
 from setuptools import setup, Extension
 import os
 import sys
-if sys.version_info[:2] < (3, 7):
-    raise RuntimeError("Python version >= 3.7 required.")
+if sys.version_info[:2] < (3, 6):
+    raise RuntimeError("Python version >= 3.6 required.")
 
 from Cython.Distutils import build_ext
 
@@ -89,7 +89,7 @@ setup(
     author='C Daniel Meliza',
     maintainer='C Daniel Meliza',
     url='https://melizalab.github.io/libtfr/',
-    install_requires=["numpy>=1.21.6"],
+    install_requires=["numpy>=1.19.5"],
     zip_safe=False,
     test_suite='tests'
 )

@@ -1,2 +1,2 @@
 [build-system]
-requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.21.6", "cython>=0.29"]
+requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.19.5", "cython>=0.29"]
