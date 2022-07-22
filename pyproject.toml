@@ -1,2 +1,9 @@
 [build-system]
 requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.19.5", "cython>=0.29"]
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "pytest {project}/test"
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y fftw3-devel lapack-devel"
