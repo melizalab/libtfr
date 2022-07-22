@@ -4,6 +4,24 @@ requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.19.5", "cython>
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "pytest {project}/test"
+manylinux-x86_64-image = "manylinux2014"
+manylinux-i686-image = "manylinux2014"
+
+[[tool.cibuildwheel.overrides]]
+select = "cp3?-*"
+manylinux-x86_64-image = "manylinux2010"
+manylinux-i686-image = "manylinux2010"
 
 [tool.cibuildwheel.linux]
-before-all = "yum install -y fftw3-devel lapack-devel"
+before-all = [
+   "yum install -y fftw3-devel lapack-devel"
+]
+
+[[tool.cibuildwheel.overrides]]
+select = "*musllinux*"
+before-all = [
+  "apk add fftw-dev lapack-dev",
+]
+
+[tool.cibuildwheel.macos]
+before-all = "brew install fftw"
