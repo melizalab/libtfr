@@ -305,7 +305,7 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
     cdef double[:] samples = nx.asarray(s).astype(DTYPE)
 
     # generate/convert frequency grid
-    cdef int nfreq = N/2 + 1
+    cdef int nfreq = N//2 + 1
     cdef nx.ndarray[DTYPE_t, ndim=1] fgrid_cast
     cdef double * fgridp = NULL
     if fgrid is not None:
@@ -378,8 +378,8 @@ cdef void hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out) nogil:
     """Copy data from workspace of mtm object into a complex array"""
     cdef size_t nfft = tfr.mtm_nfft(mtm)
     cdef size_t ntapers = tfr.mtm_ntapers(mtm)
-    cdef size_t real_count = nfft / 2 + 1
-    cdef size_t imag_count = (nfft + 1) / 2
+    cdef size_t real_count = nfft // 2 + 1
+    cdef size_t imag_count = (nfft + 1) // 2
     cdef size_t t, n
     cdef double * buf = tfr.mtm_buffer(mtm)
 
