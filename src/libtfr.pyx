@@ -201,7 +201,7 @@ cdef class mfft:
         t0, tN, - start and stop of the signal
         returns array of complex numbers, dimension (nreal, ntapers)
         """
-        cdef int i
+        cdef unsigned int i
         cdef double tw0, Msp
         cdef nx.ndarray[DTYPE_t, ndim=2] ht
         cdef nx.ndarray[DTYPE_t] times = nx.asarray(t).astype(DTYPE)
