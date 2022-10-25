@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # -*- mode: cython -*-
+#cython: language_level=3
 """Interface to libtfr spectrogram library using numpy.
 
 Spectrograms are returned as 2D arrays with frequency indexed by row and time by
