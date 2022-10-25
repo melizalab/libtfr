@@ -34,8 +34,8 @@ mfft *
 mtm_init(int nfft, int npoints, int ntapers)
 {
         mfft *mtm;
-        int *n_array, i;
-        fftw_r2r_kind *kind;
+        int i;
+        fftw_r2r_kind kind = FFTW_R2HC;
         mtm = (mfft*)malloc(sizeof(mfft));
 
         mtm->nfft = nfft;
@@ -49,20 +49,11 @@ mtm_init(int nfft, int npoints, int ntapers)
         //mtm->out_buf = (fftw_complex*)fftw_malloc((nfft/2+1)*ntapers*sizeof(fftw_complex));
 
         // set up fftw plan
-        n_array = malloc(sizeof(int)*ntapers);
-        kind = malloc(sizeof(int)*ntapers);
-        for (i = 0; i < ntapers; i++) {
-                n_array[i] = nfft;
-                kind[i] = FFTW_R2HC;
-        }
-
-        mtm->plan = fftw_plan_many_r2r(1, n_array, ntapers,
+        mtm->plan = fftw_plan_many_r2r(1, &nfft, ntapers,
                                        mtm->buf, NULL, 1, nfft,
                                        mtm->buf, NULL, 1, nfft,
-                                       kind, FFTW_MEASURE);
+                                       &kind, FFTW_MEASURE);
 
-        free(n_array);
-        free(kind);
         return mtm;
 }
 
