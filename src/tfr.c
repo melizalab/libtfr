@@ -94,16 +94,21 @@ mtm_init_herm(int nfft, int npoints, int order, double tm)
  *
  */
 static int
-find_bin(double f, const double *fgrid, int nfreq) {
-        double diff;
-        int i;
-        if (f < *fgrid || f > fgrid[nfreq-1]) return -1;
-        for (i = 1; i < nfreq; i++) {
-                diff = fgrid[i] - f;
-                if (diff >= 0)
-                        return ((f-fgrid[i-1]) < diff) ? i-1 : i;
+find_bin(double f, const double *fgrid, int nfreq)
+{
+        int i = 0, j = nfreq - 1;
+
+        if (f < fgrid[i] || f > fgrid[j]) return -1;
+
+        while (j - i > 1) {
+                int k = (i + j) / 2;
+                if (f > fgrid[k])
+                        i = k;
+                else
+                        j = k;
         }
-        return -1;
+
+        return (f - fgrid[i] < fgrid[j] - f) ? i : j;
 }
 
 void
