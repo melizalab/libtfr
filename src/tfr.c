@@ -26,51 +26,80 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
 
         int i, k;
-        double dt, *tt, *g, *P, *Htemp;
+        double dt, *tt, *P;
 
         // fix even window sizes
         N -= (N % 2) ? 0 : 1;
 
-        tt = (double*)malloc(N*M*sizeof(double));
-        g = (double*)malloc(N*sizeof(double));
-        P = (double*)malloc(N*(M+1)*sizeof(double));
-        Htemp = (double*)malloc(N*(M+1)*sizeof(double));
+        tt = (double*)malloc(N*sizeof(double));
+        P = (double*)malloc(N*2*sizeof(double));
+
+        // tt[] are the x values that the functions P, h, Dh, and Th are evaluated at
+        // P is the Hermite polynomial
+        // h is the Hermite function, Ψₙ = (2ⁿ n! √π)^-½ * e^(-x²/2) * Pₙ
+
+        // The first two Hermite polynomials, P₀ & P₁, are calculated by explicit
+        // expression, the orders after that via recurrence.  P₀ & P₁ are pre-multiplied
+        // by the factor e^(-x²/2), as it more efficient than multiplying when h and Dh
+        // are computed and means e^(-x²/2) doesn't need to be saved.
+
+        // Dh, the derivative of h, is calculated as:
+        // Ψₙ´ = ((2ⁿ n! √π)^-½ * e^(-x²/2) * Pₙ)´            With P = Hermite polynomial
+        //     = f * (e^(-x²/2) * Pₙ)´                        Where f = (2ⁿ n! √π)^-½
+        //     = f * (e^(-x²/2) * Pₙ´ - x * e^(-x²/2) * Pₙ)
+        //                                                    Using Pₙ´ = Pₙ₋₁ * 2n
+        //     = f * (e^(-x²/2) * Pₙ₋₁ * 2n - x * e^(-x²/2) * Pₙ)
+        //                                                    Where Pk = e^(-x²/2) * Pₙ
+        //     = f * (2n * Pkm1 - x * Pk)
 
         dt = 2 * tm / (N-1);
         for (i = 0; i < N; i++) {
                 tt[i] = -tm + dt * i;
-                g[i] = exp(-tt[i] * tt[i] / 2);
-                P[i] = 1.0;
-                P[N+i] = 2 * tt[i];
+                // Include e^(-x²/2) factor here, i.e.. P = Hermite(0) * e^(-x²/2) = 1 * e^(-x²/2)
+                P[i] = exp(-tt[i] * tt[i] / 2);
+                P[N+i] = 2 * tt[i] * P[i];
         }
 
-        for (k = 2; k < M+1; k++) {
+        // f is (2^k k! √π)^-½ * √dt, for the current k (now k = 0)
+        // It's faster to calculate fₖ through recurrence as fₖ = fₖ₋₁ / √(2k)
+        double f = sqrt(dt / sqrt(M_PI));
+        for (i = 0; i < N; i++) {
+                h[i] = P[i] * f;
+                Th[i] = h[i] * (-(N-1)/2 + i);
+                // Dh = dt * f * (2k * Pkm1 - tt * Pk), with Pkm1 = 0 and h = f * Pk
+                Dh[i] = -dt * tt[i] * h[i];
+        }
+        f /= sqrt(2);
+        for (i = 0; i < N; i++) {
+                h[N+i] = P[N+i] * f;
+                Th[N+i] = h[N+i] * (-(N-1)/2 + i);
+                Dh[N+i] = f * dt * (2 * P[i] - tt[i] * P[N+i]);
+        }
+
+        // Pkm2 points to Pₖ₋₂ and Pkm1 points to Pₖ₋₁, i.e. the two previous orders of
+        // P.  Pk will be the current order, it points to Pkm2, so we overwrite Pkm2 as
+        // we calculate the values for Pk.  The pointers are shifted each iteration.
+        // This way we only need two rows of P values at once.
+        double *Pkm2 = P, *Pkm1 = P + N, *Pk = P;
+        for (k = 2; k < M; k++) {
+                f /= sqrt(2 * k);
+
                 for (i = 0; i < N; i++) {
-                        P[k*N+i] = 2 * tt[i] * P[(k-1)*N+i] - 2 * (k-1) * P[(k-2)*N+i];
+                        // Pkm2 is P[k-2,], and Pkm1 is P[k-1,], we will overwrite Pkm2 with P[k,]
+                        Pk[i] = 2.0 * (tt[i] * Pkm1[i] - (k-1) * Pkm2[i]);
+
+                        h[k*N+i] = Pk[i] * f;
+                        Th[k*N+i] = h[k*N+i] * (-(N-1)/2 + i);
+                        Dh[k*N+i] = f * dt * (2 * k * Pkm1[i] - tt[i] * Pk[i]);
                 }
+
+                Pkm2 = Pkm1;
+                Pkm1 = Pk;
+                Pk = Pkm2;
         }
 
-        for (k = 0; k < M+1; k++) {
-                for (i = 0; i < N; i++) {
-                        Htemp[k*N+i] = P[k*N+i] *
-                                g[i]/sqrt(sqrt(M_PI) * pow(2, k) * tgamma(k+1)) *
-                                sqrt(dt);
-                }
-        }
-
-        for (k = 0; k < M; k++) {
-                for (i = 0; i < N; i++) {
-                        Dh[k*N+i] = (tt[i] * Htemp[k*N+i] - sqrt(2*(k+1)) * Htemp[(k+1)*N+i])*dt;
-                        Th[k*N+i] = Htemp[k*N+i] * (-(N-1)/2 + i);
-                }
-        }
-
-
-        memcpy(h, Htemp, N*M*sizeof(double));
         free(tt);
-        free(g);
         free(P);
-        free(Htemp);
 
         return N;
 }
