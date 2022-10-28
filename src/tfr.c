@@ -38,10 +38,10 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
         // P is the Hermite polynomial
         // h is the Hermite function, Ψₙ = (2ⁿ n! √π)^-½ * e^(-x²/2) * Pₙ
 
-        // The first two Hermite polynomials, P₀ & P₁, are calculated by explicit
-        // expression, the orders after that via recurrence.  P₀ & P₁ are pre-multiplied
-        // by the factor e^(-x²/2), as it more efficient than multiplying when h and Dh
-        // are computed and means e^(-x²/2) doesn't need to be saved.
+        // The first Hermite polynomial, P₀, is calculated by explicit expression, the
+        // orders after that via recurrence.  P₀ is pre-multiplied by the factor
+        // e^(-x²/2), as it more efficient than multiplying when h and Dh are computed
+        // and means e^(-x²/2) doesn't need to be saved.
 
         // Dh, the derivative of h, is calculated as:
         // Ψₙ´ = ((2ⁿ n! √π)^-½ * e^(-x²/2) * Pₙ)´            With P = Hermite polynomial
@@ -53,35 +53,29 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
         //     = f * (2n * Pkm1 - x * Pk)
 
         dt = 2 * tm / (N-1);
-        for (i = 0; i < N; i++) {
-                tt[i] = -tm + dt * i;
-                // Include e^(-x²/2) factor here, i.e.. P = Hermite(0) * e^(-x²/2) = 1 * e^(-x²/2)
-                P[i] = exp(-tt[i] * tt[i] / 2);
-                P[N+i] = 2 * tt[i] * P[i];
-        }
-
         // f is (2^k k! √π)^-½ * √dt, for the current k (now k = 0)
         // It's faster to calculate fₖ through recurrence as fₖ = fₖ₋₁ / √(2k)
         double f = sqrt(dt / sqrt(M_PI));
         for (i = 0; i < N; i++) {
+                tt[i] = -tm + dt * i;
+                // Include e^(-x²/2) factor here, i.e.. P = Hermite(0) * e^(-x²/2) = 1 * e^(-x²/2)
+                P[i] = exp(-tt[i] * tt[i] / 2);
+
                 h[i] = P[i] * f;
                 Th[i] = h[i] * (-(N-1)/2 + i);
                 // Dh = dt * f * (2k * Pkm1 - tt * Pk), with Pkm1 = 0 and h = f * Pk
                 Dh[i] = -dt * tt[i] * h[i];
-        }
-        f /= sqrt(2);
-        for (i = 0; i < N; i++) {
-                h[N+i] = P[N+i] * f;
-                Th[N+i] = h[N+i] * (-(N-1)/2 + i);
-                Dh[N+i] = f * dt * (2 * P[i] - tt[i] * P[N+i]);
         }
 
         // Pkm2 points to Pₖ₋₂ and Pkm1 points to Pₖ₋₁, i.e. the two previous orders of
         // P.  Pk will be the current order, it points to Pkm2, so we overwrite Pkm2 as
         // we calculate the values for Pk.  The pointers are shifted each iteration.
         // This way we only need two rows of P values at once.
-        double *Pkm2 = P, *Pkm1 = P + N, *Pk = P;
-        for (k = 2; k < M; k++) {
+        double *Pkm2 = P+N, *Pkm1 = P, *Pk = P+N;
+
+        // Note that on the first iteration (k=1), Pkm2 is uninitialized, but it is
+        // multiplied by (k-1) = 0, so it doesn't matter.
+        for (k = 1; k < M; k++) {
                 f /= sqrt(2 * k);
 
                 for (i = 0; i < N; i++) {
