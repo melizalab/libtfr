@@ -73,6 +73,8 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
         // This way we only need two rows of P values at once.
         double *Pkm2 = P+N, *Pkm1 = P, *Pk = P+N;
 
+        memset(Pkm2, 0, sizeof(*Pkm2) * N);
+
         // Note that on the first iteration (k=1), Pkm2 is uninitialized, but it is
         // multiplied by (k-1) = 0, so it doesn't matter.
         for (k = 1; k < M; k++) {
