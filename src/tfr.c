@@ -21,15 +21,13 @@
 #define SQR(a) ( (a) * (a) )
 #endif
 
+// N must be odd
 int
 hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 {
 
         int i, k;
         double dt, *tt, *P;
-
-        // fix even window sizes
-        N -= (N % 2) ? 0 : 1;
 
         tt = (double*)malloc(N*sizeof(double));
         P = (double*)malloc(N*2*sizeof(double));
@@ -101,6 +99,8 @@ hermf(int N, int M, double tm, double *h, double *Dh, double *Th)
 mfft *
 mtm_init_herm(int nfft, int npoints, int order, double tm)
 {
+        if ((npoints & 1) == 0)
+                return NULL;
         mfft * mtm = mtm_init(nfft, npoints, order*3);
         tm = (tm > 0) ? tm : 6;
         npoints = hermf(npoints, order, tm,
