@@ -302,6 +302,8 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
     fgrid.size by L
     """
 
+    if Np > N:
+        raise ValueError("Np must be less or equal to N")
     if Np % 2 == 0:
         raise ValueError("Np must be odd")
 
