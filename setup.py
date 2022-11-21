@@ -4,13 +4,13 @@
 from setuptools import setup, Extension
 import os
 import sys
-if sys.version_info[:2] < (3, 6):
-    raise RuntimeError("Python version >= 3.6 required.")
+if sys.version_info[:2] < (3, 7):
+    raise RuntimeError("Python version >= 3.7 required.")
 
 from Cython.Distutils import build_ext
 
 # --- Distutils setup and metadata --------------------------------------------
-VERSION = '2.1.6'
+VERSION = '2.1.7'
 
 cls_txt = """
 Development Status :: 5 - Production/Stable
