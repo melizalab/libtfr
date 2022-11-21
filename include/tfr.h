@@ -101,7 +101,7 @@ mfft * mtm_init_dpss(int nfft, int npoints, double nw, int ntapers);
  * (i.e. using hermitian function tapers)
  *
  * @param nfft  the number of points in the fourier transform
- * @param npoints  the number of points in the window; controls the time-frequency resolution
+ * @param npoints  the number of points in the window; controls the time-frequency resolution (must be odd)
  * @param order  the maximum order of hermite functions to use. actual # of tapers is 3 times this
  * @param tm     time support for the tapers. If 0 or less, use the default of 6
  * @returns pointer to mfft structure
@@ -294,7 +294,7 @@ int dpss(double *tapers, double *lambda, int npoints, double nw, int k);
  *  Computes a set of orthogonal Hermite functions.
  *  Used in computing multi-taper reassigned spectrograms
  *
- * @param N  the number of points in the window (must be odd; rounded down)
+ * @param N  the number of points in the window (must be odd)
  * @param M  the maximum order of the set of functions
  * @param tm  half-time support
  *

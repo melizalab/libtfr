@@ -289,7 +289,7 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
     s - input signal (real)
     N - number of frequency points
     step - step size (in time points)
-    Np - window size (should be <= N)
+    Np - window size (should be <= N, must be odd)
     K - number of tapers to use (default 6)
     tm - time support of tapers (default 6.0)
     flock - frequency locking parameter; power is not reassigned
@@ -301,6 +301,12 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
     returns an N/2+1 by L power spectrogram, or if fgrid is specified,
     fgrid.size by L
     """
+
+    if Np > N:
+        raise ValueError("Np must be less or equal to N")
+    if Np % 2 == 0:
+        raise ValueError("Np must be odd")
+
     # coerce data to proper type
     cdef double[:] samples = nx.asarray(s).astype(DTYPE)
 
@@ -315,6 +321,8 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
 
     # initialize transform
     cdef tfr.mfft * mtmh = tfr.mtm_init_herm(N, Np, K, tm)
+    if mtmh is NULL:
+        raise RuntimeError(f"Arguments ({N}, {Np}, {K}, {tm}) rejected by mtm_init_herm or other error")
 
     # allocate output array
     cdef size_t nt = tfr.mtm_nframes(mtmh, samples.size, step)
@@ -338,6 +346,8 @@ def hermf(int N, int M=6, double tm=6.0):
 
     @returns  hermite functions (MxN), first derivative of h (MxN), time-multiple of h (MxN)
     """
+    if N % 2 == 0:
+        raise ValueError("N must be odd")
     cdef nx.ndarray[DTYPE_t, ndim=2] h = nx.empty((M, N), dtype=DTYPE)
     cdef nx.ndarray[DTYPE_t, ndim=2] Dh = nx.empty((M, N), dtype=DTYPE)
     cdef nx.ndarray[DTYPE_t, ndim=2] Th = nx.empty((M, N), dtype=DTYPE)
