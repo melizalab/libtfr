@@ -20,4 +20,4 @@ before-all = [
 ]
 
 [tool.cibuildwheel.macos]
-before-all = "brew install fftw"
+before-all = "brew install fftw pkg-config"
