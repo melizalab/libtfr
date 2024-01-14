@@ -1,6 +1,21 @@
 [build-system]
 requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.19.5", "cython>=0.29"]
 
+[tool.ruff]
+target-version = "py37"
+
+[tool.ruff.lint]
+extend-select = [
+  "B",   # flake8-bugbear
+  "I",   # isort
+  "PGH", # pygrep-hooks
+  "RUF", # Ruff-specific
+  "UP",  # pyupgrade
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.cibuildwheel]
 skip = "cp36-*"
 test-requires = "pytest"

@@ -28,6 +28,7 @@ ctypedef nx.double_t DTYPE_t
 CTYPE = nx.complex128
 ctypedef nx.complex128_t CTYPE_t
 
+__version__ = "2.1.8"
 
 cdef class mfft:
     """
