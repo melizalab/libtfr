@@ -33,12 +33,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        if: ${{ failure() }}
-        with:
-          ## If no one connects after 5 minutes, shut down server.
-          wait-timeout-minutes: 5
       - name: Install libraries
         run: ${{ matrix.INSTALL_DEPS }}
       - name: Install dependencies
@@ -49,3 +43,9 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        if: ${{ failure() }}
+        with:
+          ## If no one connects after 5 minutes, shut down server.
+          wait-timeout-minutes: 5
