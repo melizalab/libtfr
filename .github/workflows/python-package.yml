@@ -22,8 +22,6 @@ jobs:
             INSTALL_DEPS: sudo apt-get install liblapack-dev libfftw3-dev
           - platform: macos-latest
             INSTALL_DEPS: brew install fftw
-          - platform: windows-latest
-            INSTALL_DEPS: choco install fftw
         python-version: ["3.7"] #, "3.8", "3.9", "3.10", "3.11", "3.12"]
     runs-on: ${{ matrix.platform }}
 
