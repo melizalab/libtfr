@@ -37,6 +37,10 @@ mtm_init(int nfft, int npoints, int ntapers)
         int i;
         fftw_r2r_kind kind = FFTW_R2HC;
         mtm = (mfft*)malloc(sizeof(mfft));
+	if (mtm == NULL) {
+		// memory error
+		return mtm;
+	}
 
         mtm->nfft = nfft;
         mtm->npoints = npoints;
@@ -69,6 +73,7 @@ mtm_copy(mfft * mtmh, const double * tapers, const double * weights)
 void
 mtm_destroy(mfft * mtm)
 {
+	if (mtm == NULL) return;
         if (mtm->plan) fftw_destroy_plan(mtm->plan);
         if (mtm->tapers) free(mtm->tapers);
         if (mtm->weights) free(mtm->weights);
