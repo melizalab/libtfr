@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -*- mode: cython -*-
-#cython: language_level=3
+#cython: infer_types=True, language_level=3
 """Interface to libtfr spectrogram library using numpy.
 
 Spectrograms are returned as 2D arrays with frequency indexed by row and time by
@@ -15,18 +15,17 @@ Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
 
 """
-from cython cimport view, boundscheck
-import numpy as nx
-cimport numpy as nx
-nx.import_array()
+cimport cython
+from cython.view cimport array as cvarray
 cimport tfr
 
-ITYPE = nx.int32
-ctypedef nx.int32_t ITYPE_t
-DTYPE = nx.double
-ctypedef nx.double_t DTYPE_t
-CTYPE = nx.complex128
-ctypedef nx.complex128_t CTYPE_t
+import numpy as np
+
+ctypedef double complex cmplx_t
+
+ITYPE = np.int32
+DTYPE = np.double
+CTYPE = np.complex128
 
 __version__ = "2.1.8"
 
@@ -37,11 +36,21 @@ cdef class mfft:
 
     """
     cdef tfr.mfft * _mfft
+
     def __init__(self):
         raise TypeError("This class cannot be directly instantiated")
+
     def __dealloc__(self):
         if self._mfft is not NULL:
             tfr.mtm_destroy(self._mfft)
+
+    @staticmethod
+    cdef mfft from_ptr(tfr.mfft *ptr):
+         if ptr is NULL:
+             raise MemoryError
+         cdef mfft instance = mfft.__new__(mfft)
+         instance._mfft = ptr
+         return instance
 
     @property
     def ntapers(self):
@@ -62,26 +71,25 @@ cdef class mfft:
     @property
     def tapers(self):
         """A copy of the transform object's tapers, dimension (ntapers, npoints)"""
-        cdef nx.npy_intp dims[2]
-        cdef nx.ndarray out
-        dims[0] = tfr.mtm_ntapers(self._mfft)
-        dims[1] = tfr.mtm_npoints(self._mfft)
-        # TODO copy this more effectively
-        out = nx.PyArray_SimpleNewFromData(2, dims,
-                                           nx.NPY_DOUBLE, tfr.mtm_tapers(self._mfft))
-        return out.copy()
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef Py_ssize_t npoints = tfr.mtm_npoints(self._mfft)
+        cdef double [:, :] arr_view = <double[:ntapers, :npoints]>tfr.mtm_tapers(self._mfft)
+        # allocate empty array and copy
+        out = np.empty((ntapers, npoints), dtype=DTYPE)
+        out[...] = arr_view
+        return out
 
-    cpdef nx.ndarray[CTYPE_t, ndim=2] tapers_fft(self, double scale):
+    def tapers_fft(self, double scale):
         """The FFT of the transform object's tapers, dimension (ntapers, nreal) """
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef size_t real_count = tfr.mtm_nreal(self._mfft)
-        cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef Py_ssize_t real_count = tfr.mtm_nreal(self._mfft)
         tfr.mtm_tapers_fft(self._mfft, scale)
+        out = np.zeros((ntapers, real_count), dtype=CTYPE)
         hc2cmplx(self._mfft, out)
         return out
 
-    cpdef nx.ndarray[DTYPE_t, ndim=2] tapers_interpolate(self,
-                                                         double[:] t, double t0, double dt):
+
+    def tapers_interpolate(self, double[:] t, double t0, double dt):
         """
         Interpolate the transform object's tapers at specified values. The time
         support for the tapers is specified by a start time and a sampling interval.
@@ -91,11 +99,12 @@ cdef class mfft:
         dt - the sampling interval of the tapers
         returns a 2D array, dimension (ntapers, t.size)
         """
-        cdef size_t ntimes = t.size
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef size_t npoints = tfr.mtm_npoints(self._mfft)
-        cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((ntapers, ntimes), dtype=DTYPE)
-        tfr.mtm_tapers_interp(self._mfft, &out[0, 0], &t[0], ntimes, t0, dt)
+        cdef Py_ssize_t ntimes = t.size
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef Py_ssize_t npoints = tfr.mtm_npoints(self._mfft)
+        out = np.zeros((ntapers, ntimes), dtype=DTYPE)
+        cdef double[:, :] out_view = out
+        tfr.mtm_tapers_interp(self._mfft, &out_view[0, 0], &t[0], ntimes, t0, dt)
         return out
 
     def mtfft(self, s not None):
@@ -105,10 +114,11 @@ cdef class mfft:
         s - input data (1D time series)
         returns array of complex numbers, dimension (nreal, ntapers)
         """
-        cdef double[:] data = nx.asarray(s).astype(DTYPE)
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef size_t real_count = tfr.mtm_nreal(self._mfft)
-        cdef nx.ndarray[CTYPE_t, ndim=2] out = nx.zeros((ntapers, real_count), dtype=CTYPE)
+        # this allows the caller to use any kind of array as input
+        cdef const double[:] data = np.asarray(s).astype(DTYPE)
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef Py_ssize_t real_count = tfr.mtm_nreal(self._mfft)
+        out = np.empty((ntapers, real_count), dtype=CTYPE)
         tfr.mtfft(self._mfft, &data[0], data.size);
         hc2cmplx(self._mfft, out)
         return out.T
@@ -120,25 +130,28 @@ cdef class mfft:
         times - input data (1D time series)
         t0, dt - define the support of the window
         returns array of complex numbers, dimension (nreal, ntapers)
+
         """
-        cdef nx.ndarray[DTYPE_t] times = nx.asarray(t).astype(DTYPE)
-        nevents = times.size
-        npoints = tfr.mtm_npoints(self._mfft)
-        nfft = tfr.mtm_nfft(self._mfft)
-        Fs = 1 / dt
+        # this algorithm could be further cythonized
+        times = np.asarray(t).astype(DTYPE)
+        cdef Py_ssize_t nevents = times.size
+        cdef Py_ssize_t npoints = tfr.mtm_npoints(self._mfft)
+        cdef Py_ssize_t nfft = tfr.mtm_nfft(self._mfft)
+        cdef double Fs = 1 / dt
         # finite size correction
+        cdef double Msp = nevents / npoints
         H = self.tapers_fft(1.0).T
-        Msp = nevents / npoints
         if nevents == 0:
-            return nx.zeros_like(H)
+            return np.zeros_like(H)
         # apply tapers to input times
-        cdef nx.ndarray[DTYPE_t, ndim=2] ht = self.tapers_interpolate(times, t0, dt)
+        ht = self.tapers_interpolate(times, t0, dt)
         # exp(2 pi i omega t)
         f, idx = fgrid(Fs, nfft)
-        w = -2j * nx.pi * f
-        Y = nx.exp(nx.outer(w, times - t0))
+        w = -2j * np.pi * f
+        Y = np.exp(np.outer(w, times - t0))
         # integrate  exp (2 pi i omega t) * ht with matrix multiplication
-        return nx.dot(Y, ht.T) - H * Msp
+        return np.dot(Y, ht.T) - H * Msp
+
 
     def mtpsd(self, s not None, adapt=True):
         """Compute PSD of a signal using multitaper methods
@@ -148,13 +161,14 @@ cdef class mfft:
 
         @returns  N/2+1 1D real power spectrum density
         """
-        cdef double[:] data = nx.asarray(s).astype(DTYPE)
-        cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
-        cdef nx.ndarray[DTYPE_t, ndim=1] spec = nx.zeros(nfreq, dtype=DTYPE)
+        cdef const double[:] data = np.asarray(s).astype(DTYPE)
+        cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
         cdef double sigpow = tfr.mtfft(self._mfft, &data[0], data.size)
         if not adapt:
             sigpow = 0.0
-        tfr.mtpower(self._mfft, &spec[0], sigpow)
+        spec = np.empty(nfreq, dtype=DTYPE)
+        cdef double[:] spec_view = spec
+        tfr.mtpower(self._mfft, &spec_view[0], sigpow)
         return spec
 
     def mtspec(self, s not None, int step, adapt=True):
@@ -166,11 +180,12 @@ cdef class mfft:
 
         @returns real power spectrogram, dim (N/2+1, L)
         """
-        cdef double[:] data = nx.asarray(s).astype(DTYPE)
-        cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
-        cdef size_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
-        cdef nx.ndarray[DTYPE_t, ndim=2] spec = nx.zeros((nt, nfreq), dtype=DTYPE)
-        tfr.mtm_spec(self._mfft, &spec[0,0], &data[0], data.size, step, adapt)
+        cdef const double[:] data = np.asarray(s).astype(DTYPE)
+        cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
+        cdef Py_ssize_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
+        spec = np.empty((nt, nfreq), dtype=DTYPE)
+        cdef double[:, :] spec_view = spec
+        tfr.mtm_spec(self._mfft, &spec_view[0,0], &data[0], data.size, step, adapt)
         return spec.T
 
     def mtstft(self, s not None, int step):
@@ -181,12 +196,13 @@ cdef class mfft:
 
         @returns complex STFT, dim (N/2+1, L, ntapers)
         """
-        cdef double[:] data = nx.asarray(s).astype(DTYPE)
-        cdef size_t nfreq = tfr.mtm_nreal(self._mfft)
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
-        cdef size_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
-        cdef nx.ndarray[CTYPE_t, ndim=3] out = nx.zeros((nt, ntapers, nfreq), dtype=CTYPE)
-        cdef size_t t
+        cdef const double[:] data = np.asarray(s).astype(DTYPE)
+        cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
+        cdef Py_ssize_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
+        out = np.empty((nt, ntapers, nfreq), dtype=CTYPE)
+        cdef cmplx_t[:, :, :] out_view = out
+        cdef Py_ssize_t t
         for t in range(nt):
             tfr.mtfft(self._mfft, &data[t*step], data.size - t*step)
             hc2cmplx(self._mfft, out[t,:,:])
@@ -204,21 +220,19 @@ cdef class mfft:
         """
         cdef unsigned int i
         cdef double tw0, Msp
-        cdef nx.ndarray[DTYPE_t, ndim=2] ht
-        cdef nx.ndarray[DTYPE_t] times = nx.asarray(t).astype(DTYPE)
-        cdef size_t npoints = tfr.mtm_npoints(self._mfft)
-        cdef size_t nfft = tfr.mtm_nfft(self._mfft)
-        cdef size_t ntapers = tfr.mtm_ntapers(self._mfft)
+        times = np.asarray(t).astype(DTYPE)
+        cdef Py_ssize_t npoints = tfr.mtm_npoints(self._mfft)
+        cdef Py_ssize_t nfft = tfr.mtm_nfft(self._mfft)
+        cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef double window = npoints * dt
         cdef double Fs = 1 / dt
-        cdef size_t nframes = int((tN - t0 - window) / step) + 1
+        cdef Py_ssize_t nframes = int((tN - t0 - window) / step) + 1
         # exp(2 pi i omega t)
         f = fgrid(Fs, nfft)[0]
-        w = -2j * nx.pi * f
-        cdef nx.ndarray[CTYPE_t, ndim=2] H = self.tapers_fft(1.0).T
-        # cdef nx.ndarray[DTYPE_t] tgrid = nx.arange(t0, tN, step)
-        cdef nx.ndarray[CTYPE_t, ndim=3] J = nx.zeros((f.size, nframes, ntapers), dtype=CTYPE)
-        cdef nx.ndarray[ITYPE_t, ndim=1] Nsp = nx.zeros(nframes, dtype=ITYPE)
+        w = -2j * np.pi * f
+        H = self.tapers_fft(1.0).T
+        J = np.zeros((f.size, nframes, ntapers), dtype=CTYPE)
+        Nsp = np.zeros(nframes, dtype=ITYPE)
         for i in range(nframes):
             tw0 = t0 + i * step
             # this is not very efficient
@@ -230,8 +244,8 @@ cdef class mfft:
             else:
                 Msp = 1. * Nsp[i] / npoints
                 ht = self.tapers_interpolate(events, tw0, dt)
-                Y = nx.exp(nx.outer(w, events - tw0))
-                J[:, i, :] = nx.dot(Y, ht.T) - H * Msp
+                Y = np.exp(np.outer(w, events - tw0))
+                J[:, i, :] = np.dot(Y, ht.T) - H * Msp
         return J, Nsp
 
 
@@ -247,8 +261,7 @@ def mfft_dpss(int nfft, double nw, int ntapers, int npoints=0):
     """
     if npoints <=0:
         npoints = nfft
-    cdef mfft instance = mfft.__new__(mfft)
-    instance._mfft = tfr.mtm_init_dpss(nfft, npoints, nw, ntapers)
+    cdef mfft instance = mfft.from_ptr(tfr.mtm_init_dpss(nfft, npoints, nw, ntapers))
     return instance
 
 
@@ -260,25 +273,24 @@ def mfft_precalc(int nfft, tapers not None, weights=None):
     tapers -  array with tapers, either (npoints,) or (ntapers,npoints)
     weights - array with weights for the tapers, or None to give equal weight
     """
-    cdef mfft instance = mfft.__new__(mfft)
     cdef int npoints
     cdef int ntapers
-    tapers = nx.asarray(tapers)
+    tapers = np.asarray(tapers).astype(DTYPE)
     if tapers.ndim == 1:
         tapers.shape = (1, tapers.size)
-    ntapers,npoints = tapers.shape
-    cdef nx.ndarray[DTYPE_t, ndim=2] tapers_c = tapers.astype(DTYPE)
+    ntapers, npoints = tapers.shape
+    cdef double[:, :] tapers_view = tapers
 
-    cdef nx.ndarray[DTYPE_t, ndim=1] weights_c
     if weights is None:
-        weights_c = nx.ones(ntapers, dtype=DTYPE)
+        weights = np.ones(ntapers, dtype=DTYPE)
     elif weights.size != ntapers:
         raise ValueError("Number of weights does not match number of tapers")
     else:
-        weights_c = nx.asarray(weights).astype(DTYPE)
+        weights = np.asarray(weights).astype(DTYPE)
+    cdef double[:] weights_view = weights
 
-    instance._mfft = tfr.mtm_init(nfft, npoints, ntapers)
-    tfr.mtm_copy(instance._mfft, &tapers_c[0,0], &weights_c[0])
+    cdef mfft instance = mfft.from_ptr(tfr.mtm_init(nfft, npoints, ntapers))
+    tfr.mtm_copy(instance._mfft, &tapers_view[0,0], &weights_view[0])
     return instance
 
 
@@ -309,16 +321,17 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
         raise ValueError("Np must be odd")
 
     # coerce data to proper type
-    cdef double[:] samples = nx.asarray(s).astype(DTYPE)
+    cdef double[:] samples = np.asarray(s).astype(DTYPE)
 
     # generate/convert frequency grid
     cdef int nfreq = N//2 + 1
-    cdef nx.ndarray[DTYPE_t, ndim=1] fgrid_cast
+    cdef double[:] fgrid_view
     cdef double * fgridp = NULL
     if fgrid is not None:
-        fgrid_cast = nx.asarray(fgrid).astype(DTYPE)
-        fgridp = &fgrid_cast[0]
-        nfreq = fgrid_cast.size
+        fgrid = np.asarray(fgrid).astype(DTYPE)
+        fgrid_view = fgrid
+        fgridp = &fgrid_view[0]
+        nfreq = fgrid.size
 
     # initialize transform
     cdef tfr.mfft * mtmh = tfr.mtm_init_herm(N, Np, K, tm)
@@ -326,10 +339,10 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
         raise RuntimeError(f"Arguments ({N}, {Np}, {K}, {tm}) rejected by mtm_init_herm or other error")
 
     # allocate output array
-    cdef size_t nt = tfr.mtm_nframes(mtmh, samples.size, step)
-    cdef nx.ndarray[DTYPE_t, ndim=2] out = nx.zeros((nt, nfreq), dtype=DTYPE)
-
-    tfr.tfr_spec(mtmh, &out[0,0], &samples[0], samples.size, -1,
+    cdef Py_ssize_t nt = tfr.mtm_nframes(mtmh, samples.size, step)
+    out = np.zeros((nt, nfreq), dtype=DTYPE)
+    cdef double[:, :] out_view = out
+    tfr.tfr_spec(mtmh, &out_view[0,0], &samples[0], samples.size, -1,
                  step, flock, tlock, nfreq, fgridp);
     tfr.mtm_destroy(mtmh)
 
@@ -349,10 +362,13 @@ def hermf(int N, int M=6, double tm=6.0):
     """
     if N % 2 == 0:
         raise ValueError("N must be odd")
-    cdef nx.ndarray[DTYPE_t, ndim=2] h = nx.empty((M, N), dtype=DTYPE)
-    cdef nx.ndarray[DTYPE_t, ndim=2] Dh = nx.empty((M, N), dtype=DTYPE)
-    cdef nx.ndarray[DTYPE_t, ndim=2] Th = nx.empty((M, N), dtype=DTYPE)
-    tfr.hermf(N, M, tm, &h[0,0], &Dh[0,0], &Th[0,0])
+    h = np.empty((M, N), dtype=DTYPE)
+    cdef double[:, :] h_view = h
+    Dh = np.empty((M, N), dtype=DTYPE)
+    cdef double[:, :] Dh_view = Dh
+    Th = np.empty((M, N), dtype=DTYPE)
+    cdef double[:, :] Th_view = Th
+    tfr.hermf(N, M, tm, &h_view[0,0], &Dh_view[0,0], &Th_view[0,0])
     return (h, Dh, Th)
 
 
@@ -370,10 +386,12 @@ def dpss(int N, double NW, int k):
     @returns (2D array of tapers, shape (k,npoints),
               1D array of concentration values, length k)
     """
-    cdef nx.ndarray[DTYPE_t, ndim=2] tapers = nx.empty((k, N), dtype=DTYPE)
-    cdef nx.ndarray[DTYPE_t, ndim=1] lambdas = nx.empty(k, dtype=DTYPE)
+    tapers = np.empty((k, N), dtype=DTYPE)
+    cdef double[:, :] tapers_view = tapers
+    lambdas = np.empty(k, dtype=DTYPE)
+    cdef double[:] lambdas_view = lambdas
 
-    rv = tfr.dpss(&tapers[0,0], &lambdas[0], N, NW, k)
+    rv = tfr.dpss(&tapers_view[0,0], &lambdas_view[0], N, NW, k)
     if rv == 0:
         return tapers, lambdas
     elif rv == -1:
@@ -384,24 +402,25 @@ def dpss(int N, double NW, int k):
         raise RuntimeError("Unknown error")
 
 
-@boundscheck(False)
-cdef void hc2cmplx(tfr.mfft * mtm, CTYPE_t[:,:] out) nogil:
+cdef void hc2cmplx(tfr.mfft * mtm, cmplx_t[:,:] out) noexcept nogil:
     """Copy data from workspace of mtm object into a complex array"""
-    cdef size_t nfft = tfr.mtm_nfft(mtm)
-    cdef size_t ntapers = tfr.mtm_ntapers(mtm)
-    cdef size_t real_count = nfft // 2 + 1
-    cdef size_t imag_count = (nfft + 1) // 2
-    cdef size_t t, n
-    cdef double * buf = tfr.mtm_buffer(mtm)
+    cdef Py_ssize_t nfft = tfr.mtm_nfft(mtm)
+    cdef Py_ssize_t ntapers = tfr.mtm_ntapers(mtm)
+    cdef Py_ssize_t real_count = nfft // 2 + 1
+    cdef Py_ssize_t imag_count = (nfft + 1) // 2
+    cdef Py_ssize_t t, n
+    cdef const double * buf = tfr.mtm_buffer(mtm)
 
-    for t in range(ntapers):
-        for n in range(0, real_count):
-            out[t, n] = buf[t*nfft+n]
-        for n in range(1, imag_count):
-            out[t, n] += buf[t*nfft+(nfft-n)] * 1j
+    with cython.boundscheck(False), cython.wraparound(False):
+        for t in range(ntapers):
+            for n in range(0, real_count):
+                out[t, n] = buf[t*nfft+n]
+            for n in range(1, imag_count):
+                out[t, n] += buf[t*nfft+(nfft-n)] * 1j
 
 
-### Utility functions
+### Utility functions: not much benefit to cython as written but nice to have in
+### the same module
 def log_fgrid(double fmin, double fmax, int N, Fs=None):
     """
     Generates a logarithmic frequency grid between fmin and fmax
@@ -422,7 +441,6 @@ def log_fgrid(double fmin, double fmax, int N, Fs=None):
         return out
 
 
-# utility functions
 def fgrid(double Fs, int nfft, fpass=None):
     """
     Calculate the frequency grid associated with an fft computation
@@ -445,10 +463,8 @@ def fgrid(double Fs, int nfft, fpass=None):
 
     From Chronux 1_50
     """
-    from numpy import arange, abs
-
     cdef double df = Fs / nfft
-    cdef nx.ndarray[DTYPE_t, ndim=1] f = arange(0, Fs, df)  # all possible frequencies
+    f = np.arange(0, Fs, df)  # all possible frequencies
 
     if fpass is not None:
         f1, f2 = fpass
@@ -478,15 +494,14 @@ def tgrid(S not None, double Fs, int shift):
 
     @returns a 1D array of frame start times
     """
-    from numpy import arange, ndarray
-    if isinstance(S, ndarray):
+    if isinstance(S, np.ndarray):
         if S.ndim == 1: raise ValueError, "Input must be a scalar or a 2D numpy array"
-        return arange(0, 1. / Fs * S.shape[1] * shift, 1. / Fs * shift)
+        return np.arange(0, 1. / Fs * S.shape[1] * shift, 1. / Fs * shift)
     else:
-        return arange(0, 1. / Fs * S, 1. / Fs * shift)
+        return np.arange(0, 1. / Fs * S, 1. / Fs * shift)
 
 
-def dynamic_range(nx.ndarray S, double dB):
+def dynamic_range(S not None, double dB):
     """
     Compress a spectrogram's dynamic range by thresholding all values
     dB less than the peak of S (linear scale).
@@ -496,7 +511,6 @@ def dynamic_range(nx.ndarray S, double dB):
 
     @returns copy of S after thresholding
     """
-    from numpy import log10, where
     cdef double smax = S.max()
-    cdef double thresh = 10 ** (log10(smax) - dB / 10.)
-    return where(S >= thresh, S, thresh)
+    cdef double thresh = 10 ** (np.log10(smax) - dB / 10.)
+    return np.where(S >= thresh, S, thresh)
