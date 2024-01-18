@@ -18,7 +18,7 @@ def generate(env):
     # find mex if MEXC not set
     if not env.get("MEXC"):
         extra_paths = ["/usr/bin"]
-        if env.has_key("OPT_PREFIX"):
+        if "OPT_PREFIX" in env:
             extra_paths.append("%s/bin" % env["OPT_PREFIX"])
         opts = ["el4", "el3", "ws3", "fc4", "fc3", "fc2"]
         extra_paths.extend(["/net/opt_lnx/local_%s/bin" % o for o in opts])
