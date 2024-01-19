@@ -65,6 +65,12 @@ extern "C" {
 #include <complex.h>
 #endif
 
+#ifdef _MSC_VER
+typedef _Dcomplex cmplx_t;
+#else
+typedef double complex cmplx_t;
+#endif
+
 /**
  * Opaque pointer type for multitaper fft transforms
  */
@@ -212,7 +218,7 @@ void mtpower(mfft const * mtm, double * pow, double sigpow);
  * @param out  (output) complex transform of signal. Needs to be preallocated with
  *             dimensions at least ntapers by nfft
  */
-void mtcomplex(mfft const * mtm, _Complex double * out);
+void mtcomplex(mfft const * mtm, cmplx_t * out);
 
 /**
  *  Compute a multitaper spectrogram by stepping through a signal.
@@ -244,7 +250,7 @@ void mtm_spec(mfft * mtm, double * spec, const double *samples, int nsamples, in
  * @param spec      (output) spectrogram, dimension (nsamples-npoints+1)/shift
  *                  by (ntapers) by (nfft). Must be allocated and zero-filled.
  */
-void mtm_zspec(mfft * mtm, _Complex double *spec, const double *samples, int nsamples,
+void mtm_zspec(mfft * mtm, cmplx_t *spec, const double *samples, int nsamples,
                int shift);
 
 /**

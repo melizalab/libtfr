@@ -183,7 +183,7 @@ cdef class mfft:
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
         cdef Py_ssize_t nt = tfr.mtm_nframes(self._mfft, data.size, step)
-        spec = np.empty((nt, nfreq), dtype=DTYPE)
+        spec = np.zeros((nt, nfreq), dtype=DTYPE)
         cdef double[:, :] spec_view = spec
         tfr.mtm_spec(self._mfft, &spec_view[0,0], &data[0], data.size, step, adapt)
         return spec.T
