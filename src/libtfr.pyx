@@ -416,7 +416,7 @@ cdef void hc2cmplx(tfr.mfft * mtm, cmplx_t[:,:] out) noexcept nogil:
             for n in range(0, real_count):
                 out[t, n] = buf[t*nfft+n]
             for n in range(1, imag_count):
-                out[t, n] += buf[t*nfft+(nfft-n)] * 1j
+                out[t, n] = out[t, n] + buf[t*nfft+(nfft-n)] * 1j
 
 
 ### Utility functions: not much benefit to cython as written but nice to have in
