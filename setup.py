@@ -15,7 +15,7 @@ def get_include_dirs():
     build_platform = get_build_platform()
     if build_platform.startswith("linux"):
         include_dirs.append("/usr/include")
-    elif build_platform == in ("win32", "win-amd64"):
+    elif build_platform in ("win32", "win-amd64"):
         include_dirs.append(os.path.join(os.getcwd(), "fftw"))
     elif build_platform.startswith("freebsd"):
         include_dirs.append("/usr/local/include")
