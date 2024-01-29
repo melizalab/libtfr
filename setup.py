@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # -*- mode: python -*-
-from setuptools import setup, Extension
 import os
 import platform
-from pkg_resources import get_build_platform
 
-from Cython.Distutils import build_ext
 from Cython.Build import cythonize
+from pkg_resources import get_build_platform
+from setuptools import Extension, setup
 
 
 def get_include_dirs():

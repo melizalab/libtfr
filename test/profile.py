@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 # -*- mode: python -*-
 
 #import pstats, cProfile
 
-from numpy.random import randn
 import libtfr
+from numpy.random import randn
 
 sig = randn(17590)
 D = libtfr.dpss(256, 3, 5)

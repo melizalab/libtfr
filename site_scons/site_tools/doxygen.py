@@ -1,5 +1,4 @@
 # vim: set et sw=3 tw=0 fo=awqorc ft=python:
-# -*- mode:python; coding:utf-8; -*-
 #
 # Astxx, the Asterisk C++ API and Utility Library.
 # Copyright (C) 2005, 2006  Matthew A. Nicholson
@@ -20,9 +19,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import glob
 import os
 import os.path
-import glob
 from fnmatch import fnmatch
 
 

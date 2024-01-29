@@ -3,11 +3,10 @@
 
 
 import os
-import re
+from subprocess import PIPE, Popen
+
 import SCons
 from SCons.Builder import Builder
-from SCons.Action import Action
-from subprocess import Popen, PIPE
 
 
 def generate(env):

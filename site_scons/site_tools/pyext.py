@@ -7,12 +7,8 @@ pyext.py - tool chain for building python extension modules
 Copyright (C) 2010 Daniel Meliza <dmeliza@dylan.uchicago.edu>
 Created 2010-03-29
 """
-import os
-import SCons
-from SCons.Builder import Builder
-from SCons.Action import Action
-
 import distutils.sysconfig
+import os
 
 
 def generate(env, **kw):
@@ -20,9 +16,9 @@ def generate(env, **kw):
     pyvars = distutils.sysconfig.get_config_vars(
         "CC", "CXX", "OPT", "BASECFLAGS", "CCSHARED", "LDSHARED", "SO"
     )
-    (cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = [
+    (cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = (
         x if x != None else "" for x in pyvars
-    ]
+    )
     nxdir = os.path.join(pybase, "numpy/core/include")
 
     def build_module(env, target, csources, sharedobjects):

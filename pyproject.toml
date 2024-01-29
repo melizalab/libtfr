@@ -3,6 +3,7 @@ requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.19.5", "cython>
 
 [tool.ruff]
 target-version = "py37"
+extend-exclude = ["attic", "venv"]
 
 [tool.ruff.lint]
 extend-select = [
@@ -11,7 +12,9 @@ extend-select = [
   "PGH", # pygrep-hooks
   "RUF", # Ruff-specific
   "UP",  # pyupgrade
+  "NPY201", # numpy 2.0 migration
 ]
+preview = true
 
 [tool.mypy]
 ignore_missing_imports = true

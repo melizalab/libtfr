@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
 # -*- mode: python -*-
 """
 A quick test / example of the libtfr python interface.
@@ -9,7 +7,8 @@ Created 2009-06-09
 """
 
 import numpy as nx
-from libtfr import *
+from libtfr import dpss, hermf, log_fgrid, mtfft, mtm_psd, mtm_spec, stft, tfr_spec
+
 
 def fmsin(N, fnormin=0.05, fnormax=0.45, period=None, t0=None, fnorm0=0.25, pm1=1):
     """
@@ -39,23 +38,26 @@ def fmsin(N, fnormin=0.05, fnormax=0.45, period=None, t0=None, fnorm0=0.25, pm1=
     (note: Licensed under GPL; see main LICENSE file)
     """
 
-    if period==None:
-	period = N
-    if t0==None:
-	t0 = N/2
+    if period is None:
+        period = N
+    if t0 is None:
+        t0 = N / 2
     pm1 = nx.sign(pm1)
 
-    fnormid=0.5*(fnormax+fnormin);
-    delta  =0.5*(fnormax-fnormin);
-    phi    =-pm1*nx.arccos((fnorm0-fnormid)/delta);
-    time   =nx.arange(1,N)-t0;
-    phase  =2*nx.pi*fnormid*time+delta*period*(nx.sin(2*nx.pi*time/period+phi)-nx.sin(phi));
-    y      =nx.exp(1j*phase)
-    iflaw  =fnormid+delta*nx.cos(2*nx.pi*time/period+phi);
+    fnormid = 0.5 * (fnormax + fnormin)
+    delta = 0.5 * (fnormax - fnormin)
+    phi = -pm1 * nx.arccos((fnorm0 - fnormid) / delta)
+    time = nx.arange(1, N) - t0
+    phase = 2 * nx.pi * fnormid * time + delta * period * (
+        nx.sin(2 * nx.pi * time / period + phi) - nx.sin(phi)
+    )
+    y = nx.exp(1j * phase)
+    iflaw = fnormid + delta * nx.cos(2 * nx.pi * time / period + phi)
 
-    return y,iflaw
+    return y, iflaw
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     N = 256
     NW = 3.5
     step = 10
@@ -64,27 +66,27 @@ if __name__=="__main__":
     Np = 201
 
     import sys
-    nloop = 1 if len(sys.argv) == 1 else int(sys.argv[1])
 
+    nloop = 1 if len(sys.argv) == 1 else int(sys.argv[1])
 
     # generate a nice dynamic signal
     siglen = 17590
-    ss,iff = fmsin(siglen, .15, 0.45, 1024, 256/4,0.3,-1)
-    s = ss.real + nx.random.randn(ss.size)/2
+    ss, iff = fmsin(siglen, 0.15, 0.45, 1024, 256 / 4, 0.3, -1)
+    s = ss.real + nx.random.randn(ss.size) / 2
 
     w = nx.hamming(N)
 
     for i in range(nloop):
-	print "Loop %d" % i
-	h,Dh,Th = hermf(N, k, tm)
-	E,V   = dpss(N, NW, k)
-	mpsd  = mtm_psd(s[8300:8600], NW)
-	J     = mtfft(s[8300:8600], NW)
-        spec  = stft(s, w, step)
-	mspec = mtm_spec(s, N, step, NW)
-	tspec = tfr_spec(s, N, step, Np, k, tm)
-	tspec_zoom = tfr_spec(s, N, step, Np, k, tm, fgrid=nx.linspace(0.1,0.475,512))
-	tspec_log = tfr_spec(s, N, step, Np, k, tm, fgrid=log_fgrid(0.1, 0.45, 256))
+        print("Loop %d" % i)
+        h, Dh, Th = hermf(N, k, tm)
+        E, V = dpss(N, NW, k)
+        mpsd = mtm_psd(s[8300:8600], NW)
+        J = mtfft(s[8300:8600], NW)
+        spec = stft(s, w, step)
+        mspec = mtm_spec(s, N, step, NW)
+        tspec = tfr_spec(s, N, step, Np, k, tm)
+        tspec_zoom = tfr_spec(s, N, step, Np, k, tm, fgrid=nx.linspace(0.1, 0.475, 512))
+        tspec_log = tfr_spec(s, N, step, Np, k, tm, fgrid=log_fgrid(0.1, 0.45, 256))
 
 
 # Variables:
