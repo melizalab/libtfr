@@ -159,7 +159,7 @@ cdef class mfft:
         s -  input data (1D time series)
         adapt - compute adaptive spectrum (default True)
 
-        @returns  N/2+1 1D real power spectrum density
+        @returns  N/2+1 1D real power spectrum (not normalized)
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
@@ -178,7 +178,7 @@ cdef class mfft:
         step -  number of samples to step between frames
         adapt - compute adaptive spectrum (default True)
 
-        @returns real power spectrogram, dim (N/2+1, L)
+        @returns real power spectrogram, dim (N/2+1, L), not normalized
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
