@@ -28,9 +28,24 @@ def get_include_dirs():
     return include_dirs
 
 
+def get_lib_dirs():
+    build_platform = get_build_platform()
+    lib_dirs = []
+    if build_platform.startswith("macosx"):
+        # macports
+        lib_dirs.append("/opt/local/lib")
+        arch = platform.machine()
+        if arch == "arm64":
+            lib_dirs.append("/opt/homebrew/lib")
+        elif arch == "x86_64":
+            lib_dirs.append("/usr/local/lib")
+    return lib_dirs
+
+
 compiler_settings = {
     "include_dirs": get_include_dirs(),
     "libraries": ["fftw3", "lapack", "m"],
+    "library_dirs": get_lib_dirs(),
     "extra_link_args": [],
 }
 
