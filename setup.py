@@ -20,11 +20,9 @@ def get_include_dirs():
     elif build_platform.startswith("macosx"):
         # macports
         include_dirs.append("/opt/local/include")
-        arch = platform.machine()
-        if arch == "arm64":
-            include_dirs.append("/opt/homebrew/include")
-        elif arch == "x86_64":
-            include_dirs.append("/usr/local/include")
+        # homebrew
+        include_dirs.append("/opt/homebrew/include")
+        include_dirs.append("/usr/local/include")
     return include_dirs
 
 
@@ -34,11 +32,9 @@ def get_lib_dirs():
     if build_platform.startswith("macosx"):
         # macports
         lib_dirs.append("/opt/local/lib")
-        arch = platform.machine()
-        if arch == "arm64":
-            lib_dirs.append("/opt/homebrew/lib")
-        elif arch == "x86_64":
-            lib_dirs.append("/usr/local/lib")
+        # homebrew
+        lib_dirs.append("/opt/homebrew/lib")
+        lib_dirs.append("/usr/local/lib")
     return lib_dirs
 
 
