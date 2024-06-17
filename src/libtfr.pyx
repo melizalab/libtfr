@@ -9,7 +9,11 @@ transform size of N have N/2+1 rows, corresponding to frequencies from 0 to
 Nyquist. The number of time points in the spectrogram is (M - W + 1)/S, where M
 is the length of the signal, S is the shift (S), and the analysis window size is
 W (this may be less than or equal to N). Only time points corresponding to
-window positions that completely overlap with the signal are returned.
+window positions that completely overlap with the signal are returned. Power
+spectra and spectrograms are not normalized; they are just the absolute values
+of the complex FFT results. To get the power spectrum, divide by the square of
+the sum of the window. To get the power spectral density, divide by the sampling
+rate times the sum of the square of the window function.
 
 Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
 General Public License, Version 2.  See COPYING for details.
@@ -157,9 +161,9 @@ cdef class mfft:
         """Compute PSD of a signal using multitaper methods
 
         s -  input data (1D time series)
-        adapt - compute adaptive spectrum (default True)
+        adapt - if more than one taper, compute adaptive spectrum (default True)
 
-        @returns  N/2+1 1D real power spectrum (not normalized)
+        @returns  N/2+1 1D real power spectrum, not normalized
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
@@ -176,7 +180,7 @@ cdef class mfft:
 
         s -     input data (1D time series)
         step -  number of samples to step between frames
-        adapt - compute adaptive spectrum (default True)
+        adapt - if more than one taper, compute adaptive spectrum (default True)
 
         @returns real power spectrogram, dim (N/2+1, L), not normalized
         """
