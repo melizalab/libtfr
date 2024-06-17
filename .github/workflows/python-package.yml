@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-latest]
+        platform: [macos-13, ubuntu-latest]
         include:
           - platform: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install liblapack-dev libfftw3-dev
