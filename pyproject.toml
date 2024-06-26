@@ -40,7 +40,7 @@ before-all = [
 [tool.cibuildwheel.macos]
 before-build = [
   "curl -O http://fftw.org/fftw-3.3.10.tar.gz",
-  "echo '56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467  fftw-3.3.10.tar.gz' | sha256sum -c",
+  "echo '56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467  fftw-3.3.10.tar.gz' | shasum -a 256 -c",
   "tar zxvf fftw-3.3.10.tar.gz",
   "cd fftw-3.3.10",
   "./configure --enable-shared --disable-debug --enable-threads --disable-dependency-tracking",
