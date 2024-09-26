@@ -71,7 +71,7 @@ jobs:
           name: all-files
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.9.0
+      - uses: pypa/gh-action-pypi-publish@v1.10.2
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
