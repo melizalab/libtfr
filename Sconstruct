@@ -53,8 +53,8 @@ if system == "Darwin":
     # fftw is probably installed with macports; if elsewhere
     # then adjust these paths
     env.Append(
-        CPPPATH=["/opt/local/include"],
-        LIBPATH=["/opt/local/lib"],
+        CPPPATH=["/opt/local/include", "/opt/homebrew/include", "/usr/local/include"],
+        LIBPATH=["/opt/local/lib", "/opt/homebrew/lib", "/usr/local/lib"],
     )
 elif system == "Linux":
     # add additional items as needed (usually not required on modern debian)
