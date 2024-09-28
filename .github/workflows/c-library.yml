@@ -8,8 +8,17 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            INSTALL_DEPS: sudo apt-get install liblapack-dev libfftw3-dev
+          - os: macos-13
+            INSTALL_DEPS: brew install fftw
+          - os: macos-14
+            INSTALL_DEPS: brew install fftw
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
