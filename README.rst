@@ -34,7 +34,7 @@ The library will also calculate conventional windowed spectrograms and
 multitaper spectrograms.
 
 Libtfr has C and Python APIs. The Python package has been tested on
-CPython 3.7 through 3.10.
+CPython 3.7-3.11 and PyPy 3.7-3.10.
 
 
 Python package
@@ -53,7 +53,7 @@ fftw, so if speed is a concern, consider compiling yourself against
 optimized libraries of your own following the instructions below.
 Windows wheels with statically linked FFTW and LAPACK libraries have
 kindly been developed by `carlkl <https://github.com/carlkl>`__, but
-they are somewhat out of date. Install with
+they very out of date now. Install with
 ``pip install -i https://pypi.anaconda.org/carlkl/simple libtfr``
 
 Installing from source

@@ -31,7 +31,7 @@ ITYPE = np.int32
 DTYPE = np.double
 CTYPE = np.complex128
 
-__version__ = "2.1.8"
+__version__ = "2.1.9"
 
 cdef class mfft:
     """

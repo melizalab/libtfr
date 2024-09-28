@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
 import os
-import platform
 
 from Cython.Build import cythonize
 from pkg_resources import get_build_platform
