@@ -23,7 +23,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: sudo apt-get install scons liblapack-dev libfftw3-dev
+      run: ${{ matrix.INSTALL_DEPS }}
     - name: build
       run: scons lib test
     - name: test
