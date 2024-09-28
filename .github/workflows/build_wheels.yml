@@ -1,11 +1,11 @@
 name: Build wheels
 
-on: [push, pull_request]
+# on: [push, pull_request]
 # Alternatively, to publish when a (published) GitHub Release is created, use the following:
-# on:
-#   release:
-#     types:
-#       - published
+on:
+  release:
+    types:
+      - published
 
 jobs:
   build_wheels:

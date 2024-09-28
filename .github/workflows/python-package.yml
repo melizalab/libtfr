@@ -16,14 +16,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-latest]
+        os: [macos-13, macos-14, ubuntu-latest]
         include:
-          - platform: ubuntu-latest
+          - os: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install liblapack-dev libfftw3-dev
-          - platform: macos-latest
+          - os: macos-13
             INSTALL_DEPS: brew install fftw
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    runs-on: ${{ matrix.platform }}
+          - os: macos-14
+            INSTALL_DEPS: brew install fftw
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        exclude:
+          - os: macos-14
+            python-version: "3.7"
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
