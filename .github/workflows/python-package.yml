@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          if [ -f src/libtfr.c]; then rm src/libtfr.c; fi
+          if [ -f src/libtfr.c ]; then rm src/libtfr.c; fi
           pip install -e .[test]
       - name: Test with pytest
         run: |

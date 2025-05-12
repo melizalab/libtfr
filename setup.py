@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
 import os
+import platform
 
 from Cython.Build import cythonize
 from pkg_resources import get_build_platform
@@ -44,15 +45,18 @@ compiler_settings = {
     "extra_link_args": [],
 }
 
+cython_directives = {}
+
+if platform.python_implementation() == 'PyPy':
+    cython_directives.update({
+        "legacy_implicit_noexcept": True,
+        "c_api_binop_methods": False,
+    })
+
 sources = ["src/tfr.c", "src/mtm.c", "src/libtfr.pyx"]
 extensions = [Extension("libtfr", sources=sources, **compiler_settings)]
-
-setup(
-    name="libtfr",
-    ext_modules=cythonize(extensions),
-    # ext_modules=[Extension("libtfr", sources=sources)],
-    # cmdclass={"build_ext": BuildExt},
-)
+ext_modules = cythonize(extensions, compiler_directives=cython_directives)
+setup(name="libtfr", ext_modules=ext_modules)
 
 
 # Variables:
