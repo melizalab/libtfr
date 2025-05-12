@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [macos-13, macos-14, ubuntu-22.04]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             INSTALL_DEPS: sudo apt-get install liblapack-dev libfftw3-dev
           - os: macos-13
             INSTALL_DEPS: brew install fftw
