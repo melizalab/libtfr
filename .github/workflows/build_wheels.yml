@@ -1,78 +1,160 @@
 name: Build wheels
 
-on: [push, pull_request]
-# Alternatively, to publish when a (published) GitHub Release is created, use the following:
-# on:
-#   release:
-#     types:
-#       - published
+on: push
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: ${{ matrix.os }} • ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-22.04, macos-13, macos-14]
-
+        os: [ubuntu-latest, macos-13, macos-14]
+        python: [cp37, cp38, cp39, cp310, cp311, cp312, pp37, pp38, pp39, pp310]
+        exclude:
+          # Skip Python 3.7 on newer platforms
+          - os: macos-14
+            python: cp37
+          - os: macos-14
+            python: pp37
     steps:
       - uses: actions/checkout@v4
-
+      - name: Set version suffix for TestPyPI
+        id: set_version
+        run: |
+          if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
+            BUILD_NUM=${{ github.run_number }}
+            VERSION=$(grep '^version = ' setup.cfg | sed -E 's/version = "(.*)"/\1/')
+            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" setup.cfg
+          fi
+        shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22
         env:
+          CIBW_BUILD: ${{ matrix.python }}-*
           CIBW_ARCHS_MACOS: auto
-          CIBW_SKIP: "cp36-* pp*win_amd64 cp313-win* pp38* pp39-manylinux_i686 pp310-manylinux_i686"
+          CIBW_SKIP: "pp39-manylinux_i686 pp310-manylinux_i686"
         with:
           package-dir: .
           output-dir: wheelhouse
           config-file: "{package}/pyproject.toml"
       - name: Verify clean directory
+        if: startsWith(github.ref, 'refs/tags/')
         run: git diff --exit-code
         shell: bash
       - uses: actions/upload-artifact@v4
         with:
-          name: artifact-${{ matrix.os }}
+          name: artifact-${{ matrix.os }}-${{ matrix.python }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - name: Set version suffix for TestPyPI
+        id: set_version
+        run: |
+          if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
+            BUILD_NUM=${{ github.run_number }}
+            VERSION=$(grep '^version = ' setup.cfg | sed -E 's/version = "(.*)"/\1/')
+            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" setup.cfg
+          fi
       - name: Build sdist
         run: pipx run build --sdist
-
       - uses: actions/upload-artifact@v4
         with:
           name: artifact-source
           path: dist/*.tar.gz
 
-  upload_pypi:
+  merge_artifacts:
+    name: Merge artifacts
     needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-22.04
-    # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
     steps:
       - name: Merge artifacts
         uses: actions/upload-artifact/merge@v4
         with:
           name: all-files
           pattern: artifact-*
+          
+  publish-to-pypi:
+    name: >-
+      Publish Python distribution to PyPI
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs: [merge_artifacts]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/libtfr
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: all-files
+        path: dist/
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
 
-      - uses: actions/download-artifact@v4
-        with:
-          # unpacks default artifact into dist/
-          # if `name: artifact` is omitted, the action will create extra parent dir
-          name: all-files
-          path: dist
+  github-release:
+    name: >-
+      Sign the Python distribution with Sigstore
+      and to GitHub Release
+    needs: [publish-to-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: all-files
+        path: dist/
+    - name: Sign the dists with Sigstore
+      uses: sigstore/gh-action-sigstore-python@v3.0.0
+      with:
+        inputs: >-
+          ./dist/*.tar.gz
+          ./dist/*.whl
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release create
+        '${{ github.ref_name }}'
+        --repo '${{ github.repository }}'
+        --notes ""
+    - name: Upload artifact signatures to GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      # Upload to GitHub Release using the `gh` CLI.
+      # `dist/` contains the built packages, and the
+      # sigstore-produced signatures and certificates.
+      run: >-
+        gh release upload
+        '${{ github.ref_name }}' dist/**
+        --repo '${{ github.repository }}'
 
-      - uses: pypa/gh-action-pypi-publish@v1.10.2
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          #repository_url: https://test.pypi.org/legacy/
+  publish-to-testpypi:
+    name: Publish Python distribution to TestPyPI
+    needs: [merge_artifacts]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/libtfr
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: all-files
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        verbose: true
