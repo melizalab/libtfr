@@ -24,8 +24,8 @@ jobs:
         run: |
           if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             BUILD_NUM=${{ github.run_number }}
-            VERSION=$(grep '^version = ' setup.cfg | sed -E 's/version = "(.*)"/\1/')
-            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" setup.cfg
+            VERSION=$(grep '^version = ' setup.cfg )
+            sed -i -e "s/^${VERSION}/${VERSION}.dev${BUILD_NUM}/" setup.cfg
           fi
         shell: bash
       - name: Build wheels
@@ -57,8 +57,8 @@ jobs:
         run: |
           if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             BUILD_NUM=${{ github.run_number }}
-            VERSION=$(grep '^version = ' setup.cfg | sed -E 's/version = "(.*)"/\1/')
-            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" setup.cfg
+            VERSION=$(grep '^version = ' setup.cfg )
+            sed -i -e "s/^${VERSION}/${VERSION}.dev${BUILD_NUM}/" setup.cfg
           fi
       - name: Build sdist
         run: pipx run build --sdist
