@@ -67,7 +67,7 @@ extend-select = [
 ignore_missing_imports = true
 
 [tool.cibuildwheel]
-skip = "cp36-*"
+skip= "cp314t-*"
 test-requires = "pytest"
 test-command = "pytest {project}/test"
 manylinux-x86_64-image = "manylinux2014"
