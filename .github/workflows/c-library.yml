@@ -10,13 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-13, macos-14, ubuntu-latest]
+        os: [macos-15-intel, macos-latest, ubuntu-latest]
         include:
           - os: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install scons liblapack-dev libfftw3-dev
-          - os: macos-13
+          - os: macos-15-intel
             INSTALL_DEPS: brew install scons fftw
-          - os: macos-14
+          - os: macos-latest
             INSTALL_DEPS: brew install scons fftw
     runs-on: ${{ matrix.os }}
 

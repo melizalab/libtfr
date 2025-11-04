@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-13, macos-14]
-        python: [cp38, cp39, cp310, cp311, cp312, cp313, pp39, pp310]
+        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
+        python: [cp39, cp310, cp311, cp312, cp313, cp314, pp311]
     steps:
       - uses: actions/checkout@v5
       - name: Set version suffix for TestPyPI
@@ -18,12 +18,12 @@ jobs:
         run: |
           if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             BUILD_NUM=${{ github.run_number }}
-            VERSION=$(grep '^version = ' setup.cfg )
-            sed -i -e "s/^${VERSION}/${VERSION}.dev${BUILD_NUM}/" setup.cfg
+            VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" pyproject.toml
           fi
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23
+        uses: pypa/cibuildwheel@v3.2
         env:
           CIBW_BUILD: ${{ matrix.python }}-*
           CIBW_ARCHS_MACOS: auto
@@ -51,8 +51,8 @@ jobs:
         run: |
           if [[ ! "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             BUILD_NUM=${{ github.run_number }}
-            VERSION=$(grep '^version = ' setup.cfg )
-            sed -i -e "s/^${VERSION}/${VERSION}.dev${BUILD_NUM}/" setup.cfg
+            VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+            sed -i -e "s/^version = \"${VERSION}\"/version = \"${VERSION}.dev${BUILD_NUM}\"/" pyproject.toml
           fi
       - name: Build sdist
         run: pipx run build --sdist
@@ -108,7 +108,7 @@ jobs:
         name: all-files
         path: dist/
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.0.1
+      uses: sigstore/gh-action-sigstore-python@v3.1.0
       with:
         inputs: >-
           ./dist/*.tar.gz
