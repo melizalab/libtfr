@@ -4,13 +4,13 @@ import os
 import platform
 
 from Cython.Build import cythonize
-from pkg_resources import get_build_platform
+from sysconfig import get_platform
 from setuptools import Extension, setup
 
 
 def get_include_dirs():
     include_dirs = [os.path.join(os.getcwd(), "include")]
-    build_platform = get_build_platform()
+    build_platform = get_platform()
     if build_platform.startswith("linux"):
         include_dirs.append("/usr/include")
     elif build_platform in ("win32", "win-amd64"):
@@ -27,7 +27,7 @@ def get_include_dirs():
 
 
 def get_lib_dirs():
-    build_platform = get_build_platform()
+    build_platform = get_platform()
     lib_dirs = []
     if build_platform.startswith("macosx"):
         # macports

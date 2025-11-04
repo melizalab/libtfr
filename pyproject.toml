@@ -1,20 +1,67 @@
 [build-system]
 requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.21", "cython>=3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "libtfr"
+version = "2.1.10"
+description = "Calculate multi-taper windowed and time-frequency reassignment spectrograms"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+    {name = "C Daniel Meliza", email = "dan@meliza.org"},
+]
+maintainers = [
+    {name = "C Daniel Meliza", email = "dan@meliza.org"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",    
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Natural Language :: English"
+]
+dependencies = [
+    "numpy>=2.0.2",
+]
+
+[project.urls]
+homepage = "https://github.com/melizalab/libtfr"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.14.3",
+]
 
 [tool.ruff]
-target-version = "py37"
-extend-exclude = ["attic", "venv"]
+line-length = 88
+target-version = "py39"
+extend-exclude = ["attic", "venv", "build"]
 
 [tool.ruff.lint]
 extend-select = [
-  "B",   # flake8-bugbear
-  "I",   # isort
-  "PGH", # pygrep-hooks
-  "RUF", # Ruff-specific
-  "UP",  # pyupgrade
-  "NPY201", # numpy 2.0 migration
+    "F",  # pyflakes
+    "B",   # flake8-bugbear
+    "I",   # isort
+    "PGH", # pygrep-hooks
+    "RUF", # Ruff-specific
+    "UP",  # pyupgrade
+    "NPY201", # numpy 2.0
 ]
-preview = true
 
 [tool.mypy]
 ignore_missing_imports = true
