@@ -33,8 +33,9 @@ sequences).
 The library will also calculate conventional windowed spectrograms and
 multitaper spectrograms.
 
-Libtfr has C and Python APIs. The Python package has been tested on
-CPython 3.7-3.11 and PyPy 3.7-3.10.
+Libtfr has C and Python APIs. The Python package has been tested on CPython
+3.7-3.14 and PyPy 3.7-3.11, although wheels for some of these older versions may
+no longer be available.
 
 
 Python package
