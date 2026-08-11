@@ -69,15 +69,17 @@ ignore_missing_imports = true
 skip= "cp314t-*"
 test-requires = "pytest"
 test-command = "pytest {project}/test"
-manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
 # enable pypy builds - no longer on by default
 enable = "pypy"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-manylinux*"
-before-all = "yum install -y fftw3-devel lapack-devel devtoolset-11-gcc devtoolset-11-gcc-c++ && source /opt/rh/devtoolset-11/enable"
-environment = { CC = "/opt/rh/devtoolset-11/root/usr/bin/gcc", CXX = "/opt/rh/devtoolset-11/root/usr/bin/g++" }
+before-all = "dnf install -y epel-release && dnf install -y fftw3-devel lapack-devel"
 
 [[tool.cibuildwheel.overrides]]
 select = "*musllinux*"
