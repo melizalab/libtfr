@@ -60,11 +60,20 @@ def get_link_libraries():
         link_libraries = ["fftw3", "lapack", "m"]
     return link_libraries
 
+
+def get_define_macros():
+    build_platform = get_platform()
+    define_macros = []
+    if build_platform in ("win32", "win-amd64"):
+        define_macros.append(("FFTW_NO_Complex", "1"))
+    return define_macros
+
 compiler_settings = {
     "include_dirs": get_include_dirs(),
     "libraries": ["fftw3", "lapack", "m"],
     "library_dirs": get_lib_dirs(),
     "libraries": get_link_libraries(),
+    "define_macros": get_define_macros(),
     "extra_link_args": [],
 }
 
