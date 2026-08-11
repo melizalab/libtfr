@@ -107,5 +107,6 @@ before-build = [
   "tar -xzf fftw-3.3.10.tar.gz",
   "cd fftw-3.3.10 && cmake -B build -DENABLE_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/fftw -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build build --config Release && cmake --install build",
   "cd ..",
-  "pip install numpy-lapack"
+  "powershell -Command \"Invoke-WebRequest -Uri 'https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.34/OpenBLAS-0.3.34-x64.zip' -OutFile 'openblas.zip'\"",
+  "powershell -Command \"Expand-Archive -Path 'openblas.zip' -DestinationPath 'C:/lapack' -Force\""
 ]
