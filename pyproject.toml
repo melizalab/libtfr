@@ -105,7 +105,7 @@ environment = { FFTW_PATH = "C:\\fftw", LAPACK_PATH = "C:\\lapack" }
 before-build = [
   "powershell -Command \"Invoke-WebRequest -Uri 'http://fftw.org/fftw-3.3.10.tar.gz' -OutFile 'fftw-3.3.10.tar.gz'\"",
   "tar -xzf fftw-3.3.10.tar.gz",
-  "cd fftw-3.3.10 && cmake -B build -DENABLE_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/fftw && cmake --build build --config Release && cmake --install build",
+  "cd fftw-3.3.10 && cmake -B build -DENABLE_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/fftw -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build build --config Release && cmake --install build",
   "cd ..",
   "pip install numpy-lapack"
 ]
