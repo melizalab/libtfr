@@ -101,12 +101,13 @@ before-all = [
 [tool.cibuildwheel.windows]
 before-all = "python -m pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
-environment = { FFTW_PATH = "C:\\fftw", LAPACK_PATH = "C:\\lapack" }
+environment = { FFTW_PATH = "C:\\fftw", LAPACK_PATH = "C:\\lapack", PATH = "C:\\fftw\\bin;C:\\lapack\\bin;$PATH" }
 before-build = [
   "powershell -Command \"Invoke-WebRequest -Uri 'http://fftw.org/fftw-3.3.10.tar.gz' -OutFile 'fftw-3.3.10.tar.gz'\"",
   "tar -xzf fftw-3.3.10.tar.gz",
   "cd fftw-3.3.10 && cmake -B build -DENABLE_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/fftw -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build build --config Release && cmake --install build",
   "cd ..",
   "powershell -Command \"Invoke-WebRequest -Uri 'https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.34/OpenBLAS-0.3.34-x64.zip' -OutFile 'openblas.zip'\"",
-  "powershell -Command \"Expand-Archive -Path 'openblas.zip' -DestinationPath 'C:/lapack' -Force\""
+  "powershell -Command \"Expand-Archive -Path 'openblas.zip' -DestinationPath 'C:/lapack' -Force\"",
+  "powershell -Command \"Copy-Item 'C:/lapack/lib/libopenblas.lib' 'C:/lapack/lib/openblas.lib'\""  
 ]

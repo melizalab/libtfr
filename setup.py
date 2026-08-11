@@ -14,7 +14,14 @@ def get_include_dirs():
     if build_platform.startswith("linux"):
         include_dirs.append("/usr/include")
     elif build_platform in ("win32", "win-amd64"):
-        include_dirs.append(os.path.join(os.getcwd(), "fftw"))
+        fftw_path = os.environ.get("FFTW_PATH")
+        if fftw_path:
+            include_dirs.append(os.path.join(fftw_path, "include"))
+        else:
+            include_dirs.append(os.path.join(os.getcwd(), "fftw"))
+        lapack_path = os.environ.get("LAPACK_PATH")
+        if lapack_path:
+            include_dirs.append(os.path.join(lapack_path, "include"))
     elif build_platform.startswith("freebsd"):
         include_dirs.append("/usr/local/include")
     elif build_platform.startswith("macosx"):
@@ -35,13 +42,29 @@ def get_lib_dirs():
         # homebrew
         lib_dirs.append("/opt/homebrew/lib")
         lib_dirs.append("/usr/local/lib")
+    elif build_platform in ("win32", "win-amd64"):
+        fftw_path = os.environ.get("FFTW_PATH")
+        if fftw_path:
+            lib_dirs.append(os.path.join(fftw_path, "lib"))
+        lapack_path = os.environ.get("LAPACK_PATH")
+        if lapack_path:
+            lib_dirs.append(os.path.join(lapack_path, "lib"))
     return lib_dirs
 
+
+def get_link_libraries():
+    build_platform = get_platform()
+    if build_platform in ("win32", "win-amd64"):
+        link_libraries = ["fftw3", "openblas"]
+    else:
+        link_libraries = ["fftw3", "lapack", "m"]
+    return link_libraries
 
 compiler_settings = {
     "include_dirs": get_include_dirs(),
     "libraries": ["fftw3", "lapack", "m"],
     "library_dirs": get_lib_dirs(),
+    "libraries": get_link_libraries(),
     "extra_link_args": [],
 }
 
