@@ -21,6 +21,7 @@ General Public License, Version 2.  See COPYING for details.
 """
 cimport cython
 from cython.view cimport array as cvarray
+from importlib.metadata import version, PackageNotFoundError
 cimport tfr
 
 import numpy as np
@@ -31,7 +32,10 @@ ITYPE = np.int32
 DTYPE = np.double
 CTYPE = np.complex128
 
-__version__ = "2.1.9"
+try:
+    __version__ = version("libtfr")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 cdef class mfft:
     """
