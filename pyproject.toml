@@ -101,7 +101,7 @@ before-all = [
 [tool.cibuildwheel.windows]
 before-all = "python -m pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
-environment = { FFTW_PATH = "C:\\fftw", LAPACK_PATH = "C:\\lapack", PATH = "C:\\fftw\\bin;C:\\lapack\\bin;$PATH" }
+environment = { FFTW_PATH = "C:/fftw", LAPACK_PATH = "C:/lapack", PATH = "C:/fftw/bin;C:/lapack/bin;$PATH" }
 before-build = [
   "powershell -Command \"Invoke-WebRequest -Uri 'http://fftw.org/fftw-3.3.10.tar.gz' -OutFile 'fftw-3.3.10.tar.gz'\"",
   "tar -xzf fftw-3.3.10.tar.gz",
