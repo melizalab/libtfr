@@ -146,6 +146,61 @@ class TestTransforms(unittest.TestCase):
         self.assertTupleEqual(Z.shape, (nfft // 2 + 1, (sig.size - Np) // shift + 1))
         self.assertEqual(Z.dtype, libtfr.DTYPE)
 
+    def test_tfr_degenerate_input(self):
+        """Signals with no power give an all-zero spectrogram, never NaN/inf.
+
+        tfr_displacements divides by z1, the transform of the first taper,
+        which is exactly zero for a digitally silent frame and underflows to
+        zero for a denormal one. tfr_reassign currently insulates the output
+        from that: a non-finite displacement produces an out-of-range target
+        bin, and q is below threshold as well, so the frame is dropped on two
+        independent counts. This test pins the resulting API contract -- it
+        does not constrain how the division itself is implemented, since the
+        intermediate value never reaches the caller.
+        """
+        for nfft, step, Np, K in ((256, 64, 201, 6), (512, 64, 255, 5), (128, 32, 101, 4)):
+            for name, s in (
+                ("zeros", np.zeros(4096)),
+                ("denormal", np.full(4096, 1e-300)),
+                ("negative_zero", np.full(4096, -0.0)),
+            ):
+                with self.subTest(nfft=nfft, Np=Np, signal=name):
+                    Z = libtfr.tfr_spec(s, nfft, step, Np, K, 6.0, 0.01, 5)
+                    self.assertTrue(np.isfinite(Z).all(), "non-finite values in spectrogram")
+                    # no power in, no power out
+                    self.assertTrue((Z == 0).all())
+
+            with self.subTest(nfft=nfft, Np=Np, signal="dc"):
+                # a constant signal does carry power, and must survive intact
+                Z = libtfr.tfr_spec(np.ones(4096), nfft, step, Np, K, 6.0, 0.01, 5)
+                self.assertTrue(np.isfinite(Z).all())
+                self.assertGreater(Z.max(), 0.0)
+
+    def test_tfr_reassignment_concentration(self):
+        """A pure tone must reassign onto its own frequency bin.
+
+        This is the point of reassignment, and it is the only numerical check
+        on tfr_displacements -- test_tfr above covers shape and dtype only.
+        Asserting the structure (which bin, how concentrated) rather than
+        stored reference values keeps it stable across platforms, where the
+        floating-point results differ in the last ulp.
+        """
+        Fs = 8000.0
+        t = np.arange(8192) / Fs
+        for nfft, step, Np, K in ((256, 64, 201, 6), (512, 64, 255, 5)):
+            for f0 in (500.0, 1000.0, 1500.0, 2000.0):
+                with self.subTest(nfft=nfft, Np=Np, f0=f0):
+                    Z = libtfr.tfr_spec(
+                        np.sin(2 * np.pi * f0 * t), nfft, step, Np, K, 6.0, 0.01, 5
+                    )
+                    power = Z.mean(1)
+                    freqs = np.arange(Z.shape[0]) / nfft * Fs
+                    peak = power.argmax()
+                    self.assertEqual(freqs[peak], f0)
+                    # essentially all the energy lands within a bin of the peak
+                    concentration = power[max(0, peak - 1) : peak + 2].sum() / power.sum()
+                    self.assertGreater(concentration, 0.99)
+
     def test_dpss_mtfft(self):
         nfft = sig.size
         ntapers = 5
