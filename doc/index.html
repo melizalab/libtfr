@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>libtfr API documentation</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --muted: #5a5a5a;
+    --bg: #ffffff;
+    --card: #f6f6f4;
+    --border: #dcdcd6;
+    --link: #0b5fa5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e6e6e6;
+      --muted: #a0a0a0;
+      --bg: #16181a;
+      --card: #202325;
+      --border: #33383c;
+      --link: #6cb6f0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.5rem;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 2rem; margin: 0 0 .25rem; }
+  .tagline { color: var(--muted); margin: 0 0 2rem; }
+  .apis { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  a.card {
+    display: block;
+    padding: 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+  }
+  a.card:hover { border-color: var(--link); }
+  a.card h2 { margin: 0 0 .4rem; font-size: 1.1rem; color: var(--link); }
+  a.card p { margin: 0; color: var(--muted); font-size: .925rem; }
+  footer { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .9rem; }
+  footer a { color: var(--link); }
+  code { background: var(--card); padding: .1em .35em; border-radius: 4px; font-size: .9em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>libtfr</h1>
+  <p class="tagline">Multi-taper windowed and time-frequency reassignment spectrograms.</p>
+
+  <div class="apis">
+    <a class="card" href="python/libtfr.html">
+      <h2>Python API &rarr;</h2>
+      <p>The <code>libtfr</code> module: the <code>mfft</code> transform object,
+         spectrogram functions, and taper generators. Start here if you installed
+         from PyPI.</p>
+    </a>
+    <a class="card" href="c/">
+      <h2>C API &rarr;</h2>
+      <p>The <code>tfr.h</code> header, for linking against libtfr directly from
+         C. Same algorithms, without the numpy layer.</p>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/melizalab/libtfr">Source on GitHub</a> &middot;
+    Generated from the docstrings in <code>src/libtfr.pyx</code> and
+    <code>include/tfr.h</code>.
+  </footer>
+</main>
+</body>
+</html>
