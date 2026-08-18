@@ -6,6 +6,9 @@ name: Docs
 # pdoc has to import libtfr to read its docstrings, and libtfr is a compiled
 # extension, so this job builds it against system fftw/lapack the same way
 # tests.yml does.
+#
+# doc/ holds the landing page and the static assets it needs, and is copied
+# over the generated output wholesale.
 on:
   push:
     branches:
@@ -41,8 +44,8 @@ jobs:
         run: uv run pdoc libtfr -o site/python
       - name: Build C API docs
         run: doxygen doxy.cfg
-      - name: Add landing page
-        run: cp doc/index.html site/
+      - name: Add landing page and its assets
+        run: cp -r doc/. site/
       # deploy only from master; pull requests build to catch a docstring that
       # breaks the render, but must not publish
       - name: Publish to gh-pages
