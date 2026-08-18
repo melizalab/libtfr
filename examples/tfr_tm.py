@@ -2,8 +2,10 @@
 """
 A quick test / example of the libtfr python interface.
 
-Copyright (C) 2009 Daniel Meliza <dmeliza@meliza-laptop-1.uchicago.edu>
+Copyright (C) 2009-2026 C Daniel Meliza
 Created 2009-06-09
+
+SPDX-License-Identifier: GPL-2.0-or-later
 """
 
 import numpy as nx
@@ -77,7 +79,7 @@ if __name__ == "__main__":
     w = nx.hamming(N)
 
     for i in range(nloop):
-        print("Loop %d" % i)
+        print(f"Loop {i}")
         h, Dh, Th = hermf(N, k, tm)
         E, V = dpss(N, NW, k)
         mpsd = mtm_psd(s[8300:8600], NW)

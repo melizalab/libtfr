@@ -6,9 +6,9 @@
  * Frequency locking algorithm from Gardner and Magnasco
  * (http://web.mit.edu/tgardner/www/Downloads/Entries/2007/10/22_Blue_bird_day_files/ifdv.m)
  *
- * All other code Copyright C Daniel Meliza 2010.  Licensed for use
- * under GNU General Public License, Version 2.  See COPYING for
- * details.
+ * All other code Copyright (C) 2010-2026 C Daniel Meliza
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include <stdlib.h>
 #include <string.h>

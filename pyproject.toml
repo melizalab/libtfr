@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools", "wheel", "pkgconfig>=1.5.5", "numpy>=1.21", "cython>=3.0"]
+# setuptools>=77 provides PEP 639 license / license-files support
+requires = ["setuptools>=77", "wheel", "pkgconfig>=1.5.5", "numpy>=1.21", "cython>=3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +9,8 @@ version = "2.1.11"
 description = "Calculate multi-taper windowed and time-frequency reassignment spectrograms"
 readme = "README.rst"
 requires-python = ">=3.10"
-license = { text = "GPL-3.0-or-later" }
+license = "GPL-2.0-or-later"
+license-files = ["COPYING"]
 authors = [
     {name = "C Daniel Meliza", email = "dan@meliza.org"},
 ]
@@ -52,9 +54,18 @@ docs = [
 ]
 
 [tool.ruff]
+# apply the excludes below even when a path is named explicitly on the command
+# line, so `ruff check attic/...` stays quiet too
+force-exclude = true
 line-length = 88
 target-version = "py310"
-extend-exclude = ["attic", "venv", "build"]
+extend-exclude = [
+    "attic",
+    "venv",
+    "build",
+    # vendored third-party (Astxx, LGPL-2.1); keep it as upstream ships it
+    "site_scons/site_tools/doxygen.py",
+]
 
 [tool.ruff.lint]
 extend-select = [

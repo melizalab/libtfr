@@ -15,8 +15,9 @@ of the complex FFT results. To get the power spectrum, divide by the square of
 the sum of the window. To get the power spectral density, divide by the sampling
 rate times the sum of the square of the window function.
 
-Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
-General Public License, Version 2.  See COPYING for details.
+Copyright (C) 2010-2026 C Daniel Meliza
+
+SPDX-License-Identifier: GPL-2.0-or-later
 
 """
 cimport cython

@@ -2,6 +2,10 @@
  * @file   mtm_impl.h
  * @author C Daniel Meliza
  * @date   Mon Mar  7 2016
+ *
+ * Copyright (C) 2010-2026 C Daniel Meliza
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <fftw3.h>

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
+# Copyright (C) 2010-2026 C Daniel Meliza
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import os
 
 if hasattr(os, "uname"):
@@ -32,7 +35,6 @@ Help(
     """
 Type: 'scons' to build the library
       'scons install' to install library and headers under %s
-      'scons matlab' to compile mex file
       'scons test' to compile the test program
       (use --prefix  to change library installation location)
 """
@@ -45,7 +47,7 @@ env = Environment(
     LIBS=["m", "fftw3", "lapack"],
     CPPPATH=["#include"],
     CCFLAGS=["-O2", "-g", "-std=c99"],
-    tools=["default", "mex", "doxygen"],
+    tools=["default", "doxygen"],
 )
 
 # system-specific settings
@@ -70,11 +72,6 @@ env.Default(env.Alias("lib", [slib, dylib]))
 env.Alias("test", test_prog)
 env.Alias("install", env.Install(os.path.join(install_prefix, "include"), hdr_files))
 env.Alias("install", env.Install(os.path.join(install_prefix, "lib"), [slib, dylib]))
-
-# matlab mex-file
-if hasattr(env, "MEX"):
-    mex = env.MEX("#matlab/tfrspec", ["#matlab/tfrspec.c", sharedobjs])
-    env.Alias("mex", mex)
 
 if hasattr(env, "Doxygen"):
     dox = env.Doxygen("doxy.cfg")

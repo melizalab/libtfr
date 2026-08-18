@@ -1,10 +1,12 @@
-#!/usr/bin/env python
 # -*- mode: python -*-
+# Copyright (C) 2010-2026 C Daniel Meliza
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import os
 import platform
+from sysconfig import get_platform
 
 from Cython.Build import cythonize
-from sysconfig import get_platform
 from setuptools import Extension, setup
 
 
@@ -68,6 +70,7 @@ def get_define_macros():
     # path that only gets exercised in CI.
     return [("FFTW_NO_Complex", "1")]
 
+
 compiler_settings = {
     "include_dirs": get_include_dirs(),
     "library_dirs": get_lib_dirs(),
@@ -78,11 +81,13 @@ compiler_settings = {
 
 cython_directives = {}
 
-if platform.python_implementation() == 'PyPy':
-    cython_directives.update({
-        "legacy_implicit_noexcept": True,
-        "c_api_binop_methods": False,
-    })
+if platform.python_implementation() == "PyPy":
+    cython_directives.update(
+        {
+            "legacy_implicit_noexcept": True,
+            "c_api_binop_methods": False,
+        }
+    )
 
 sources = ["src/tfr.c", "src/mtm.c", "src/libtfr.pyx"]
 extensions = [Extension("libtfr", sources=sources, **compiler_settings)]

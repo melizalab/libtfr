@@ -4,9 +4,12 @@
 """
 pyext.py - tool chain for building python extension modules
 
-Copyright (C) 2010 Daniel Meliza <dmeliza@dylan.uchicago.edu>
+Copyright (C) 2010-2026 C Daniel Meliza
 Created 2010-03-29
+
+SPDX-License-Identifier: GPL-2.0-or-later
 """
+
 import distutils.sysconfig
 import os
 
@@ -16,7 +19,7 @@ def generate(env, **kw):
     pyvars = distutils.sysconfig.get_config_vars(
         "CC", "CXX", "OPT", "BASECFLAGS", "CCSHARED", "LDSHARED", "SO"
     )
-    (cc, cxx, opt, basecflags, ccshared, ldshared, so_ext) = (
+    (cc, _cxx, opt, basecflags, _ccshared, ldshared, so_ext) = (
         x if x != None else "" for x in pyvars
     )
     nxdir = os.path.join(pybase, "numpy/core/include")

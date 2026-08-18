@@ -8,8 +8,9 @@
  * Pass any argument to also dump the demo spectrograms to .dat files in the
  * working directory; by default nothing is written, so CI leaves no clutter.
  *
- * Copyright C Daniel Meliza 2010.  Licensed for use under GNU
- * General Public License, Version 2.  See COPYING for details.
+ * Copyright (C) 2010-2026 C Daniel Meliza
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <stdlib.h>

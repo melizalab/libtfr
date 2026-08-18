@@ -50,8 +50,9 @@
  * For an example of how to use the library, see test_tfr.c
  *
  * @section lic License
- * Copyright C Daniel Meliza 2010-2016.  Licensed for use under GNU
- * General Public License, Version 2.  See COPYING for details.
+ * Copyright (C) 2010-2026 C Daniel Meliza
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef _LIBTFR_H
 #define _LIBTFR_H

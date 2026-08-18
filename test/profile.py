@@ -1,6 +1,9 @@
 # -*- mode: python -*-
+# Copyright (C) 2010-2026 C Daniel Meliza
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 
-#import pstats, cProfile
+# import pstats, cProfile
 
 import libtfr
 from numpy.random import randn
@@ -8,6 +11,6 @@ from numpy.random import randn
 sig = randn(17590)
 D = libtfr.dpss(256, 3, 5)
 
-#cProfile.runctx("D.mtspec(sig, 10)", globals(), locals(), "Profile.prof")
-#s = pstats.Stats("Profile.prof")
-#s.strip_dirs().sort_stats("time").print_stats()
+# cProfile.runctx("D.mtspec(sig, 10)", globals(), locals(), "Profile.prof")
+# s = pstats.Stats("Profile.prof")
+# s.strip_dirs().sort_stats("time").print_stats()

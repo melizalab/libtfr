@@ -240,11 +240,17 @@ Xiao and Flandrin 2007)
 License
 -------
 
-libtfr was written by C Daniel Meliza and is licensed under the Gnu
-Public License (GPL) version 2; see COPYING for details.
+Copyright (C) 2010-2026 C Daniel Meliza.
 
-some code is adapted from chronux (http://www.chronux.org), by Partha
-Mitra and Hemant Bokil, also licensed under GPL version 2
+libtfr is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 2 of the License, or (at your option) any later
+version. The SPDX identifier is ``GPL-2.0-or-later``; see COPYING for the full
+text.
+
+Some code is adapted from chronux (http://www.chronux.org), by Partha Mitra and
+Hemant Bokil, also licensed under GPL version 2. The scons doxygen tool in
+``site_scons/`` is third-party code under the LGPL, version 2.1.
 
 THE PROGRAMS ARE PROVIDED “AS IS” WITHOUT WARRANTY OF MERCANTABILITY OR
 FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR
