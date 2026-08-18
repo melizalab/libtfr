@@ -9,8 +9,8 @@ libtfr
 .. |Version| image:: https://img.shields.io/pypi/v/libtfr.svg
 .. _Version: https://pypi.python.org/pypi/libtfr/
 
-.. |BuildStatus| image:: https://github.com/melizalab/libtfr/actions/workflows/python-package.yml/badge.svg
-.. _BuildStatus: https://github.com/melizalab/libtfr/actions/workflows/python-package.yml
+.. |BuildStatus| image:: https://github.com/melizalab/libtfr/actions/workflows/test.yml/badge.svg
+.. _BuildStatus: https://github.com/melizalab/libtfr/actions/workflows/test.yml
 
 .. |License| image:: https://img.shields.io/pypi/l/libtfr.svg
 .. _License: https://opensource.org/license/gpl-2-0/
@@ -18,8 +18,8 @@ libtfr
 .. |PythonVersions| image:: https://img.shields.io/pypi/pyversions/libtfr.svg
 .. _PythonVersions: https://pypi.python.org/pypi/libtfr/
 
-.. |DOI| image:: https://zenodo.org/badge/1833187.svg
-   :target: https://zenodo.org/badge/latestdoi/1833187
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1101017.svg
+   :target: https://doi.org/10.5281/zenodo.1101017
 
 Libtfr is a library for calculating multi-taper time-frequency
 reassignment (TFR) spectrograms. Time-frequency reassignment is a method

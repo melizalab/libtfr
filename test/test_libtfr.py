@@ -18,13 +18,17 @@ def fmsin(N, fnormin, fnormax, period, t0, fnorm0, pm1):
     return real(exp(1j * phase))
 
 
-def ppt(sig):
-    from numpy import exp, random
+def ppt(sig, seed=20240818):
+    from numpy import exp
+    from numpy.random import default_rng
 
+    # seeded so a CI failure is reproducible; the point-process tests only
+    # check shapes and dtypes, so the particular draw does not matter
+    rng = default_rng(seed)
     p = exp(sig - 1)
-    events = (p > random.uniform(size=p.size)).nonzero()[0].astype("d")
+    events = (p > rng.uniform(size=p.size)).nonzero()[0].astype("d")
     # jitter
-    events += random.uniform(low=-0.25, high=0.25, size=events.size)
+    events += rng.uniform(low=-0.25, high=0.25, size=events.size)
     return events
 
 
