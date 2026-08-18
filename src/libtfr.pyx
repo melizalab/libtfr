@@ -21,10 +21,30 @@ General Public License, Version 2.  See COPYING for details.
 """
 cimport cython
 from cython.view cimport array as cvarray
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import version as _version
+from importlib.metadata import PackageNotFoundError as _PackageNotFoundError
 cimport tfr
 
 import numpy as np
+
+# pdoc renders docstrings as markdown; this selects the Args/Returns dialect
+__docformat__ = "google"
+
+__all__ = [
+    "mfft",
+    "mfft_dpss",
+    "mfft_precalc",
+    "tfr_spec",
+    "hermf",
+    "dpss",
+    "log_fgrid",
+    "fgrid",
+    "tgrid",
+    "dynamic_range",
+    "ITYPE",
+    "DTYPE",
+    "CTYPE",
+]
 
 ctypedef double complex cmplx_t
 
@@ -33,8 +53,8 @@ DTYPE = np.double
 CTYPE = np.complex128
 
 try:
-    __version__ = version("libtfr")
-except PackageNotFoundError:
+    __version__ = _version("libtfr")
+except _PackageNotFoundError:
     __version__ = "unknown"
 
 cdef class mfft:
@@ -46,6 +66,7 @@ cdef class mfft:
     cdef tfr.mfft * _mfft
 
     def __init__(self):
+        """Not callable. Use `mfft_dpss` or `mfft_precalc` to construct a transform."""
         raise TypeError("This class cannot be directly instantiated")
 
     def __dealloc__(self):
@@ -62,23 +83,27 @@ cdef class mfft:
 
     @property
     def ntapers(self):
+        """The number of tapers used by the transform."""
         return tfr.mtm_ntapers(self._mfft)
 
     @property
     def nfft(self):
+        """The number of points in the transform."""
         return tfr.mtm_nfft(self._mfft)
 
     @property
     def npoints(self):
+        """The number of points in each taper, which may be less than nfft."""
         return tfr.mtm_npoints(self._mfft)
 
     @property
     def nreal(self):
+        """The number of frequency bins in the spectrum of a real signal, nfft/2 + 1."""
         return tfr.mtm_nreal(self._mfft)
 
     @property
     def tapers(self):
-        """A copy of the transform object's tapers, dimension (ntapers, npoints)"""
+        """A copy of the transform's tapers, dimension (ntapers, npoints)."""
         cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef Py_ssize_t npoints = tfr.mtm_npoints(self._mfft)
         cdef double [:, :] arr_view = <double[:ntapers, :npoints]>tfr.mtm_tapers(self._mfft)
@@ -88,7 +113,14 @@ cdef class mfft:
         return out
 
     def tapers_fft(self, double scale):
-        """The FFT of the transform object's tapers, dimension (ntapers, nreal) """
+        """The FFT of the transform's tapers.
+
+        Args:
+            scale: positive factor to rescale the tapers by before transforming
+
+        Returns:
+            Complex array, dimension (ntapers, nreal).
+        """
         cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
         cdef Py_ssize_t real_count = tfr.mtm_nreal(self._mfft)
         tfr.mtm_tapers_fft(self._mfft, scale)
@@ -98,14 +130,18 @@ cdef class mfft:
 
 
     def tapers_interpolate(self, double[:] t, double t0, double dt):
-        """
-        Interpolate the transform object's tapers at specified values. The time
-        support for the tapers is specified by a start time and a sampling interval.
+        """Interpolate the transform's tapers at specified times.
 
-        t - input data (array of times)
-        t0 - the start time of the tapers
-        dt - the sampling interval of the tapers
-        returns a 2D array, dimension (ntapers, t.size)
+        The time support of the tapers is given by a start time and a sampling
+        interval.
+
+        Args:
+            t: times at which to interpolate
+            t0: start time of the tapers
+            dt: sampling interval of the tapers
+
+        Returns:
+            2D array, dimension (ntapers, t.size).
         """
         cdef Py_ssize_t ntimes = t.size
         cdef Py_ssize_t ntapers = tfr.mtm_ntapers(self._mfft)
@@ -116,11 +152,13 @@ cdef class mfft:
         return out
 
     def mtfft(self, s not None):
-        """
-        Computes complex multitaper FFT of a real-valued signal.
+        """Compute the complex multitaper FFT of a real-valued signal.
 
-        s - input data (1D time series)
-        returns array of complex numbers, dimension (nreal, ntapers)
+        Args:
+            s: input data (1D time series)
+
+        Returns:
+            Complex array, dimension (nreal, ntapers).
         """
         # this allows the caller to use any kind of array as input
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
@@ -132,13 +170,15 @@ cdef class mfft:
         return out.T
 
     def mtfft_pt(self, t not None, double dt, double t0):
-        """
-        Computes complex multitaper FFT of a point process
+        """Compute the complex multitaper FFT of a point process.
 
-        times - input data (1D time series)
-        t0, dt - define the support of the window
-        returns array of complex numbers, dimension (nreal, ntapers)
+        Args:
+            t: event times (1D array)
+            dt: sampling interval of the window
+            t0: start time of the window
 
+        Returns:
+            Complex array, dimension (nreal, ntapers).
         """
         # this algorithm could be further cythonized
         times = np.asarray(t).astype(DTYPE)
@@ -162,12 +202,15 @@ cdef class mfft:
 
 
     def mtpsd(self, s not None, adapt=True):
-        """Compute PSD of a signal using multitaper methods
+        """Compute the power spectral density of a signal using multitaper methods.
 
-        s -  input data (1D time series)
-        adapt - if more than one taper, compute adaptive spectrum (default True)
+        Args:
+            s: input data (1D time series)
+            adapt: with more than one taper, compute the adaptive spectrum
 
-        @returns  N/2+1 1D real power spectrum, not normalized
+        Returns:
+            1D real power spectrum of length nreal. Not normalized; see the
+            module docstring for how to scale it.
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
@@ -180,13 +223,16 @@ cdef class mfft:
         return spec
 
     def mtspec(self, s not None, int step, adapt=True):
-        """Compute spectrogram of a signal using multitaper methods
+        """Compute the spectrogram of a signal using multitaper methods.
 
-        s -     input data (1D time series)
-        step -  number of samples to step between frames
-        adapt - if more than one taper, compute adaptive spectrum (default True)
+        Args:
+            s: input data (1D time series)
+            step: number of samples to advance between frames
+            adapt: with more than one taper, compute the adaptive spectrum
 
-        @returns real power spectrogram, dim (N/2+1, L), not normalized
+        Returns:
+            Real power spectrogram, dimension (nreal, nframes). Not normalized;
+            see the module docstring for how to scale it.
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
@@ -197,12 +243,14 @@ cdef class mfft:
         return spec.T
 
     def mtstft(self, s not None, int step):
-        """Compute STFT of a signal using multiple tapers
+        """Compute the short-time Fourier transform of a signal using multiple tapers.
 
-        s -     input data (1D time series)
-        step -  number of samples to step between frames
+        Args:
+            s: input data (1D time series)
+            step: number of samples to advance between frames
 
-        @returns complex STFT, dim (N/2+1, L, ntapers)
+        Returns:
+            Complex STFT, dimension (nreal, nframes, ntapers).
         """
         cdef const double[:] data = np.asarray(s).astype(DTYPE)
         cdef Py_ssize_t nfreq = tfr.mtm_nreal(self._mfft)
@@ -217,14 +265,19 @@ cdef class mfft:
         return out.transpose(2, 0, 1)
 
     def mtstft_pt(self, t not None, double dt, double step, double t0, double tN):
-        """
-        Computes complex multitaper STFT of a point process
+        """Compute the complex multitaper STFT of a point process.
 
-        times - input data (1D time series)
-        dt    - implied sampling rate of the signal (determines frequency resolution)
-        step  - time interval between frames
-        t0, tN, - start and stop of the signal
-        returns array of complex numbers, dimension (nreal, ntapers)
+        Args:
+            t: event times (1D array)
+            dt: implied sampling interval of the signal, which sets the
+                frequency resolution
+            step: time interval between frames
+            t0: start time of the signal
+            tN: stop time of the signal
+
+        Returns:
+            A tuple of the complex STFT, dimension (nreal, nframes, ntapers),
+            and the number of events in each frame, length nframes.
         """
         cdef unsigned int i
         cdef double tw0, Msp
@@ -258,14 +311,18 @@ cdef class mfft:
 
 
 def mfft_dpss(int nfft, double nw, int ntapers, int npoints=0):
-    """
-    Initializes a mfft transform using DPSS tapers (i.e. for a standard
-    multitaper transform)
+    """Initialize an mfft transform using DPSS tapers.
 
-    nfft -     number of points in the transform/dpss tapers
-    nw -       time-frequency parameter
-    ntapers -  number of tapers to generate
-    npoints -  number of points in the taper
+    This is the standard multitaper transform.
+
+    Args:
+        nfft: number of points in the transform
+        nw: time-bandwidth parameter
+        ntapers: number of tapers to generate
+        npoints: number of points in each taper; defaults to nfft
+
+    Returns:
+        An `mfft` transform object.
     """
     if npoints <=0:
         npoints = nfft
@@ -274,12 +331,21 @@ def mfft_dpss(int nfft, double nw, int ntapers, int npoints=0):
 
 
 def mfft_precalc(int nfft, tapers not None, weights=None):
-    """
-    Copy pre-calculated tapers/window functions (e.g. hanning) into a mtfft
+    """Copy pre-calculated tapers or window functions into an mfft transform.
 
-    nfft -    number of points in the transform/dpss tapers
-    tapers -  array with tapers, either (npoints,) or (ntapers,npoints)
-    weights - array with weights for the tapers, or None to give equal weight
+    Use this for window functions libtfr does not generate itself, such as a
+    Hanning window.
+
+    Args:
+        nfft: number of points in the transform
+        tapers: taper array, either (npoints,) or (ntapers, npoints)
+        weights: weight for each taper; defaults to equal weights
+
+    Returns:
+        An `mfft` transform object.
+
+    Raises:
+        ValueError: if the number of weights does not match the number of tapers
     """
     cdef int npoints
     cdef int ntapers
@@ -306,23 +372,28 @@ def mfft_precalc(int nfft, tapers not None, weights=None):
 
 def tfr_spec(s not None, int N, int step, int Np, int K=6,
              double tm=6.0, double flock=0.01, int tlock=5, fgrid=None):
-    """
-    Compute time-frequency reassignment spectrogram of input signal s
+    """Compute the time-frequency reassignment spectrogram of a signal.
 
-    s - input signal (real)
-    N - number of frequency points
-    step - step size (in time points)
-    Np - window size (should be <= N, must be odd)
-    K - number of tapers to use (default 6)
-    tm - time support of tapers (default 6.0)
-    flock - frequency locking parameter; power is not reassigned
-            more than this value (normalized frequency; default 0.01)
-    tlock - time locking parameter (in frames; default 5)
-    fgrid - output frequency bins: monotonically increasing
-            (default linear scale with N points; Nyquist is 1.0)
+    Args:
+        s: input signal (real)
+        N: number of frequency points
+        step: number of samples to advance between frames
+        Np: window size; must be odd and no larger than N
+        K: number of tapers to use
+        tm: time support of the tapers
+        flock: frequency locking parameter. Power is not reassigned further
+            than this, in normalized frequency
+        tlock: time locking parameter, in frames
+        fgrid: output frequency bins, monotonically increasing. Defaults to a
+            linear scale with N points, with Nyquist at 1.0
 
-    returns an N/2+1 by L power spectrogram, or if fgrid is specified,
-    fgrid.size by L
+    Returns:
+        Power spectrogram, dimension (N/2+1, nframes), or (fgrid.size, nframes)
+        if fgrid is given.
+
+    Raises:
+        ValueError: if Np is larger than N, or is even
+        RuntimeError: if the transform cannot be initialized
     """
 
     if Np > N:
@@ -360,15 +431,21 @@ def tfr_spec(s not None, int N, int step, int Np, int K=6,
 
 
 def hermf(int N, int M=6, double tm=6.0):
-    """
-    Computes a set of orthogonal Hermite functions for use in computing
-    multi-taper reassigned spectrograms
+    """Compute a set of orthogonal Hermite functions.
 
-    @param N      the number of points in the window (must be odd)
-    @param M      the maximum order of the set of functions (default 6)
-    @param tm     half-time support (default 6)
+    These are the tapers used for multi-taper reassigned spectrograms.
 
-    @returns  hermite functions (MxN), first derivative of h (MxN), time-multiple of h (MxN)
+    Args:
+        N: number of points in the window; must be odd
+        M: maximum order of the set of functions
+        tm: half-time support
+
+    Returns:
+        A tuple of three (M, N) arrays: the Hermite functions, their first
+        derivatives, and their time multiples.
+
+    Raises:
+        ValueError: if N is even
     """
     if N % 2 == 0:
         raise ValueError("N must be odd")
@@ -383,18 +460,24 @@ def hermf(int N, int M=6, double tm=6.0):
 
 
 def dpss(int N, double NW, int k):
-    """
-    Computes the discrete prolate spherical sequences used in the
-    multitaper method power spectrum calculations.
+    """Compute discrete prolate spheroidal sequences.
 
-    @param npoints   the number of points in the window
-    @param mtm_p     the time-bandwidth product. Must be an integer or half-integer
-                     (typical choices are 2, 5/2, 3, 7/2, or 4)
-    @param k         the number of DPSS vectors to generate. Must be less than
-                     npoints, but k > NW*2 - 1 are not stable
+    These are the tapers used for multitaper power spectrum estimation.
 
-    @returns (2D array of tapers, shape (k,npoints),
-              1D array of concentration values, length k)
+    Args:
+        N: number of points in the window
+        NW: time-bandwidth product. Must be an integer or half-integer;
+            typical choices are 2, 5/2, 3, 7/2 or 4
+        k: number of DPSS vectors to generate. Must be less than N, and
+            vectors beyond NW*2 - 1 are not numerically stable
+
+    Returns:
+        A tuple of the tapers, shape (k, N), and their concentration values,
+        length k.
+
+    Raises:
+        ValueError: if the parameters are invalid
+        RuntimeError: if the eigenvalue solver fails
     """
     tapers = np.empty((k, N), dtype=DTYPE)
     cdef double[:, :] tapers_view = tapers
@@ -432,14 +515,17 @@ cdef void hc2cmplx(tfr.mfft * mtm, cmplx_t[:,:] out) noexcept nogil:
 ### Utility functions: not much benefit to cython as written but nice to have in
 ### the same module
 def log_fgrid(double fmin, double fmax, int N, Fs=None):
-    """
-    Generates a logarithmic frequency grid between fmin and fmax
+    """Generate a logarithmic frequency grid between fmin and fmax.
 
-    @param fmin  first frequency
-    @param fmax  last frequency
-    @param N     number of points
-    @param base  log base
-    @param Fs    set to a positive value to convert values to relative frequencies
+    Args:
+        fmin: first frequency
+        fmax: last frequency
+        N: number of points
+        Fs: sampling frequency. If given, the grid is returned as relative
+            frequencies; must be greater than fmax
+
+    Returns:
+        1D array of N frequencies.
     """
     from numpy import log, logspace, e
     lfmin, lfmax = log((fmin, fmax))
@@ -452,26 +538,24 @@ def log_fgrid(double fmin, double fmax, int N, Fs=None):
 
 
 def fgrid(double Fs, int nfft, fpass=None):
-    """
-    Calculate the frequency grid associated with an fft computation
+    """Calculate the frequency grid associated with an FFT computation.
 
-    @param Fs        sampling frequency associated with the data
-    @param nfft      number of points in fft
-    @param fpass     upper and lower frequencies of interest,
-                     [fmin fmax), in same units as Fs. If not supplied,
-                     returns all the frequencies up to Nyquist.
+    Args:
+        Fs: sampling frequency of the data
+        nfft: number of points in the FFT
+        fpass: lower and upper frequencies of interest, [fmin, fmax), in the
+            same units as Fs. Defaults to all frequencies up to Nyquist
 
-    @returns (1D array of frequencies,
-              1D array indexing frequencies in the full frequency grid)
+    Returns:
+        A tuple of the frequencies and the indices of those frequencies within
+        the full frequency grid.
 
     Example:
+        With `Fs=1000` and `nfft=1048`, an FFT of a real signal generates 512
+        frequencies between 0 and 500 Hz. With `fpass=(0, 100)`, the returned
+        indices are those of the frequencies below 100 Hz.
 
-    If Fs=1000, and nfft=1048, an fft calculation of a real signal
-    generates 512 frequencies between 0 and 500 (i.e. Fs/2) Hz. Now if
-    fpass=(0,100), findx will contain the indices in the frequency grid
-    corresponding to frequencies < 100 Hz.
-
-    From Chronux 1_50
+    Adapted from Chronux 1_50.
     """
     cdef double df = Fs / nfft
     f = np.arange(0, Fs, df)  # all possible frequencies
@@ -486,23 +570,27 @@ def fgrid(double Fs, int nfft, fpass=None):
 
 
 def tgrid(S not None, double Fs, int shift):
-    """
-    Calculate the time grid associated with an STFT. Note that
-    spectrograms generated by libtfr do not include frames that extend
-    beyond the edge of the signal.  These can be excluded if one knows
-    the size of the analysis taper(s), but this size may be adjusted
-    silently by the functions that generate Hermitian and DPSS tapers
-    in order to ensure that the number of points is even or odd.  This
-    function will accept either a scalar or an ndarray as its first
-    argument: in the former case the full time grid (including
-    unsupported frames) will be returned; in the latter, the time grid
-    will be truncated to match the length of the spectrogram.
+    """Calculate the time grid associated with an STFT.
 
-    @param S         length of signal (in samples) OR the 2D spectrogram array (freq x time)
-    @param Fs        sampling frequency associated with the data
-    @param shift     number of samples shifted between data frames
+    Spectrograms generated by libtfr omit frames that extend past the edge of
+    the signal. Those frames can only be excluded here if the taper size is
+    known, and that size may be adjusted silently by the Hermite and DPSS taper
+    functions to keep the number of points even or odd. So the two forms of
+    this function differ: given a signal length, the full grid is returned,
+    including unsupported frames; given a spectrogram, the grid is truncated to
+    match it.
 
-    @returns a 1D array of frame start times
+    Args:
+        S: length of the signal in samples, or the 2D spectrogram array
+            (frequency x time)
+        Fs: sampling frequency of the data
+        shift: number of samples shifted between frames
+
+    Returns:
+        1D array of frame start times.
+
+    Raises:
+        ValueError: if S is a 1D array, which is ambiguous
     """
     if isinstance(S, np.ndarray):
         if S.ndim == 1:
@@ -513,14 +601,17 @@ def tgrid(S not None, double Fs, int shift):
 
 
 def dynamic_range(S not None, double dB):
-    """
-    Compress a spectrogram's dynamic range by thresholding all values
-    dB less than the peak of S (linear scale).
+    """Compress a spectrogram's dynamic range.
 
-    @param S    the input spectrogram or spectrum
-    @param dB   the dynamic range to rescale to
+    Values more than `dB` below the peak of `S` are clamped to that threshold.
+    `S` is on a linear scale.
 
-    @returns copy of S after thresholding
+    Args:
+        S: input spectrogram or spectrum
+        dB: dynamic range to rescale to
+
+    Returns:
+        A copy of S after thresholding.
     """
     cdef double smax = S.max()
     cdef double thresh = 10 ** (np.log10(smax) - dB / 10.)

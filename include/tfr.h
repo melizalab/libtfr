@@ -122,6 +122,7 @@ mfft * mtm_init_herm(int nfft, int npoints, int order, double tm);
  * Copy pre-calculated tapers/window functions (e.g. hanning) into a mtfft
  * transform. Size of arrays must match memory allocated by the transform.
  *
+ * @param mtmh     the transform to copy the tapers into
  * @param tapers   pointer to ntapers*npoints array of windowing functions
  * @param weights  weights for tapers; if NULL, assign weight of 1.0 to each taper
  *

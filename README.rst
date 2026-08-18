@@ -152,13 +152,19 @@ To install the libraries and header (default to ``/usr/local/lib`` and
 
    scons install
 
-See ``src/test_tfr.c`` for an example of how to use the C API.
+See ``test/test_tfr.c`` for an example of how to use the C API.
 
 Documentation
 -------------
 
-The C header ``tfr.h`` and python module ``libtfr.pyx`` are both
-extensively documented.
+API documentation for both interfaces is published at
+https://melizalab.github.io/libtfr/
+
+- Python API: https://melizalab.github.io/libtfr/python/libtfr.html
+- C API: https://melizalab.github.io/libtfr/c/
+
+It is generated from the docstrings in ``src/libtfr.pyx`` and the comments in
+``include/tfr.h``, so those remain the authoritative source.
 
 Algorithm and usage notes
 -------------------------

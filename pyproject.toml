@@ -45,6 +45,11 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.14.3",
 ]
+# not in dev: uv installs dev by default, and the tests matrix has no use for these
+docs = [
+    "pdoc>=15",
+    "ghp-import>=2.1",
+]
 
 [tool.ruff]
 line-length = 88

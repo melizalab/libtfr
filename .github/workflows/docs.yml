@@ -1,0 +1,50 @@
+name: Docs
+
+# Publishes both APIs to one Pages site: pdoc renders the python module at
+# /python, doxygen renders tfr.h at /c, and doc/index.html links them.
+#
+# pdoc has to import libtfr to read its docstrings, and libtfr is a compiled
+# extension, so this job builds it against system fftw/lapack the same way
+# tests.yml does.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'src/libtfr.pyx'
+      - 'include/**'
+      - 'doc/**'
+      - 'doxy.cfg'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          version: "latest"
+      - name: Install libraries
+        run: sudo apt-get install -y liblapack-dev libfftw3-dev doxygen
+      - name: Install dependencies
+        run: uv sync --frozen --group docs
+      - name: Build python API docs
+        run: uv run pdoc libtfr -o site/python
+      - name: Build C API docs
+        run: doxygen doxy.cfg
+      - name: Add landing page
+        run: cp doc/index.html site/
+      # deploy only from master; pull requests build to catch a docstring that
+      # breaks the render, but must not publish
+      - name: Publish to gh-pages
+        if: github.event_name != 'pull_request'
+        run: uv run ghp-import -nfop site

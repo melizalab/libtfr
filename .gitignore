@@ -16,3 +16,4 @@ wheelhouse/
 .ipynb_checkpoints/
 .eggs/
 .DS_Store
+site/
