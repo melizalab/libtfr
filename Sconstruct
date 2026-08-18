@@ -47,7 +47,7 @@ env = Environment(
     LIBS=["m", "fftw3", "lapack"],
     CPPPATH=["#include"],
     CCFLAGS=["-O2", "-g", "-std=c99"],
-    tools=["default", "doxygen"],
+    tools=["default"],
 )
 
 # system-specific settings
@@ -73,6 +73,8 @@ env.Alias("test", test_prog)
 env.Alias("install", env.Install(os.path.join(install_prefix, "include"), hdr_files))
 env.Alias("install", env.Install(os.path.join(install_prefix, "lib"), [slib, dylib]))
 
-if hasattr(env, "Doxygen"):
-    dox = env.Doxygen("doxy.cfg")
-    env.Alias("docs", dox)
+# doxy.cfg sends html to site/c; index.html stands in as the target, and the
+# header is listed as a source so edits to it trigger a rebuild
+docs = env.Command("#site/c/index.html", ["#doxy.cfg", "#include/tfr.h"], "doxygen $SOURCE")
+env.Clean(docs, "#site/c")
+env.Alias("docs", docs)

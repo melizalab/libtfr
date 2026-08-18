@@ -249,8 +249,7 @@ version. The SPDX identifier is ``GPL-2.0-or-later``; see COPYING for the full
 text.
 
 Some code is adapted from chronux (http://www.chronux.org), by Partha Mitra and
-Hemant Bokil, also licensed under GPL version 2. The scons doxygen tool in
-``site_scons/`` is third-party code under the LGPL, version 2.1.
+Hemant Bokil, also licensed under GPL version 2.
 
 THE PROGRAMS ARE PROVIDED “AS IS” WITHOUT WARRANTY OF MERCANTABILITY OR
 FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR

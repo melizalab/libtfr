@@ -1,5 +1,4 @@
 include README.rst COPYING Sconstruct requirements.txt
 recursive-include src *.c *.pxd *.pyx
 recursive-include include *.h
-recursive-include site_scons *.py
 recursive-include examples *.py *.ipynb

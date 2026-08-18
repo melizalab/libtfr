@@ -63,8 +63,6 @@ extend-exclude = [
     "attic",
     "venv",
     "build",
-    # vendored third-party (Astxx, LGPL-2.1); keep it as upstream ships it
-    "site_scons/site_tools/doxygen.py",
 ]
 
 [tool.ruff.lint]
