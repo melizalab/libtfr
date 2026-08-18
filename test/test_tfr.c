@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-// tfr.h no longer pulls in <complex.h>; this test uses C99 complex itself and
-// is never built with MSVC, so it includes the header directly.
+// tfr.h deliberately omits <complex.h>, so include it here: this is a plain
+// C99 program that uses complex arithmetic and is never built with MSVC.
 #include <complex.h>
 #include "tfr.h"
 
@@ -294,7 +294,8 @@ test_tfr_silent(void)
         mtm_destroy(mtm);
 }
 
-/* the original demo: run the whole pipeline over a chirp and optionally dump it */
+/* end-to-end pass over a chirp, covering the stages in combination rather than
+   in isolation; optionally dumps the result for eyeballing */
 static void
 demo(int write_output)
 {
@@ -303,8 +304,8 @@ demo(int write_output)
         double sigpow;
 
         sig = (double*)malloc(npoints * sizeof(double));
-        // fill the whole signal -- this used to generate only Np points and
-        // then run the transforms over uninitialized memory
+        // every sample has to be initialized: the transforms below read all
+        // npoints of it, not just the first Np
         fmsin(sig, npoints, 0.15, 0.45, 1024, 256./4, 0.3, -1);
         if (write_output) write_file("tfr_in.dat", sig, npoints, 1);
 

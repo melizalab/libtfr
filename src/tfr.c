@@ -163,8 +163,9 @@ cdiv(double nr, double ni, double dr, double di, double *qr, double *qi)
                 *qi = (ni * r - nr) / den;
         }
         // C99 Annex G: a nonzero numerator over a zero denominator is an
-        // infinity, but the arithmetic above yields NaN. Recover it so that an
-        // all-zero frame behaves as it did before this was hand-rolled.
+        // infinity, but the arithmetic above yields NaN. A silent frame lands
+        // here, and the infinity keeps it off the path where (int)round has to
+        // convert a NaN, which is undefined.
         if (isnan(*qr) && isnan(*qi) && dr == 0.0 && di == 0.0 &&
             (!isnan(nr) || !isnan(ni))) {
                 *qr = INFINITY * nr;

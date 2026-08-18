@@ -1,9 +1,9 @@
 name: Tests
 
 # Source-build tests: the package compiled against system fftw/lapack, which is
-# how developers install it. Runs on pull requests only -- build_wheels.yml runs
-# this same suite against the built wheels on every push to master, so keeping
-# both triggers here just ran the suite twice.
+# how developers install it. Pull requests only -- build_wheels.yml runs this
+# same suite against the built wheels on every push to master, so a master
+# trigger here would duplicate it.
 on:
   workflow_dispatch:
   pull_request:

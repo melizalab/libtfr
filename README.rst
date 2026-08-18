@@ -9,8 +9,8 @@ libtfr
 .. |Version| image:: https://img.shields.io/pypi/v/libtfr.svg
 .. _Version: https://pypi.python.org/pypi/libtfr/
 
-.. |BuildStatus| image:: https://github.com/melizalab/libtfr/actions/workflows/test.yml/badge.svg
-.. _BuildStatus: https://github.com/melizalab/libtfr/actions/workflows/test.yml
+.. |BuildStatus| image:: https://github.com/melizalab/libtfr/actions/workflows/tests.yml/badge.svg
+.. _BuildStatus: https://github.com/melizalab/libtfr/actions/workflows/tests.yml
 
 .. |License| image:: https://img.shields.io/pypi/l/libtfr.svg
 .. _License: https://opensource.org/license/gpl-2-0/
