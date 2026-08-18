@@ -1,9 +1,8 @@
 # -*- mode: python -*-
 
-import unittest
-
 import libtfr
 import numpy as np
+import pytest
 
 
 def fmsin(N, fnormin, fnormax, period, t0, fnorm0, pm1):
@@ -97,41 +96,53 @@ hermf_vals = [
     )
 ]
 
+# (nfft, step, Np, K) combinations for the reassignment tests. Np must be odd
+# and no larger than nfft.
+tfr_geometries = [
+    (256, 64, 201, 6),
+    (512, 64, 255, 5),
+    (128, 32, 101, 4),
+]
 
-class TestTapers(unittest.TestCase):
-    def test_dpss(self):
+# signals carrying no power at all, in the various ways that can happen
+no_power_signals = [
+    ("zeros", np.zeros(4096)),
+    ("denormal", np.full(4096, 1e-300)),
+    ("negative_zero", np.full(4096, -0.0)),
+]
+
+
+class TestTapers:
+    @pytest.mark.parametrize("args, concentrations, means", dpss_vals)
+    def test_dpss(self, args, concentrations, means):
         from numpy import ones_like
 
-        for A, C, M in dpss_vals:
-            with self.subTest(args=A, concentrations=C, means=M):
-                E, V = libtfr.dpss(*A)
-                self.assertTrue(np.allclose(V, C))
-                self.assertTrue(np.allclose(E.mean(1), M))
-                self.assertTrue(np.allclose((E**2).sum(1), ones_like(V)))
+        E, V = libtfr.dpss(*args)
+        assert np.allclose(V, concentrations)
+        assert np.allclose(E.mean(1), means)
+        assert np.allclose((E**2).sum(1), ones_like(V))
 
     def test_dpss_bad_args(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             _ = libtfr.dpss(128, -5, 3)
 
-    def test_hermf(self):
-        for A, H, D in hermf_vals:
-            with self.subTest(args=A, hmeans=H, dnorms=D):
-                h, Dh, _Th = libtfr.hermf(*A)
-                self.assertTrue(np.allclose(h.mean(1), H))
-                self.assertTrue(np.allclose((Dh**2).sum(1), D))
+    @pytest.mark.parametrize("args, hmeans, dnorms", hermf_vals)
+    def test_hermf(self, args, hmeans, dnorms):
+        h, Dh, _Th = libtfr.hermf(*args)
+        assert np.allclose(h.mean(1), hmeans)
+        assert np.allclose((Dh**2).sum(1), dnorms)
 
 
-class TestTransforms(unittest.TestCase):
-    def test_dpss_fft(self):
+class TestTransforms:
+    @pytest.mark.parametrize("args, concentrations, means", dpss_vals)
+    def test_dpss_fft(self, args, concentrations, means):
         from numpy import fft
 
-        for args, C, M in dpss_vals:
-            with self.subTest(args=args, concentrations=C, means=M):
-                D = libtfr.mfft_dpss(args[0], args[1], args[2], args[0])
-                E = D.tapers
-                Z = D.tapers_fft(1.0)
-                self.assertTupleEqual(Z.shape, (args[2], args[0] // 2 + 1))
-                self.assertTrue(np.allclose(Z, fft.fft(E, axis=1)[:, : Z.shape[1]]))
+        D = libtfr.mfft_dpss(args[0], args[1], args[2], args[0])
+        E = D.tapers
+        Z = D.tapers_fft(1.0)
+        assert Z.shape == (args[2], args[0] // 2 + 1)
+        assert np.allclose(Z, fft.fft(E, axis=1)[:, : Z.shape[1]])
 
     # these tests simply assert that the returned arrays have the correct shape and type
     def test_tfr(self):
@@ -143,10 +154,16 @@ class TestTransforms(unittest.TestCase):
         flock = 0.01
         tlock = 5
         Z = libtfr.tfr_spec(sig, nfft, shift, Np, K, tm, flock, tlock)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, (sig.size - Np) // shift + 1))
-        self.assertEqual(Z.dtype, libtfr.DTYPE)
+        assert Z.shape == (nfft // 2 + 1, (sig.size - Np) // shift + 1)
+        assert Z.dtype == libtfr.DTYPE
 
-    def test_tfr_degenerate_input(self):
+    @pytest.mark.parametrize("nfft, step, Np, K", tfr_geometries)
+    @pytest.mark.parametrize(
+        "signal",
+        [s for _, s in no_power_signals],
+        ids=[name for name, _ in no_power_signals],
+    )
+    def test_tfr_degenerate_input(self, signal, nfft, step, Np, K):
         """Signals with no power give an all-zero spectrogram, never NaN/inf.
 
         tfr_displacements divides by z1, the transform of the first taper,
@@ -158,25 +175,21 @@ class TestTransforms(unittest.TestCase):
         does not constrain how the division itself is implemented, since the
         intermediate value never reaches the caller.
         """
-        for nfft, step, Np, K in ((256, 64, 201, 6), (512, 64, 255, 5), (128, 32, 101, 4)):
-            for name, s in (
-                ("zeros", np.zeros(4096)),
-                ("denormal", np.full(4096, 1e-300)),
-                ("negative_zero", np.full(4096, -0.0)),
-            ):
-                with self.subTest(nfft=nfft, Np=Np, signal=name):
-                    Z = libtfr.tfr_spec(s, nfft, step, Np, K, 6.0, 0.01, 5)
-                    self.assertTrue(np.isfinite(Z).all(), "non-finite values in spectrogram")
-                    # no power in, no power out
-                    self.assertTrue((Z == 0).all())
+        Z = libtfr.tfr_spec(signal, nfft, step, Np, K, 6.0, 0.01, 5)
+        assert np.isfinite(Z).all(), "non-finite values in spectrogram"
+        # no power in, no power out
+        assert (Z == 0).all()
 
-            with self.subTest(nfft=nfft, Np=Np, signal="dc"):
-                # a constant signal does carry power, and must survive intact
-                Z = libtfr.tfr_spec(np.ones(4096), nfft, step, Np, K, 6.0, 0.01, 5)
-                self.assertTrue(np.isfinite(Z).all())
-                self.assertGreater(Z.max(), 0.0)
+    @pytest.mark.parametrize("nfft, step, Np, K", tfr_geometries)
+    def test_tfr_constant_input(self, nfft, step, Np, K):
+        """A constant signal does carry power, and must survive intact."""
+        Z = libtfr.tfr_spec(np.ones(4096), nfft, step, Np, K, 6.0, 0.01, 5)
+        assert np.isfinite(Z).all()
+        assert Z.max() > 0.0
 
-    def test_tfr_reassignment_concentration(self):
+    @pytest.mark.parametrize("nfft, step, Np, K", tfr_geometries)
+    @pytest.mark.parametrize("f0", [500.0, 1000.0, 1500.0, 2000.0])
+    def test_tfr_reassignment_concentration(self, f0, nfft, step, Np, K):
         """A pure tone must reassign onto its own frequency bin.
 
         This is the point of reassignment, and it is the only numerical check
@@ -187,27 +200,22 @@ class TestTransforms(unittest.TestCase):
         """
         Fs = 8000.0
         t = np.arange(8192) / Fs
-        for nfft, step, Np, K in ((256, 64, 201, 6), (512, 64, 255, 5)):
-            for f0 in (500.0, 1000.0, 1500.0, 2000.0):
-                with self.subTest(nfft=nfft, Np=Np, f0=f0):
-                    Z = libtfr.tfr_spec(
-                        np.sin(2 * np.pi * f0 * t), nfft, step, Np, K, 6.0, 0.01, 5
-                    )
-                    power = Z.mean(1)
-                    freqs = np.arange(Z.shape[0]) / nfft * Fs
-                    peak = power.argmax()
-                    self.assertEqual(freqs[peak], f0)
-                    # essentially all the energy lands within a bin of the peak
-                    concentration = power[max(0, peak - 1) : peak + 2].sum() / power.sum()
-                    self.assertGreater(concentration, 0.99)
+        Z = libtfr.tfr_spec(np.sin(2 * np.pi * f0 * t), nfft, step, Np, K, 6.0, 0.01, 5)
+        power = Z.mean(1)
+        freqs = np.arange(Z.shape[0]) / nfft * Fs
+        peak = power.argmax()
+        assert freqs[peak] == f0
+        # essentially all the energy lands within a bin of the peak
+        concentration = power[max(0, peak - 1) : peak + 2].sum() / power.sum()
+        assert concentration > 0.99
 
     def test_dpss_mtfft(self):
         nfft = sig.size
         ntapers = 5
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z = D.mtfft(sig)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, ntapers))
-        self.assertEqual(Z.dtype, libtfr.CTYPE)
+        assert Z.shape == (nfft // 2 + 1, ntapers)
+        assert Z.dtype == libtfr.CTYPE
 
     def test_dpss_mtfft_pt_noevents(self):
         from numpy import zeros_like
@@ -216,25 +224,25 @@ class TestTransforms(unittest.TestCase):
         ntapers = 5
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         J = D.mtfft_pt([], 1, 0)
-        self.assertTupleEqual(J.shape, (nfft // 2 + 1, ntapers))
-        self.assertEqual(J.dtype, libtfr.CTYPE)
-        self.assertTrue(np.allclose(J, zeros_like(J)))
+        assert J.shape == (nfft // 2 + 1, ntapers)
+        assert J.dtype == libtfr.CTYPE
+        assert np.allclose(J, zeros_like(J))
 
     def test_dpss_mtfft_pt(self):
         nfft = sig.size
         ntapers = 5
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         J = D.mtfft_pt(events, 1, 0)
-        self.assertTupleEqual(J.shape, (nfft // 2 + 1, ntapers))
-        self.assertEqual(J.dtype, libtfr.CTYPE)
+        assert J.shape == (nfft // 2 + 1, ntapers)
+        assert J.dtype == libtfr.CTYPE
 
     def test_dpss_mtpsd(self):
         nfft = sig.size
         ntapers = 5
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z = D.mtpsd(sig)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1,))
-        self.assertEqual(Z.dtype, libtfr.DTYPE)
+        assert Z.shape == (nfft // 2 + 1,)
+        assert Z.dtype == libtfr.DTYPE
 
     def test_dpss_mtspec(self):
         nfft = 256
@@ -243,8 +251,8 @@ class TestTransforms(unittest.TestCase):
         nframes = (sig.size - nfft) // shift + 1
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z = D.mtspec(sig, shift)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, nframes))
-        self.assertEqual(Z.dtype, libtfr.DTYPE)
+        assert Z.shape == (nfft // 2 + 1, nframes)
+        assert Z.dtype == libtfr.DTYPE
 
     def test_dpss_mtstft(self):
         nfft = 256
@@ -253,8 +261,8 @@ class TestTransforms(unittest.TestCase):
         nframes = (sig.size - nfft) // shift + 1
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z = D.mtstft(sig, shift)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, nframes, ntapers))
-        self.assertEqual(Z.dtype, libtfr.CTYPE)
+        assert Z.shape == (nfft // 2 + 1, nframes, ntapers)
+        assert Z.dtype == libtfr.CTYPE
 
     def test_dpss_mtstft_pt_noevents(self):
         from numpy import zeros_like
@@ -266,10 +274,10 @@ class TestTransforms(unittest.TestCase):
         nframes = (sig.size - nfft) // shift + 1
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, nframes, ntapers))
-        self.assertEqual(Nsp.size, nframes)
-        self.assertEqual(Z.dtype, libtfr.CTYPE)
-        self.assertTrue(np.allclose(Z, zeros_like(Z)))
+        assert Z.shape == (nfft // 2 + 1, nframes, ntapers)
+        assert Nsp.size == nframes
+        assert Z.dtype == libtfr.CTYPE
+        assert np.allclose(Z, zeros_like(Z))
 
     def test_dpss_mtstft_pt(self):
         nfft = 256
@@ -278,9 +286,9 @@ class TestTransforms(unittest.TestCase):
         nframes = (sig.size - nfft) // shift + 1
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z, Nsp = D.mtstft_pt(events, 1, shift, 0, sig.size)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, nframes, ntapers))
-        self.assertEqual(Nsp.size, nframes)
-        self.assertEqual(Z.dtype, libtfr.CTYPE)
+        assert Z.shape == (nfft // 2 + 1, nframes, ntapers)
+        assert Nsp.size == nframes
+        assert Z.dtype == libtfr.CTYPE
 
     def test_hanning_mtstft(self):
         from numpy import hanning
@@ -291,29 +299,29 @@ class TestTransforms(unittest.TestCase):
         nframes = (sig.size - window.size) // shift + 1
         D = libtfr.mfft_precalc(nfft, window)
         Z = D.mtstft(sig, shift)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1, nframes, 1))
-        self.assertEqual(Z.dtype, libtfr.CTYPE)
+        assert Z.shape == (nfft // 2 + 1, nframes, 1)
+        assert Z.dtype == libtfr.CTYPE
 
     def test_precalc_psd(self):
         nfft = 256
         E, V = libtfr.dpss(200, 3, 5)
         D = libtfr.mfft_precalc(nfft, E, V)
-        self.assertTrue(np.allclose(E, D.tapers))
+        assert np.allclose(E, D.tapers)
         Z = D.mtpsd(sig)
-        self.assertTupleEqual(Z.shape, (nfft // 2 + 1,))
-        self.assertEqual(Z.dtype, libtfr.DTYPE)
+        assert Z.shape == (nfft // 2 + 1,)
+        assert Z.dtype == libtfr.DTYPE
 
 
-class TestUtility(unittest.TestCase):
+class TestUtility:
     def test_fgrid(self):
         Fs = 100
         nfft = 256
         f, idx = libtfr.fgrid(Fs, nfft)
-        self.assertEqual(f.size, idx.size)
-        self.assertEqual(f[-1], Fs / 2)
+        assert f.size == idx.size
+        assert f[-1] == Fs / 2
         f, idx = libtfr.fgrid(Fs, nfft, (10, 40))
-        self.assertTrue(f[0] >= 10)
-        self.assertTrue(f[-1] <= 40)
+        assert f[0] >= 10
+        assert f[-1] <= 40
 
     def test_tgrid(self):
         nfft = 256
@@ -325,7 +333,8 @@ class TestUtility(unittest.TestCase):
         _tgrid2 = libtfr.tgrid(Z, 1, shift)
         # assert_array_equal(tgrid1, tgrid2)
 
-    def test_interpolation(self):
+    @pytest.mark.parametrize("i", range(5))
+    def test_interpolation(self, i):
         from numpy import arange, interp
 
         nfft1 = 256
@@ -335,6 +344,5 @@ class TestUtility(unittest.TestCase):
         t1 = arange(0, nfft1, 1)
         t2 = arange(0, nfft1, nfft1 / nfft2)
         h1_interp = D1.tapers_interpolate(t2, 0, 1)
-        self.assertTupleEqual(h1_interp.shape, (ntapers, nfft2))
-        for i in range(ntapers):
-            self.assertTrue(np.allclose(h1_interp[i], interp(t2, t1, D1.tapers[i])))
+        assert h1_interp.shape == (ntapers, nfft2)
+        assert np.allclose(h1_interp[i], interp(t2, t1, D1.tapers[i]))
