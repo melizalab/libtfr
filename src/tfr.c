@@ -136,6 +136,42 @@ find_bin(double f, const double *fgrid, int nfreq)
         return (f - fgrid[i] < fgrid[j] - f) ? i : j;
 }
 
+/**
+ * Complex division (nr + ni*i) / (dr + di*i), written without C99 _Complex so
+ * that MSVC can compile it.
+ *
+ * This is Smith's algorithm, the same scaling strategy the C99 complex divide
+ * uses. The naive form -- multiplying by the conjugate and dividing by |d|^2 --
+ * is shorter but loses half the exponent range, because |d|^2 underflows to
+ * zero for a silent frame and overflows above roughly 1e154. Scaling by the
+ * larger component instead keeps the full range.
+ */
+static void
+cdiv(double nr, double ni, double dr, double di, double *qr, double *qi)
+{
+        double r, den;
+        if (fabs(dr) >= fabs(di)) {
+                r = di / dr;
+                den = dr + di * r;
+                *qr = (nr + ni * r) / den;
+                *qi = (ni - nr * r) / den;
+        }
+        else {
+                r = dr / di;
+                den = di + dr * r;
+                *qr = (nr * r + ni) / den;
+                *qi = (ni * r - nr) / den;
+        }
+        // C99 Annex G: a nonzero numerator over a zero denominator is an
+        // infinity, but the arithmetic above yields NaN. Recover it so that an
+        // all-zero frame behaves as it did before this was hand-rolled.
+        if (isnan(*qr) && isnan(*qi) && dr == 0.0 && di == 0.0 &&
+            (!isnan(nr) || !isnan(ni))) {
+                *qr = INFINITY * nr;
+                *qi = INFINITY * ni;
+        }
+}
+
 void
 tfr_displacements(mfft const * mtm, double *q, double *tdispl, double *fdispl)
 {
@@ -145,17 +181,26 @@ tfr_displacements(mfft const * mtm, double *q, double *tdispl, double *fdispl)
         int real_count = nfft / 2 + 1;
         int imag_count = (nfft+1) / 2; // not actually the count but the last index
         int K = mtm->ntapers / 3;
-        fftw_complex z1,z2,z3;
+        double re1,im1,re2,im2,re3,im3;
+        double dr,di;
 
         for (j = 0; j < K; j++) {
                 for (i = 1; i < imag_count; i++) {
-                        z1 = mtm->buf[j*nfft+i] + mtm->buf[j*nfft+(nfft-i)] * I;
-                        z2 = mtm->buf[(K+j)*nfft+i] + mtm->buf[(K+j)*nfft+(nfft-i)] * I;
-                        z3 = mtm->buf[(2*K+j)*nfft+i] + mtm->buf[(2*K+j)*nfft+(nfft-i)] * I;
+                        // half-complex layout: real parts ascend from index 0,
+                        // imaginary parts descend from index nfft-1
+                        re1 = mtm->buf[j*nfft+i];
+                        im1 = mtm->buf[j*nfft+(nfft-i)];
+                        re2 = mtm->buf[(K+j)*nfft+i];
+                        im2 = mtm->buf[(K+j)*nfft+(nfft-i)];
+                        re3 = mtm->buf[(2*K+j)*nfft+i];
+                        im3 = mtm->buf[(2*K+j)*nfft+(nfft-i)];
 
-                        q[j*real_count+i] = cabs(z1) * cabs(z1);
-                        fdispl[j*real_count+i] =  cimag(z2 / z1 / (2 * M_PI));
-                        tdispl[j*real_count+i] = creal(z3 / z1);
+                        q[j*real_count+i] = re1 * re1 + im1 * im1;
+                        // fdispl is the imaginary part of z2/z1, tdispl the real part of z3/z1
+                        cdiv(re2, im2, re1, im1, &dr, &di);
+                        fdispl[j*real_count+i] = di / (2 * M_PI);
+                        cdiv(re3, im3, re1, im1, &dr, &di);
+                        tdispl[j*real_count+i] = dr;
                 }
                 // DC
                 q[j*real_count] = SQR(mtm->buf[j*nfft]);

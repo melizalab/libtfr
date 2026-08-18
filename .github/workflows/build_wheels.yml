@@ -1,5 +1,8 @@
 name: Build wheels
 on:
+  # manual trigger: the only practical dev loop for the Windows wheel, since
+  # MSVC cannot be run locally
+  workflow_dispatch:
   push:
     branches:
       - master

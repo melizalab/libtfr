@@ -37,10 +37,10 @@ mtm_init(int nfft, int npoints, int ntapers)
         int i;
         fftw_r2r_kind kind = FFTW_R2HC;
         mtm = (mfft*)malloc(sizeof(mfft));
-	if (mtm == NULL) {
-		// memory error
-		return mtm;
-	}
+        if (mtm == NULL) {
+                // memory error
+                return mtm;
+        }
 
         mtm->nfft = nfft;
         mtm->npoints = npoints;
@@ -73,7 +73,7 @@ mtm_copy(mfft * mtmh, const double * tapers, const double * weights)
 void
 mtm_destroy(mfft * mtm)
 {
-	if (mtm == NULL) return;
+        if (mtm == NULL) return;
         if (mtm->plan) fftw_destroy_plan(mtm->plan);
         if (mtm->tapers) free(mtm->tapers);
         if (mtm->weights) free(mtm->weights);
@@ -274,24 +274,24 @@ mtpower(mfft const * mtm, double *pow, double sigpow)
 }
 
 void
-mtcomplex(mfft const * mtm, double complex *out)
+mtcomplex(mfft const * mtm, cmplx_t *out)
 {
         int nfft = mtm->nfft;
         int ntapers = mtm->ntapers;
         int real_count = nfft / 2 + 1;
         int imag_count = (nfft+1) / 2;  // not actually the count but the last index
         int t,n;
-        double complex x;
 
+        // The FFTW half-complex buffer stores the real parts ascending from
+        // index 0 and the imaginary parts descending from index nfft-1.
         for (t = 0; t < ntapers; t++) {
-                for (n = 0; n < real_count; n++)
-                  out[t*real_count+n] = mtm->buf[t*nfft+n];
-                  //out[t*nfft+n] = out[t*nfft+(nfft-n)] = mtm->buf[t*nfft+n];
-                for (n = 1; n < imag_count; n++) {
-                        x = mtm->buf[t*nfft+(nfft-n)] * I;
-                        out[t*real_count+n] += x;
-                        //out[t*nfft+(nfft-n)] += -x;
+                for (n = 0; n < real_count; n++) {
+                        out[t*real_count+n][0] = mtm->buf[t*nfft+n];
+                        out[t*real_count+n][1] = 0.0;
                 }
+                // DC and, for even nfft, Nyquist have no imaginary part
+                for (n = 1; n < imag_count; n++)
+                        out[t*real_count+n][1] = mtm->buf[t*nfft+(nfft-n)];
         }
 }
 
@@ -311,7 +311,7 @@ mtm_spec(mfft * mtm, double *spec, const double *samples, int nsamples, int shif
 }
 
 void
-mtm_zspec(mfft * mtm, double complex *spec, const double *samples, int nsamples, int shift)
+mtm_zspec(mfft * mtm, cmplx_t *spec, const double *samples, int nsamples, int shift)
 {
         int t;
         int nbins = SPEC_NFRAMES(mtm, nsamples, shift);
@@ -382,8 +382,16 @@ fftconv(int N, const double * x, double * y)
         fftw_execute(plan);
         fftw_destroy_plan(plan);
 
-        for (i = 0; i < N; i++)
-                X1[i] *= X2[i];
+        // X1 *= X2, expanded because fftw_complex is a double[2] (see tfr.h).
+        // Both operands come from an r2c transform of finite input, so the
+        // naive product needs none of the inf/NaN recovery the C99 complex
+        // multiply performs.
+        for (i = 0; i < N; i++) {
+                double re = X1[i][0] * X2[i][0] - X1[i][1] * X2[i][1];
+                double im = X1[i][0] * X2[i][1] + X1[i][1] * X2[i][0];
+                X1[i][0] = re;
+                X1[i][1] = im;
+        }
 
         // inverse fft
         plan = fftw_plan_dft_c2r_1d(N*2, X1, X, FFTW_ESTIMATE);

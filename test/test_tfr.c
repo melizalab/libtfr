@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+// tfr.h no longer pulls in <complex.h>; this test uses C99 complex itself and
+// is never built with MSVC, so it includes the header directly.
+#include <complex.h>
 #include "tfr.h"
 
 #ifndef M_PI

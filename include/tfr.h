@@ -60,16 +60,20 @@
 
 #ifdef __cplusplus
 extern "C" {
-#include <complex>
-#else
-#include <complex.h>
 #endif
 
-#ifdef _MSC_VER
-typedef _Dcomplex cmplx_t;
-#else
-typedef double complex cmplx_t;
-#endif
+/**
+ * An interleaved real/imaginary pair: [0] is the real part, [1] the imaginary.
+ *
+ * This is layout-compatible with C99 `double _Complex`, MSVC's `_Dcomplex`, and
+ * numpy's complex128, so the binary interface is unchanged. It is spelled as an
+ * array rather than a native complex type because MSVC's C compiler does not
+ * implement C99 `_Complex`, and indexing works identically on every compiler.
+ * Do not reintroduce <complex.h> here -- keeping it out means a stray complex
+ * expression in the library sources fails to build on Linux/macOS too, instead
+ * of only on Windows.
+ */
+typedef double cmplx_t[2];
 
 /**
  * Opaque pointer type for multitaper fft transforms
