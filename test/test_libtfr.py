@@ -327,15 +327,42 @@ class TestUtility:
         assert f[0] >= 10
         assert f[-1] <= 40
 
-    def test_tgrid(self):
+    @pytest.mark.parametrize("Fs", [1.0, 2.0, 100.0])
+    @pytest.mark.parametrize("shift", [10, 64])
+    def test_tgrid(self, Fs, shift):
+        """The two tgrid forms return different lengths, by design.
+
+        Given a spectrogram, tgrid returns one time per frame. Given only a
+        signal length it cannot know the taper length, so it returns the full
+        grid, including the frames that would run off the end of the signal.
+        The shorter is a prefix of the longer -- a truncation, not a different
+        grid.
+        """
+        from math import ceil
+
         nfft = 256
-        shift = 10
         ntapers = 5
         D = libtfr.mfft_dpss(nfft, 3, ntapers, nfft)
         Z = D.mtstft(sig, shift)
-        _tgrid1 = libtfr.tgrid(sig.size, 1, shift)
-        _tgrid2 = libtfr.tgrid(Z, 1, shift)
-        # assert_array_equal(tgrid1, tgrid2)
+
+        from_spec = libtfr.tgrid(Z, Fs, shift)
+        from_size = libtfr.tgrid(sig.size, Fs, shift)
+
+        # one frame start per spectrogram column
+        assert from_spec.size == Z.shape[1]
+        # the signal-length form also counts frames without full support
+        assert from_size.size == ceil(sig.size / shift)
+        assert from_size.size > from_spec.size
+        assert np.array_equal(from_size[: from_spec.size], from_spec)
+
+        # frames start at zero and advance by the shift, in seconds
+        assert from_spec[0] == 0.0
+        assert np.allclose(np.diff(from_spec), shift / Fs)
+
+    def test_tgrid_rejects_1d(self):
+        # a 1D array is ambiguous: it could be a signal or a single frequency band
+        with pytest.raises(ValueError):
+            libtfr.tgrid(np.zeros(10), 1.0, 10)
 
     @pytest.mark.parametrize("i", range(5))
     def test_interpolation(self, i):

@@ -1,6 +1,7 @@
-/build/
-/dist/
-/libtfr.egg-info/
+build/
+dist/
+attic/
+*.egg-info/
 *.[oa]
 *.os
 *.dat
@@ -8,6 +9,7 @@
 *.so
 *.dylib
 .sconsign.dblite
+src/libtfr.c
 /MANIFEST
 test/test_tfr
 wheelhouse/

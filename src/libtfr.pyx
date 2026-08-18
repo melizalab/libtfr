@@ -285,7 +285,9 @@ def mfft_precalc(int nfft, tapers not None, weights=None):
     cdef int ntapers
     tapers = np.asarray(tapers).astype(DTYPE)
     if tapers.ndim == 1:
-        tapers.shape = (1, tapers.size)
+        # reshape rather than assigning .shape: in-place shape assignment is
+        # deprecated as of numpy 2.5
+        tapers = tapers.reshape(1, tapers.size)
     ntapers, npoints = tapers.shape
     cdef double[:, :] tapers_view = tapers
 
@@ -503,7 +505,8 @@ def tgrid(S not None, double Fs, int shift):
     @returns a 1D array of frame start times
     """
     if isinstance(S, np.ndarray):
-        if S.ndim == 1: raise ValueError, "Input must be a scalar or a 2D numpy array"
+        if S.ndim == 1:
+            raise ValueError("Input must be a scalar or a 2D numpy array")
         return np.arange(0, 1. / Fs * S.shape[1] * shift, 1. / Fs * shift)
     else:
         return np.arange(0, 1. / Fs * S, 1. / Fs * shift)

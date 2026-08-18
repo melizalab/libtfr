@@ -47,15 +47,11 @@ To install from PyPI:
 
    pip install libtfr
 
-Wheels are built for most versions of linux and macosx using
+Wheels are built for most versions of linux, macosx, and windows using
 `cibuildwheel <https://github.com/pypa/cibuildwheel/>`__. These are
 statically linked to generic LAPACK routines and a fairly old version of
 fftw, so if speed is a concern, consider compiling yourself against
 optimized libraries of your own following the instructions below.
-Windows wheels with statically linked FFTW and LAPACK libraries have
-kindly been developed by `carlkl <https://github.com/carlkl>`__, but
-they very out of date now. Install with
-``pip install -i https://pypi.anaconda.org/carlkl/simple libtfr``
 
 Installing from source
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -155,13 +151,6 @@ To install the libraries and header (default to ``/usr/local/lib`` and
 ::
 
    scons install
-
-A small test program, *test_tfr*, can be built with ``scons test``. The
-program generates a signal with sinusoidally modulated frequency and
-then calculates a multitaper PSD, a multitaper spectrogram, and a
-time-frequency reassigned spectrogram. The results are output in ASCII
-format to ``tfr_in.dat``, ``tfr_out_psd.dat``, ``tfr_out_mtm.dat``, and
-``tfr_out_tfr.dat``.
 
 See ``src/test_tfr.c`` for an example of how to use the C API.
 
