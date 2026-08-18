@@ -57,7 +57,10 @@
 #ifndef _LIBTFR_H
 #define _LIBTFR_H
 
-#define LIBTFR_VERSION "2.0.0"
+/* keep in step with [project] version in pyproject.toml, which is the
+   single source of truth; the python module reads it from package
+   metadata, but a C header has no way to do that */
+#define LIBTFR_VERSION "2.2.0"
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "libtfr"
-version = "2.1.11"
+version = "2.2.0"
 description = "Calculate multi-taper windowed and time-frequency reassignment spectrograms"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
     "Natural Language :: English"
 ]
 dependencies = [
