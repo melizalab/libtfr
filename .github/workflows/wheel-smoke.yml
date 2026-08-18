@@ -1,0 +1,54 @@
+name: Wheel smoke
+
+# The wheel build fails in ways the source-build tests in tests.yml cannot
+# reach: MSVC's C compiler, FFTW compiled from source, the OpenBLAS import
+# library, and delvewheel's DLL vendoring. build_wheels.yml exercises all of
+# that, but only after a merge to master, so breakage there is found late.
+#
+# This runs a two-job slice of that matrix on pull requests. It is a separate
+# workflow rather than a pull_request trigger on build_wheels.yml because that
+# workflow's publish-to-testpypi job has no ref guard, so a PR trigger there
+# would publish a .devN release from every pull request.
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'test/**'
+      - 'setup.py'
+      - 'pyproject.toml'
+      - '.github/workflows/wheel-smoke.yml'
+  workflow_dispatch:
+
+# a pull request is usually pushed to several times; only the newest push needs
+# an answer, and the windows job is expensive
+concurrency:
+  group: wheel-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: wheel • ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # windows-latest is the only leg with a distinct toolchain, and the one
+        # that rots; ubuntu-latest is cheap and catches anything that depends on
+        # fftw_complex being a native complex type. tests.yml covers no Windows
+        # at all, so this is also the only pre-merge check that the test suite
+        # itself passes there.
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v7
+      # One Python is enough: these failures are compile, link and config
+      # errors, which do not vary across Python minor versions. tests.yml
+      # already spans 3.10 through 3.14 plus PyPy.
+      - name: Build and test wheel
+        uses: pypa/cibuildwheel@v4.2
+        env:
+          CIBW_BUILD: cp312-*
+          CIBW_ARCHS_WINDOWS: AMD64
+        with:
+          package-dir: .
+          config-file: "{package}/pyproject.toml"
