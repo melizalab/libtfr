@@ -45,7 +45,7 @@ jobs:
       # errors, which do not vary across Python minor versions. tests.yml
       # already spans 3.10 through 3.14 plus PyPy.
       - name: Build and test wheel
-        uses: pypa/cibuildwheel@v4.2
+        uses: pypa/cibuildwheel@v4.3
         env:
           CIBW_BUILD: cp312-*
           CIBW_ARCHS_WINDOWS: AMD64
