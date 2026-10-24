@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>libtfr</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      /* the theme has no card style of its own; keep it minimal and inherit
+         its link colour so the api list does not look bolted on */
+      ul.api { list-style: none; padding: 0; }
+      ul.api li { margin: 0 0 0.75em; }
+      ul.api a { font-weight: 700; }
+      ul.api span { display: block; font-weight: 400; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>libtfr</h1>
+        <p>fast multitaper conventional and reassignment spectrograms</p>
+
+        <p class="view"><a href="https://github.com/melizalab/libtfr">View the Project on GitHub <small>melizalab/libtfr</small></a></p>
+
+        <ul>
+          <li><a href="python/libtfr.html">Python <strong>API docs</strong></a></li>
+          <li><a href="c/">C <strong>API docs</strong></a></li>
+          <li><a href="https://github.com/melizalab/libtfr">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p>Libtfr is a library for calculating multi-taper conventional and time-frequency reassignment (TFR) spectrograms.</p>
+
+<h2>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<ul class="api">
+  <li>
+    <a href="python/libtfr.html">Python API</a>
+    <span>The <code>libtfr</code> module: the <code>mfft</code> transform object, spectrogram functions and taper generators. Start here if you installed from PyPI.</span>
+  </li>
+  <li>
+    <a href="c/">C API</a>
+    <span>The <code>tfr.h</code> header, for linking against libtfr directly from C. The same algorithms, without the numpy layer.</span>
+  </li>
+</ul>
+
+<p>Both are generated from the docstrings in the source, so those remain the authoritative reference.</p>
+
+<h2>
+<a name="why-use-reassignment-spectrograms" class="anchor" href="#why-use-reassignment-spectrograms"><span class="octicon octicon-link"></span></a>Why use reassignment spectrograms?</h2>
+
+<p>Mainly for readability. Compare the conventional windowed spectrogram on the top with the reassignment spectrogram on the bottom (click either for more detail).</p>
+
+<p><a href="A7_hanning.png"><img src="A7_hanning_sm.png" alt="conventional windowed spectrogram"></a><a href="A7_tfr.png"><img src="A7_tfr_sm.png" alt="reassignment spectrogram"></a></p>
+
+<p>The spectral energy distribution is much sparser in the second image, and it's easier to see the high-frequency trill (the tone that's rapidly modulated up and down) right in the middle of the sound. For some applications, reassignment spectrograms can provide much more precise measurements.</p>
+
+<p>It's important to note that no signal processing tricks can do away with the fundamental tradeoff in time-frequency <em>resolution</em>. In the images above, the trill gets close enough to the lower-frequency tonal component that the two start to smear together. Spectral resolution can only be increased by increasing the size of the analysis window, which reduces temporal resolution.</p>
+
+<h2>
+<a name="why-use-libtfr" class="anchor" href="#why-use-libtfr"><span class="octicon octicon-link"></span></a>Why use libtfr?</h2>
+
+<ul>
+<li>It's fast. The library is written on top of the <a href="http://www.fftw.org">FFTW</a> library, one of the fastest Fourier transformation libraries, and the library itself is in lightweight C99 code. On a reasonably modern processor, libtfr can calculate a multitaper reassignment spectrogram in 1/2 to 1/4 of the duration of the signal, making it usable for realtime applications.</li>
+<li>It's convenient. The library is well-documented and comes with python and C interfaces, with wheels on PyPI for Linux, macOS and Windows.</li>
+<li>It's free (as in speech)</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/melizalab">melizalab</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+  </body>
+</html>
